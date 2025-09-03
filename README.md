@@ -1,1 +1,3 @@
 Trapper Game
+
+init conflict
