@@ -1,0 +1,334 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36" version="28.1.2">
+  <diagram name="Page-1" id="Z8qYNpxdrfa3LcIeAe6g">
+    <mxGraphModel dx="735" dy="861" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-112" value="sign in" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="584" y="150" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-113" value="sign on" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="584" y="285" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-114" value="validate user login &amp;amp; account" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="775" y="150" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-115" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.094;entryY=0.824;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="ZHeHI-2Lt5UBjsig613U-114">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="664" y="324.52" as="sourcePoint" />
+            <mxPoint x="770" y="402.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="730" y="325" />
+              <mxPoint x="730" y="250" />
+              <mxPoint x="783" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-116" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-112" target="ZHeHI-2Lt5UBjsig613U-114">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="730" y="310" as="sourcePoint" />
+            <mxPoint x="775.76" y="381.79999999999995" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-117" value="External User" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="280" width="120" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-118" value="User Database" style="html=1;dashed=0;whiteSpace=wrap;shape=partialRectangle;right=0;left=0;" vertex="1" parent="1">
+          <mxGeometry x="765" y="310" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-119" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-114" target="ZHeHI-2Lt5UBjsig613U-118">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="680" y="490" as="sourcePoint" />
+            <mxPoint x="730" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-120" value="Game Database" style="html=1;dashed=0;whiteSpace=wrap;shape=partialRectangle;right=0;left=0;" vertex="1" parent="1">
+          <mxGeometry x="759" y="390" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-121" value="rules service" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="611" y="441" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-122" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-121" target="ZHeHI-2Lt5UBjsig613U-120">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="860" y="450" as="sourcePoint" />
+            <mxPoint x="860" y="380" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="810" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-123" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=-0.038;entryY=0.592;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-117" target="ZHeHI-2Lt5UBjsig613U-121">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="470" as="sourcePoint" />
+            <mxPoint x="590" y="470" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="440" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-124" value="get rules" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-123">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-125" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-121" target="ZHeHI-2Lt5UBjsig613U-117">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="460" as="sourcePoint" />
+            <mxPoint x="717" y="577" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="530" y="452" />
+              <mxPoint x="530" y="348" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-126" value="display rules" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-125">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-127" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-117" target="ZHeHI-2Lt5UBjsig613U-113">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="530" y="320" as="sourcePoint" />
+            <mxPoint x="667" y="437" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-128" value="usr passw&amp;nbsp;" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-127">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-129" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-117" target="ZHeHI-2Lt5UBjsig613U-112">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="500" as="sourcePoint" />
+            <mxPoint x="800" y="500" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="440" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-130" value="usr passw" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-129">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-131" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-114" target="ZHeHI-2Lt5UBjsig613U-117">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="280" as="sourcePoint" />
+            <mxPoint x="664" y="190" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="815" y="130" />
+              <mxPoint x="380" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-132" value="JWT Token/403" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-131">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-133" value="Authorized User" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="794" width="120" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-134" value="create lobby" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="350" y="614" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-135" value="join lobby" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="520" y="870" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-136" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-133" target="ZHeHI-2Lt5UBjsig613U-135">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="704" as="sourcePoint" />
+            <mxPoint x="690" y="704" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="560" y="839" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-137" value="enter lobby code" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-136">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-138" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="ZHeHI-2Lt5UBjsig613U-134">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="794" as="sourcePoint" />
+            <mxPoint x="550" y="754" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-139" value="user id" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-138">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-140" value="Game Database" style="html=1;dashed=0;whiteSpace=wrap;shape=partialRectangle;right=0;left=0;" vertex="1" parent="1">
+          <mxGeometry x="680" y="754" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-141" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.103;entryY=-0.052;entryDx=0;entryDy=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-134" target="ZHeHI-2Lt5UBjsig613U-140">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="660" y="764" as="sourcePoint" />
+            <mxPoint x="720" y="764" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="690" y="684" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-142" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.1;entryY=1.096;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-135" target="ZHeHI-2Lt5UBjsig613U-140">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="630" y="884" as="sourcePoint" />
+            <mxPoint x="690" y="884" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="689" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-143" value="start game" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="707" y="614" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-144" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-134" target="ZHeHI-2Lt5UBjsig613U-143">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="626" y="649" as="sourcePoint" />
+            <mxPoint x="710" y="726" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-145" value="lobby&amp;amp;players info, settings" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-144">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-146" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.681;entryY=-0.052;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-143" target="ZHeHI-2Lt5UBjsig613U-140">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="630" y="744" as="sourcePoint" />
+            <mxPoint x="750" y="774" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-147" value="statistics" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="520" y="972" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-148" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-133">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="944" as="sourcePoint" />
+            <mxPoint x="520" y="1024" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="370" y="1024" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-149" value="get statistics" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-148">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-7" y="-20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-150" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=0.605;entryY=1.02;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-147" target="ZHeHI-2Lt5UBjsig613U-133">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="460" y="964" as="sourcePoint" />
+            <mxPoint x="544" y="1041" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="413" y="984" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-151" value="display statistics" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-150">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-3" y="-30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-152" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.648;exitY=1.096;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-140" target="ZHeHI-2Lt5UBjsig613U-147">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="690" y="1012" as="sourcePoint" />
+            <mxPoint x="650" y="1117" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="745" y="1014" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-153" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-134" target="ZHeHI-2Lt5UBjsig613U-133">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="480" y="854" as="sourcePoint" />
+            <mxPoint x="480" y="754" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="290" y="654" />
+              <mxPoint x="290" y="839" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-154" value="ID lobby" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-153">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-155" value="Java Game Server" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="910" y="614" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-166" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-156" target="ZHeHI-2Lt5UBjsig613U-155">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-156" value="Cache" style="html=1;dashed=0;whiteSpace=wrap;shape=partialRectangle;right=0;left=0;" vertex="1" parent="1">
+          <mxGeometry x="900" y="784" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-157" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-143" target="ZHeHI-2Lt5UBjsig613U-155">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="830" y="704" as="sourcePoint" />
+            <mxPoint x="1107" y="704" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-158" value="lobby&amp;amp;players&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&amp;nbsp;info,&amp;nbsp;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;settings&amp;nbsp;token&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-157">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-8" y="-3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-160" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-155" target="ZHeHI-2Lt5UBjsig613U-134">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="710" y="554" as="sourcePoint" />
+            <mxPoint x="987" y="554" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="950" y="584" />
+              <mxPoint x="390" y="584" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-161" value="game token" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-160">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-163" value="&lt;div style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-size: 11px; text-wrap-mode: nowrap; background-color: rgb(255, 255, 255);&quot;&gt;usernames&lt;/span&gt;&lt;/div&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="652" y="844" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-165" value="Statistic Creator" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="810" y="870" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-167" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-156" target="ZHeHI-2Lt5UBjsig613U-165">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="850" as="sourcePoint" />
+            <mxPoint x="1043" y="850" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="950" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-168" value="game info" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-167">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-169" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.881;entryY=1.07;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZHeHI-2Lt5UBjsig613U-165" target="ZHeHI-2Lt5UBjsig613U-140">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="830" as="sourcePoint" />
+            <mxPoint x="870" y="926" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="850" y="830" />
+              <mxPoint x="767" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-170" value="statistic" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="ZHeHI-2Lt5UBjsig613U-169">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="15" y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-171" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;game info&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="910" y="730" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-174" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;lobby players info, settings&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="680" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-177" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;usr, passw, token&amp;nbsp;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="263" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-180" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;user info&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="787" y="260" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-181" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;usr, passw, token&amp;nbsp;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="683" y="170" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-182" value="rules info" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="1">
+          <mxGeometry x="775" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-183" value="lobby&amp;amp;players&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&amp;nbsp;info,&amp;nbsp;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;settings&amp;nbsp;token&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="1">
+          <mxGeometry x="747" y="721" as="geometry" />
+        </mxCell>
+        <mxCell id="ZHeHI-2Lt5UBjsig613U-184" value="statistic" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" connectable="0" vertex="1" parent="1">
+          <mxGeometry x="747" y="930" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
