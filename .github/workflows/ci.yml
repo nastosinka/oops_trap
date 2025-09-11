@@ -8,6 +8,6 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     steps:
-      - name: checout code
-      - uses: actions/checkout@v3
-      - run: echo "test test test"
+      - uses: actions/checkout@v4
+      - name: test run
+        run: echo test test test
