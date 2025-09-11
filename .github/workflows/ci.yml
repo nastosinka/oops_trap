@@ -2,12 +2,13 @@ name: test backend
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  test-backend:
+  build-test:
     runs-on: ubuntu-latest
     steps:
+      - name: test checkout
       - uses: actions/checkout@v4
-      - name: test run
+      - name: echo test
       - run: echo test test
