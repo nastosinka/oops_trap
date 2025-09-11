@@ -1,65 +1,12 @@
-name: oops-ci
+name: test backend
 
 on:
   push:
-    - workflows: [test-backend-workflow]
-      filter:
-        branches: [main]
-        paths:
-          - "backend/**"
+    branches: [main]
 
-
-
-workflows:
-  test-backend-workflow:
-    tasks:
-      - test-backend
-
-  test-frontend-workflow:
-    tasks:
-      - test-frontend
-
-  build-main-apps-workflow:
-    tasks:
-      - build-backend
-      - build-frontend
-  
-  build-infra-workflow:
-    tasks:
-      - build-liquibase
-
-
-
-tasks:
-  - name: test-backend
-    cubes:
-      - name: setup-jdk
-        script:
-          - "echo 'test test-backend'"
-  
-
-  - name: test-frontend
-    cubes:
-      - name: setup-vite
-        script:
-          - "echo 'test test-frontend'"
-
-  
-  - name: build-backend
-    cubes:
-      - name: setup-jdk
-        script:
-          - "echo 'test build-backend'"
-  
-  - name: build-frontend
-    cubes:
-      - name: setup-vite
-        script: 
-          - "echo 'test build-frontend'"
-
-  - name: build-loquibase
-    cubes:
-      - name: build-liquibase
-        script:
-          - "echo 'test liquibase'"
-
+jobs:
+  test-backend:
+  runs-on: ubuntu-latest
+  steps:
+    - name: test cout
+      run: echo "test test test"
