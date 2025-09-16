@@ -1,0 +1,14 @@
+name: test backend
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test checkout
+        uses: actions/checkout@v4
+      - run: echo test test
