@@ -6,9 +6,95 @@ on:
       - '**'
 
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup node.js 
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: run eslint
+        run: npm run lint
+      
+      - name: build project
+        run: npm run build
+
+      - name: upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/
+          retention-days: 1
+      
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
     steps:
       - name: test checkout
         uses: actions/checkout@v4
-      - run: echo test test
+
+      - name: setup node.js 
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: run unit tests
+        run: npm run test:unit
+
+      - name: run tests with coverage
+        run: npm run test:coverage
+
+      - name: upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 1
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: checkout 
+        uses: actions/checkout@v4
+
+      - name: setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      
+      - name: install dependencies
+        run: npm ci
+
+      - name: download build 
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: dist
+    
+      - name: install playwright
+        run: npx playwright install --with-deps
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+
+        
+      
+
