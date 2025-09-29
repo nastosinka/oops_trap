@@ -1,4 +1,4 @@
-name: test backend
+name: test project
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: ./oops_trap/oops_trap
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: ./oops_trap/oops_trap/package-lock.json
 
       - name: install dependencies
         run: npm ci
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: oops_trap/oops_trap/dist/
+          path: ./oops_trap/oops_trap/dist/
           retention-days: 1
       
   frontend-test:
@@ -46,9 +46,9 @@ jobs:
     needs: frontend-build
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: ./oops_trap/oops_trap
     steps:
-      - name: test checkout
+      - name: checkout
         uses: actions/checkout@v4
 
       - name: setup node.js 
@@ -56,7 +56,7 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: ./oops_trap/oops_trap/package-lock.json
 
       - name: install dependencies
         run: npm ci
@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: oops_trap/oops_trap/coverage/
+          path: ./oops_trap/oops_trap/coverage/
           retention-days: 1
 
   frontend-e2e:
@@ -79,7 +79,7 @@ jobs:
     needs: frontend-build
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: ./oops_trap/oops_trap
     steps:
       - name: checkout 
         uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
         with:
           node-version: '18'
           cache: npm
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: ./oops_trap/oops_trap/package-lock.json
       
       - name: install dependencies
         run: npm ci
@@ -98,7 +98,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: oops_trap/oops_trap/dist
+          path: ./oops_trap/oops_trap/dist
     
       - name: install playwright
         run: npx playwright install --with-deps
