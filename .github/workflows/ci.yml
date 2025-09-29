@@ -13,11 +13,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: some logs
-        run: pwd
+        run: |
+          pwd
+          cd oops_trap
+          pwd
+          ls -la
 
       - name: setup node.js 
         uses: actions/setup-node@v4
-        working-directory: ./oops_trap/oops_trap
         with:
           node-version: '18'
           cache: 'npm'
