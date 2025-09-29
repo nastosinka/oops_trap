@@ -31,6 +31,9 @@ jobs:
       - name: run eslint
         working-directory: ./oops_trap
         run: npm run lint
+
+      - name: show project tree
+        run: ls -R ./oops_trap
       
       - name: build project
         working-directory: ./oops_trap
@@ -40,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: oops_trap/oops_trap/dist/
+          path: oops_trap/dist/
           retention-days: 1
       
   frontend-test:
