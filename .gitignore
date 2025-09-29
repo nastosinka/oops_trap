@@ -517,3 +517,4 @@ FodyWeavers.xsd
 *.db-wal
 
 .env
+oops_trap/dist/
