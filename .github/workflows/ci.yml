@@ -15,8 +15,6 @@ jobs:
       - name: some logs
         run: |
           pwd
-          cd oops_trap
-          pwd
           ls -la
 
       - name: setup node.js 
