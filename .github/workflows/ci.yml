@@ -25,15 +25,15 @@ jobs:
           cache-dependency-path: ./oops_trap/package-lock.json
 
       - name: install dependencies
-        working-directory: ./oops_trap/oops_trap
+        working-directory: ./oops_trap
         run: npm ci
 
       - name: run eslint
-        working-directory: ./oops_trap/oops_trap
+        working-directory: ./oops_trap
         run: npm run lint
       
       - name: build project
-        working-directory: ./oops_trap/oops_trap
+        working-directory: ./oops_trap
         run: npm run build
 
       - name: upload build
