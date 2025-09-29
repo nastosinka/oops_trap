@@ -1,4 +1,4 @@
-name: test project
+name: test backend
 
 on:
   push:
@@ -10,20 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: oops_trap
     steps:
       - name: checkout
         uses: actions/checkout@v4
 
       - name: some logs
-        run: pwd && ls -la
+        run: pwd
 
       - name: setup node.js 
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: ./oops_trap/package-lock.json
 
       - name: install dependencies
         run: npm ci
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: oops_trap/oops_trap/dist/
+          path: oops_trap/dist/
           retention-days: 1
       
   frontend-test:
@@ -46,17 +46,19 @@ jobs:
     needs: frontend-build
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: oops_trap
     steps:
-      - name: checkout
+      - name: test checkout
         uses: actions/checkout@v4
+        with:
+          path: oops_trap
 
       - name: setup node.js 
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: oops_trap/package-lock.json
 
       - name: install dependencies
         run: npm ci
@@ -71,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: oops_trap/oops_trap/coverage/
+          path: oops_trap/coverage/
           retention-days: 1
 
   frontend-e2e:
@@ -79,17 +81,18 @@ jobs:
     needs: frontend-build
     defaults:
       run:
-        working-directory: oops_trap/oops_trap
+        working-directory: oops_trap
     steps:
       - name: checkout 
         uses: actions/checkout@v4
-
+        with:
+          path: oops_trap
       - name: setup node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: npm
-          cache-dependency-path: oops_trap/oops_trap/package-lock.json
+          cache-dependency-path: oops_trap/package-lock.json
       
       - name: install dependencies
         run: npm ci
@@ -98,10 +101,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: oops_trap/oops_trap/dist
+          path: frontend/dist
     
       - name: install playwright
         run: npx playwright install --with-deps
 
       - name: Run e2e tests
         run: npm run test:e2e
+
+
+        
+      
+
