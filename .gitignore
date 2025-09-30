@@ -21,6 +21,9 @@ node_modules/
 dist/
 package-lock.json
 package.json
+oops_trap/test-results-unit/
+oops_trap/test-results-e2e/
+oops_trap/test-results/
 
 #logs
 *.log
