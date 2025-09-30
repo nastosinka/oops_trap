@@ -7,7 +7,7 @@
     "dev": "vite --config config/vite.config.js",
     "build": "vite build --config config/vite.config.js",
     "preview": "vite preview --config config/vite.config.js",
-    "lint": "eslint . --ext .js,.vue --config config/eslint.config.cjs",
+    "lint": "eslint . --ext .js,.vue --config config/eslint.config.cjs --max-warnings 0",
     "lint:fix": "eslint . --ext .js,.vue --config config/eslint.config.cjs --fix",
     "test:unit": "vitest --config config/vitest.config.js tests/unit",
     "test:unit:run": "vitest run --config config/vitest.config.js tests/unit",
