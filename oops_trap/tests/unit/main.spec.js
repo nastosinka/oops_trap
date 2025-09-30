@@ -1,5 +1,4 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { createApp } from 'vue'
 
 vi.mock('@/App.vue', () => ({
   default: {       
@@ -33,7 +32,7 @@ describe('main.js bootstrap', () => {
     const router = (await import('@/router')).default
 
     const { default: App } = await import('@/App.vue')
-    const { default: main } = await import('@/main.js') // подгружаем main.js
+    await import('@/main.js')
 
     expect(vkBridge.send).toHaveBeenCalledWith('VKWebAppInit')
     expect(router.install).toHaveBeenCalled()
