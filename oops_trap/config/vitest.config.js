@@ -15,7 +15,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'test-results-unit/coverage',
-      include: ['src/**/*.{vue,js,ts}']
+      include: ['src/**/*.{vue,js,ts}'],
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80
+      }
     }
   },
   resolve: {
