@@ -6,7 +6,7 @@ describe('GameView.vue', () => {
   it('renders home page with correct title', () => {
     const wrapper = mount(GameView)
     
-    expect(wrapper.text()).toContain('Игровой экран')
+    expect(wrapper.text()).toContain('Игровая плазма')
     expect(wrapper.text()).toContain('Игра началась!')
   })
 
