@@ -25,7 +25,6 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const goToResults = () => {
-  console.log("jgf")
   router.push('/results')
 }
 </script>
