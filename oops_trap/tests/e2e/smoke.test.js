@@ -7,5 +7,6 @@ test('app should load', async ({ page }) => {
 
 test('home page should have content', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('body')).toContainText('Oops Trap')
+  await expect(page.locator('body')).toContainText('Osssi Trap')
 })
+git add .
