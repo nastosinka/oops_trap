@@ -1,41 +1,63 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GameView from '@/views/HomePage.vue'
+import SimpleAuthPage from '@/views/HomePage.vue'
+import BaseButton from '@/components/base/BaseButton.vue'
 
-describe('GameView.vue', () => {
-  it('has Sign In button', () => {
-    const wrapper = mount(GameView)
+describe('SimpleAuthPage.vue', () => {
+  it('renders all three buttons with correct labels', () => {
+    const wrapper = mount(SimpleAuthPage)
     
-    // Ищем все кнопки и фильтруем по тексту
-    const buttons = wrapper.findAll('button')
-    const signInButton = buttons.find(button => button.text() === 'Sign In')
-    
-    expect(signInButton?.exists()).toBe(true)
-  })
-
-  it('has Sign On button', () => {
-    const wrapper = mount(GameView)
-    
-    const buttons = wrapper.findAll('button')
-    const signOnButton = buttons.find(button => button.text() === 'Sign On')
-    
-    expect(signOnButton?.exists()).toBe(true)
-  })
-
-  it('has Rules button', () => {
-    const wrapper = mount(GameView)
-    
-    const buttons = wrapper.findAll('button')
-    const rulesButton = buttons.find(button => button.text() === 'Rules')
-    
-    expect(rulesButton?.exists()).toBe(true)
-  })
-
-  // Дополнительный тест для проверки общего количества кнопок
-  it('has exactly three buttons', () => {
-    const wrapper = mount(GameView)
-    
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAllComponents(BaseButton)
     expect(buttons).toHaveLength(3)
+    
+    expect(buttons[0].props('label')).toBe('Sign In')
+    expect(buttons[1].props('label')).toBe('Sign On')
+    expect(buttons[2].props('label')).toBe('Rules')
+  })
+
+  it('passes correct props to BaseButton components', () => {
+    const wrapper = mount(SimpleAuthPage)
+    
+    const buttons = wrapper.findAllComponents(BaseButton)
+    
+    buttons.forEach(button => {
+      expect(button.props('size')).toBe('large')
+      expect(button.classes()).toContain('action-button')
+    })
+  })
+
+  it('has all three methods defined', () => {
+    const wrapper = mount(SimpleAuthPage)
+    
+    expect(typeof wrapper.vm.handleSignIn).toBe('function')
+    expect(typeof wrapper.vm.handleSignOn).toBe('function')
+    expect(typeof wrapper.vm.handleRules).toBe('function')
+  })
+
+  it('calls handleSignIn when first button is clicked', async () => {
+    const wrapper = mount(SimpleAuthPage)
+    
+    const buttons = wrapper.findAllComponents(BaseButton)
+    await buttons[0].trigger('click')
+    
+    expect(wrapper.vm.handleSignIn()).toBeUndefined()
+  })
+
+  it('calls handleSignOn when second button is clicked', async () => {
+    const wrapper = mount(SimpleAuthPage)
+    
+    const buttons = wrapper.findAllComponents(BaseButton)
+    await buttons[1].trigger('click')
+    
+    expect(wrapper.vm.handleSignOn()).toBeUndefined()
+  })
+
+  it('calls handleRules when third button is clicked', async () => {
+    const wrapper = mount(SimpleAuthPage)
+    
+    const buttons = wrapper.findAllComponents(BaseButton)
+    await buttons[2].trigger('click')
+    
+    expect(wrapper.vm.handleRules()).toBeUndefined()
   })
 })
