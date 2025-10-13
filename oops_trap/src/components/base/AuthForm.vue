@@ -31,6 +31,8 @@
           Confirm Password
         </label>
       </div>
+      <div v-if="showPasswordError" class="auth-form__error">🚫 Passwords don't match</div>
+      <div v-if="showPasswordSuccess" class="auth-form__success">✅ Passwords match</div>
     </div>
 
     <div class="auth-form__actions">
@@ -64,10 +66,18 @@ export default {
     }
   },
 
+  computed: {
+    showPasswordError() {
+      return this.form.confirmPassword && this.form.password !== this.form.confirmPassword
+    },
+    showPasswordSuccess() {
+      return this.form.confirmPassword && this.form.password === this.form.confirmPassword
+    }
+  },
+
   methods: {
     handleSubmit() {
       if (this.form.password !== this.form.confirmPassword) {
-        alert('Passwords do not match!')
         return
       }
 
@@ -107,6 +117,21 @@ label {
   border-radius: 8px;
 }
 
+.auth-form__error {
+  color: #8a1414;
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: -22px;
+  font-family: "Irish Grover", system-ui;
+}
+
+.auth-form__success {
+  color: rgb(19, 41, 46);
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: -22px;
+  font-family: "Irish Grover", system-ui;
+}
 .auth-form__input {
   width: 100%;
   padding: 16px 12px 8px;
