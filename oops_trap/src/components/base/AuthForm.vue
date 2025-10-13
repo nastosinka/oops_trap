@@ -96,16 +96,6 @@ label {
   font-style: normal;
 }
 
-.auth-form {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 40px 32px;
-  width: 100%;
-  max-width: 320px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
 .auth-form__field {
   margin-bottom: 24px;
   position: relative;
@@ -118,7 +108,7 @@ label {
 }
 
 .auth-form__error {
-  color: #8a1414;
+  color: #560f0f;
   font-size: 14px;
   margin-top: 8px;
   margin-bottom: -22px;
@@ -180,6 +170,14 @@ label {
 
 .auth-form__submit {
   width: 100%;
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+    max-width: 100%;
+}
+
+.auth-form__submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 480px) {

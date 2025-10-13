@@ -2,49 +2,54 @@
     <div class="simple-auth-page">
         <div class="simple-auth-container">
             <div class="buttons-container">
-                <BaseButton label="Sign In" @click="goToLobby" size="large" 
+                <BaseButton label="Sign In" @click="showSignInModal = true" size="large" 
                     class="action-button" />
 
-                <BaseButton label="Sign On" :on-click="handleSignOn" size="large"
+                <BaseButton label="Sign On" @click="showSignOnModal = true" size="large"
                     class="action-button" />
 
-                <BaseButton label="Rules" :on-click="handleRules" size="large" 
+                <BaseButton label="Rules" @click="showRulesModal = true" size="large" 
                     class="action-button" />
             </div>
         </div>
+
+        <AuthModal
+            v-if="showSignInModal"
+            title="Sign In"
+            @close="showSignInModal = false"
+            @submit="handleSignIn"
+        />
     </div>
 </template>
 
-<script setup>
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-const goToLobby = () => {
-  router.push('/lobby')
-}
-</script>
-  
 <script>
 import BaseButton from '@/components/base/BaseButton.vue'
+import AuthModal from '@/components/base/AuthModal.vue'
 
 export default {
     name: 'SimpleAuthPage',
     components: {
-        BaseButton
+        BaseButton,
+        AuthModal
+    },
+
+    data() {
+        return {
+            showSignInModal: false,
+            showSignOnModal: false,
+            showRulesModal: false
+        }
     },
 
     methods: {
-        handleSignIn() {
-            return
+        handleSignIn(formData) {
+            // Логика входа
+            this.showSignInModal = false
         },
 
-        handleSignOn() {
-            return
-        },
-
-        handleRules() {
-            return
+        handleSignOn(formData) {
+            // Логика регистрации
+            this.showSignOnModal = false
         }
     }
 }
