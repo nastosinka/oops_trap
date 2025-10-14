@@ -55,8 +55,7 @@ describe('AuthForm.vue', () => {
     
     await passwordInput.setValue('password123')
     await confirmPasswordInput.setValue('different')
-    
-    // Проверяем отображение ошибки в DOM вместо computed свойств
+
     expect(wrapper.find('.auth-form__error').exists()).toBe(true)
     expect(wrapper.find('.auth-form__error').text()).toBe("🚫 Passwords don't match")
     expect(wrapper.find('.auth-form__success').exists()).toBe(false)
@@ -70,8 +69,7 @@ describe('AuthForm.vue', () => {
     
     await passwordInput.setValue('password123')
     await confirmPasswordInput.setValue('password123')
-    
-    // Проверяем отображение успеха в DOM вместо computed свойств
+
     expect(wrapper.find('.auth-form__success').exists()).toBe(true)
     expect(wrapper.find('.auth-form__success').text()).toBe('✅ Passwords match')
     expect(wrapper.find('.auth-form__error').exists()).toBe(false)
@@ -83,7 +81,6 @@ describe('AuthForm.vue', () => {
     const passwordInput = wrapper.find('input[type="password"]')
     await passwordInput.setValue('password123')
     
-    // Проверяем отсутствие сообщений в DOM
     expect(wrapper.find('.auth-form__error').exists()).toBe(false)
     expect(wrapper.find('.auth-form__success').exists()).toBe(false)
   })
@@ -142,19 +139,15 @@ describe('AuthForm.vue', () => {
     
     const nameLabel = wrapper.findAll('.auth-form__label')[0]
     const nameInput = wrapper.find('input[type="text"]')
-    
-    // Initially no active class
+
     expect(nameLabel.classes()).not.toContain('floating-label--active')
     
-    // Add active class on focus
     await nameInput.trigger('focus')
     expect(nameLabel.classes()).toContain('floating-label--active')
-    
-    // Remove active class on blur when empty
+  
     await nameInput.trigger('blur')
     expect(nameLabel.classes()).not.toContain('floating-label--active')
     
-    // Keep active class when input has value
     await nameInput.setValue('John')
     expect(nameLabel.classes()).toContain('floating-label--active')
   })
@@ -162,16 +155,12 @@ describe('AuthForm.vue', () => {
   it('prevents default form submission', async () => {
     const wrapper = mount(AuthForm)
     
-    // Заполняем форму корректными данными
     await wrapper.find('input[type="text"]').setValue('Test User')
     await wrapper.find('input[type="password"]').setValue('password123')
     await wrapper.findAll('input[type="password"]')[1].setValue('password123')
     
-    // Триггерим submit
     await wrapper.find('form').trigger('submit')
     
-    // Проверяем, что событие emit происходит, но страница не перезагружается
-    // (это означает, что preventDefault работает)
     expect(wrapper.emitted('submit')).toBeTruthy()
   })
 
@@ -191,17 +180,14 @@ describe('AuthForm.vue', () => {
     const passwordInput = wrapper.find('input[type="password"]')
     const confirmPasswordInput = wrapper.findAll('input[type="password"]')[1]
     
-    // Изначально нет сообщений
     expect(wrapper.find('.auth-form__error').exists()).toBe(false)
     expect(wrapper.find('.auth-form__success').exists()).toBe(false)
     
-    // При несовпадающих паролях показывается ошибка
     await passwordInput.setValue('pass1')
     await confirmPasswordInput.setValue('pass2')
     expect(wrapper.find('.auth-form__error').exists()).toBe(true)
     expect(wrapper.find('.auth-form__success').exists()).toBe(false)
     
-    // При совпадающих паролях показывается успех
     await confirmPasswordInput.setValue('pass1')
     expect(wrapper.find('.auth-form__error').exists()).toBe(false)
     expect(wrapper.find('.auth-form__success').exists()).toBe(true)
@@ -213,12 +199,10 @@ describe('AuthForm.vue', () => {
     const passwordInput = wrapper.find('input[type="password"]')
     const confirmPasswordInput = wrapper.findAll('input[type="password"]')[1]
     
-    // Устанавливаем разные пароли
     await passwordInput.setValue('password123')
     await confirmPasswordInput.setValue('different')
     expect(wrapper.find('.auth-form__error').exists()).toBe(true)
     
-    // Очищаем confirm password
     await confirmPasswordInput.setValue('')
     expect(wrapper.find('.auth-form__error').exists()).toBe(false)
     expect(wrapper.find('.auth-form__success').exists()).toBe(false)
