@@ -14,7 +14,7 @@
   </template>
   
   <script>
-  import AuthForm from './AuthForm.vue'
+  import AuthForm from '@/components/base/AuthForm.vue'
   
   export default {
     name: 'AuthModal',

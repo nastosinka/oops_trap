@@ -42,12 +42,12 @@ export default {
     },
 
     methods: {
-        handleSignIn(formData) {
+        handleSignIn() {
             // Логика входа
             this.showSignInModal = false
         },
 
-        handleSignOn(formData) {
+        handleSignOn() {
             // Логика регистрации
             this.showSignOnModal = false
         }
