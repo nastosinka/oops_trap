@@ -2,39 +2,54 @@
     <div class="simple-auth-page">
         <div class="simple-auth-container">
             <div class="buttons-container">
-                <BaseButton label="Sign In" :on-click="handleSignIn" size="large" 
+                <BaseButton label="Sign In" @click="showSignInModal = true" size="large" 
                     class="action-button" />
 
-                <BaseButton label="Sign On" :on-click="handleSignOn" size="large"
+                <BaseButton label="Sign On" @click="showSignOnModal = true" size="large"
                     class="action-button" />
 
-                <BaseButton label="Rules" :on-click="handleRules" size="large" 
+                <BaseButton label="Rules" @click="showRulesModal = true" size="large" 
                     class="action-button" />
             </div>
         </div>
+
+        <AuthModal
+            v-if="showSignInModal"
+            title="Sign In"
+            @close="showSignInModal = false"
+            @submit="handleSignIn"
+        />
     </div>
 </template>
-  
+
 <script>
 import BaseButton from '@/components/base/BaseButton.vue'
+import AuthModal from '@/components/base/AuthModal.vue'
 
 export default {
     name: 'SimpleAuthPage',
     components: {
-        BaseButton
+        BaseButton,
+        AuthModal
+    },
+
+    data() {
+        return {
+            showSignInModal: false,
+            showSignOnModal: false,
+            showRulesModal: false
+        }
     },
 
     methods: {
         handleSignIn() {
-            return
+            // Логика входа
+            this.showSignInModal = false
         },
 
         handleSignOn() {
-            return
-        },
-
-        handleRules() {
-            return
+            // Логика регистрации
+            this.showSignOnModal = false
         }
     }
 }
@@ -51,6 +66,9 @@ export default {
     position: fixed;
     top: 0;
     left: 0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .simple-auth-container {
@@ -61,6 +79,7 @@ export default {
     max-width: 320px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 

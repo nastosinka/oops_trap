@@ -113,3 +113,4 @@ const startGame = () => {
   transform: translateY(0);
 }
 </style>
+
