@@ -24,7 +24,7 @@ package.json
 oops_trap/test-results-unit/
 oops_trap/test-results-e2e/
 oops_trap/test-results/
-
+.mailmap
 #logs
 *.log
 
