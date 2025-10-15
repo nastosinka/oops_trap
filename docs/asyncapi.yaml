@@ -1,0 +1,494 @@
+asyncapi: '2.6.0'
+id: 'urn:oopstrap:game:api'
+defaultContentType: application/json
+
+info:
+  title: OopsRun WebSocket API
+  version: '1.0.0'
+  description: |
+    TrapRun — многопользовательская игра с фазой ожидания (лобби) и активным матчем.  
+    Подключение через JWT-токен:
+    ```
+    wss://api.oopstrap.game/ws/lobby/{lobby_id}?token=<JWT>
+    wss://api.oopstrap.game/ws/game/{game_id}?token=<JWT>
+    ```
+    Все сообщения имеют общий формат:
+    ```json
+    { "type": "event_name", "data": { ... } }
+    ```
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+tags:
+  - name: game
+    description: Игровой процесс
+
+servers:
+  lobby-ws:
+    url: wss://api.oopstrap.game/ws/lobby/{lobby_id}
+    protocol: wss
+    description: Канал ожидания игроков (лобби)
+    variables:
+      lobby_id:
+        description: Идентификатор лобби
+        default: "1abcd"
+
+  game-ws:
+    url: wss://api.oopstrap.game/ws/game/{game_id}
+    protocol: wss
+    description: Основной игровой канал
+    variables:
+      game_id:
+        description: Идентификатор игры
+        default: "1abcd"
+
+channels:
+  lobby-events:
+    description: События в лобби (до начала игры)
+    publish:
+      summary: Клиент отправляет команды в лобби
+      message:
+        oneOf:
+          - $ref: '#/components/messages/lobbyJoin'
+          - $ref: '#/components/messages/lobbyLeave'
+          - $ref: '#/components/messages/lobbySettingsUpdate'
+          - $ref: '#/components/messages/lobbyStartGame'
+    subscribe:
+      summary: Сервер уведомляет клиентов о событиях в лобби
+      message:
+        oneOf:
+          - $ref: '#/components/messages/lobbyState'
+          - $ref: '#/components/messages/lobbyPlayerJoined'
+          - $ref: '#/components/messages/lobbyPlayerLeft'
+          - $ref: '#/components/messages/lobbySettingsChanged'
+          - $ref: '#/components/messages/lobbyGameStarting'
+
+  game-events:
+    description: События в активной игре
+    publish:
+      summary: Клиент отправляет игровые действия
+      message:
+        oneOf:
+          - $ref: '#/components/messages/playerMove'
+          - $ref: '#/components/messages/playerJump'
+          - $ref: '#/components/messages/playerClimb'
+          - $ref: '#/components/messages/trapActivate'
+          - $ref: '#/components/messages/ping'
+    subscribe:
+      summary: Сервер рассылает игровые обновления
+      message:
+        oneOf:
+          - $ref: '#/components/messages/connectionSuccess'
+          - $ref: '#/components/messages/playerPositionUpdate'
+          - $ref: '#/components/messages/trapStateUpdate'
+          - $ref: '#/components/messages/playerDeath'
+          - $ref: '#/components/messages/playerFinish'
+          - $ref: '#/components/messages/gameState'
+          - $ref: '#/components/messages/gameOver'
+          - $ref: '#/components/messages/positionsUpdate'
+          - $ref: '#/components/messages/error'
+
+components:
+  messages:
+    lobbyJoin:
+      name: lobby_join
+      title: Вход в лобби
+      summary: Игрок подключается к лобби
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_join }
+          data:
+            type: object
+            properties:
+              name: { type: string, example: "Speedy" }
+
+    lobbyLeave:
+      name: lobby_leave
+      title: Выход из лобби
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_leave }
+          data:
+            type: object
+            properties:
+              reason: { type: string, example: "user_left" }
+
+    lobbySettingsUpdate:
+      name: lobby_settings_update
+      title: Изменение настроек лобби
+      summary: Создатель лобби меняет параметры игры
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_settings_update }
+          data:
+            type: object
+            properties:
+              map_type: { type: string, example: "map_01" }
+              mafia: { type: string, example: "Speedy" }
+              time: {type: integer, example: 60} #секунды
+
+    lobbyStartGame:
+      name: lobby_start_game
+      title: Запуск игры
+      summary: Создатель лобби запускает матч
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_start_game }
+
+    lobbyState:
+      name: lobby_state
+      title: Текущее состояние лобби
+      summary: Сервер отправляет полное состояние лобби
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_state }
+          data:
+            type: object
+            properties:
+              players:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    name: { type: string }
+                example:
+                  - id: "1"
+                    name: "Speedy"
+                  - id: "2"
+                    name: "RunnerX"
+              settings:
+                type: object
+                properties:
+                  map_type: { type: string, example: "map_01" }
+                  mafia: { type: string, example: "Speedy" }
+                  time: {type: integer, example: 60} #секунды
+
+    lobbyPlayerJoined:
+      name: lobby_player_joined
+      title: Игрок вошёл в лобби
+      summary: Сервер сообщает, что новый игрок присоединился
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_player_joined }
+          data:
+            type: object
+            properties:
+              id: { type: integer, example: "9" }
+              nickname: { type: string, example: "FastBoy" }
+
+    lobbyPlayerLeft:
+      name: lobby_player_left
+      title: Игрок покинул лобби
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_player_left }
+          data:
+            type: object
+            properties:
+              id: { type: integer, example: "3" }
+
+    lobbySettingsChanged:
+      name: lobby_settings_changed
+      title: Настройки лобби обновлены
+      summary: Сервер сообщает об изменении параметров
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_settings_changed }
+          data:
+            type: object
+            properties:
+                map_type: { type: string, example: "map_01" }
+                mafia: { type: string, example: "Speedy" }
+                time: {type: integer, example: 60} #секунды
+
+    lobbyGameStarting:
+      name: lobby_game_starting
+      title: Игра начинается
+      summary: Сервер уведомляет всех игроков о старте
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type: { type: string, example: lobby_game_starting }
+          data:
+            type: object
+            properties:
+              countdown: { type: integer, example: 5 }#нужно ли нам это?
+    playerMove:
+      name: player_move
+      title: Движение игрока
+      summary: Игрок сообщает о своём движении
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_move
+          data:
+            type: object
+            properties:
+              x: { type: integer, example: 120 }
+              y: { type: integer, example: 340 }
+
+    playerJump:
+      name: player_jump
+      title: Прыжок игрока
+      summary: Игрок сообщает о прыжке
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_jump
+          data:
+            type: object
+            properties:
+              power: { type: number, example: 0.85 }
+
+    playerClimb:
+      name: player_climb
+      title: Взбирание игрока
+      summary: Игрок совершает взбирание
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_climb
+          data:
+            type: object
+            properties:
+              height: { type: number, example: 2.5 } #какой-то параметр можно использовать
+
+    trapActivate:
+      name: trap_activate
+      title: Активация ловушки
+      summary: Игрок активирует ловушку
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: trap_activate
+          data:
+            type: object
+            properties:
+              trap_id: { type: integer, example: "1" }
+
+    ping:
+      name: ping
+      title: Проверка соединения
+      summary: Клиент отправляет пинг для проверки связи
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: ping
+          data:
+            type: object
+            properties:
+              timestamp: { type: string, example: "2025-10-13T12:00:00Z" }
+
+    connectionSuccess:
+      name: connection_success
+      title: Подключение успешно
+      summary: Сервер подтверждает установление соединения
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: connection_success
+          data:
+            type: object
+            properties:
+              player_id: { type: integer, example: 42 }
+              name: { type: string, example: "Speedy" }
+
+    playerPositionUpdate:
+      name: player_position_update
+      title: Обновление позиции игрока
+      summary: Сервер сообщает новые координаты игрока
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_position_update
+          data:
+            type: object
+            properties:
+              player_id: { type: integer, example: 42 }
+              x: { type: integer, example: 130 }
+              y: { type: integer, example: 360 }
+
+    trapStateUpdate:
+      name: trap_state_update
+      title: Изменение состояния ловушки
+      summary: Сервер сообщает о новом состоянии ловушки
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: trap_state_update
+          data:
+            type: object
+            properties:
+              trap_id: { type: integer, example: "3" }
+              state: { type: string, enum: [active, inactive], example: active }
+
+    playerDeath:
+      name: player_death
+      title: Игрок погиб
+      summary: Сервер сообщает о смерти игрока
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_death
+          data:
+            type: object
+            properties:
+              player_id: { type: integer, example: "15" }
+              cause: { type: string, example: "trap_explosion" }
+
+    playerFinish:
+      name: player_finish
+      title: Игрок добежал до финиша
+      summary: Сервер сообщает, что игрок завершил уровень
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: player_finish
+          data:
+            type: object
+            properties:
+              player_id: { type: integer, example: 42 }
+              time: { type: integer, example: 87 }
+
+    gameState:
+      name: game_state
+      title: Состояние игры
+      summary: Сервер сообщает текущее состояние матча
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: game_state
+          data:
+            type: object
+            properties:
+              state: { type: string, enum: [waiting, running, finished], example: running }
+              playersAlive: { type: integer, example: 3 }
+
+    gameOver:
+      name: game_over
+      title: Конец игры
+      summary: Сервер уведомляет о завершении матча
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: game_over
+          data:
+            type: object
+            properties:
+              winners: 
+                type: array
+                items:
+                  type: object
+                  properties:
+                    player_id:
+                      type: integer
+                      example: 42
+                    name:
+                      type: string
+                      example: "Speedy"
+                    finish_time:
+                      type: integer
+                      example: 40
+                example: 
+                - player_id: 42
+                  name: "Speedy"
+                  finish_time: 40
+                - player_id: 52
+                  name: "Shadow"
+                  finish_time: 50
+              duration: { type: integer, example: 90 }
+
+    positionsUpdate:
+      name: positions_update
+      title: Периодическая синхронизация позиций
+      summary: Сервер отправляет массив позиций всех игроков
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: positions_update
+          data:
+            type: object
+            properties:
+              players:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    player_id: { type: integer, example: 12 }
+                    x: { type: integer, example: 200 }
+                    y: { type: integer, example: 370 }
+
+    error:
+      name: error
+      title: Ошибка
+      summary: Сервер сообщает об ошибке
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: error
+          data:
+            type: object
+            properties:
+              code: { type: integer, example: 400 }
+              message: { type: string, example: "Invalid action type" }
