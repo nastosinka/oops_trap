@@ -5,17 +5,21 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <changeSet id="001-1" author="dev">
-        <createTable tableName="user">
+    <changeSet id="005-1" author="dev">
+        <createTable tableName="stats">
             <column name="id" type="INT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="name" type="VARCHAR(50)">
-                <constraints nullable="false" unique="true"/>
+            <column name="id_user" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_stats_user" references="user(id)"/>
             </column>
-            <column name="password" type="VARCHAR(60)">
+            <column name="id_map" type="INT">
+                <constraints nullable="false" foreignKeyName="fk_stats_maps" references="maps(id)"/>
+            </column>
+            <column name="time" type="INT">
                 <constraints nullable="false"/>
             </column>
+            <column name="role" type="BOOLEAN"/>
         </createTable>
     </changeSet>
     

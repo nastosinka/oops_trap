@@ -5,7 +5,7 @@ services:
       - ./src/main/resources/changelog:/liquibase/changelog
     working_dir: /liquibase
     command: [
-      "--changeLogFile=changelog/master.xml",
+      "--changelog-file=changelog/master.xml",  # ✅ Правильный путь
       "--url=jdbc:postgresql://postgres:5432/mydatabase",
       "--username=postgres", 
       "--password=password",

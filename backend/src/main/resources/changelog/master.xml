@@ -5,5 +5,21 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
+    <!-- Исправленные пути -->
     <include file="changes/001-create-users-table.xml" relativeToChangelogFile="true"/>
+    <include file="changes/002-create-maps-table.xml" relativeToChangelogFile="true"/>
+    <include file="changes/003-create-traps-table.xml" relativeToChangelogFile="true"/>
+    <include file="changes/004-create-pictures-table.xml" relativeToChangelogFile="true"/>
+    <include file="changes/005-create-stats-table.xml" relativeToChangelogFile="true"/>
+    <include file="changes/006-create-trap-for-map-table.xml" relativeToChangelogFile="true"/>
+
+
+
+
+    <include file="data/001-users-data.xml" relativeToChangelogFile="true"/>
+    <include file="data/002-maps-data.xml" relativeToChangelogFile="true"/>
+    <include file="data/003-traps-data.xml" relativeToChangelogFile="true"/>
+    <include file="data/004-pictures-data.xml" relativeToChangelogFile="true"/>
+    <include file="data/005-stats-data.xml" relativeToChangelogFile="true"/>
+    <include file="data/006-trap-for-map-data.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
