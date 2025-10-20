@@ -5,8 +5,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <!-- Создание таблицы trap_for_map -->
-    <changeSet id="006-1" author="dev">
+    <changeSet id="006-1" author="AnfiNa">
         <createTable tableName="trap_for_map">
             <column name="id" type="INT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
