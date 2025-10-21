@@ -17,15 +17,15 @@
           </div>
         </div>
   
-        <!-- Trap Maker Rules -->
+        <!-- Trapmaker Rules -->
         <div class="accordion-item" :class="{ 'accordion-item--active': activeSection === 'trapmaker' }">
           <div class="accordion-header" @click="toggleSection('trapmaker')">
-            <h3 class="accordion-title">Trap Maker Rules</h3>
+            <h3 class="accordion-title">Trapmaker Rules</h3>
             <span class="accordion-icon">{{ activeSection === 'trapmaker' ? '−' : '+' }}</span>
           </div>
           <div v-if="activeSection === 'trapmaker'" class="accordion-content">
             <div class="rules-text-content">
-              <h4>Trap Maker Responsibilities</h4>
+              <h4>Trapmaker Responsibilities</h4>
               <li>Поимать всех!</li>
             </div>
           </div>

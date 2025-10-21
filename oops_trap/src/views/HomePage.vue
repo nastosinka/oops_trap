@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <AuthModal
+    <UniversalModal
       v-if="showSignUpModal"
       title="Sign Up"
       :fields="['name', 'password', 'confirmPassword']"
@@ -34,7 +34,7 @@
       @submit="handleSignUp"
     />
 
-    <AuthModal
+    <UniversalModal
       v-if="showSignOnModal"
       title="Sign On"
       :fields="['name', 'password']"
@@ -43,9 +43,9 @@
       @submit="handleSignOn"
     />
 
-    <AuthModal
+    <UniversalModal
       v-if="showRulesModal"
-      title="Rules"
+      title=""
       type="rules"
       @close="showRulesModal= false"
     />
@@ -54,7 +54,7 @@
 
 <script>
 import BaseButton from "@/components/base/BaseButton.vue";
-import AuthModal from "@/components/base/AuthModal.vue";
+import UniversalModal from "@/components/base/UniversalModal.vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import RulesModal from '@/components/base/RulesModal.vue'
 
@@ -62,7 +62,7 @@ export default {
   name: "SimpleAuthPage",
   components: {
     BaseButton,
-    AuthModal,
+    UniversalModal,
     RulesModal
   },
 
