@@ -1,0 +1,17 @@
+{
+  "name": "oops-trap-backend",
+  "version": "1.0.0",
+  "description": "Backend architecture for Oops Trap",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
