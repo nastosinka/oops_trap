@@ -1,0 +1,12 @@
+{
+  "app_id": "54257524",
+  "app_name": "Oops Trap",
+  "version": "1.0.0",
+  "assets": {
+    "path": "dist"
+  },
+  "deploy": {
+    "command": "npm run build",
+    "output": "dist"
+  }
+}

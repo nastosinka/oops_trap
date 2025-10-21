@@ -1,92 +1,154 @@
 <template>
   <form class="auth-form" @submit.prevent="handleSubmit">
-    <div class="auth-form__field">
+    <div v-if="fields.includes('name')" class="auth-form__field">
       <div class="input-container">
-        <input v-model="form.name" type="text" class="auth-form__input" required @focus="focusedField = 'name'"
-          @blur="focusedField = null">
-        <label class="auth-form__label floating-label"
-          :class="{ 'floating-label--active': form.name || focusedField === 'name' }">
+        <input
+          v-model="form.name"
+          type="text"
+          class="auth-form__input"
+          required
+          @focus="focusedField = 'name'"
+          @blur="focusedField = null"
+        />
+        <label
+          class="auth-form__label floating-label"
+          :class="{
+            'floating-label--active': form.name || focusedField === 'name',
+          }"
+        >
           Name
         </label>
       </div>
     </div>
 
-    <div class="auth-form__field">
+    <div v-if="fields.includes('password')" class="auth-form__field">
       <div class="input-container">
-        <input v-model="form.password" type="password" class="auth-form__input" required
-          @focus="focusedField = 'password'" @blur="focusedField = null">
-        <label class="auth-form__label floating-label"
-          :class="{ 'floating-label--active': form.password || focusedField === 'password' }">
+        <input
+          v-model="form.password"
+          type="password"
+          class="auth-form__input"
+          required
+          @focus="focusedField = 'password'"
+          @blur="focusedField = null"
+        />
+        <label
+          class="auth-form__label floating-label"
+          :class="{
+            'floating-label--active':
+              form.password || focusedField === 'password',
+          }"
+        >
           Password
         </label>
       </div>
     </div>
 
-    <div class="auth-form__field">
+    <div v-if="fields.includes('confirmPassword')" class="auth-form__field">
       <div class="input-container">
-        <input v-model="form.confirmPassword" type="password" class="auth-form__input" required
-          @focus="focusedField = 'confirmPassword'" @blur="focusedField = null">
-        <label class="auth-form__label floating-label"
-          :class="{ 'floating-label--active': form.confirmPassword || focusedField === 'confirmPassword' }">
+        <input
+          v-model="form.confirmPassword"
+          type="password"
+          class="auth-form__input"
+          required
+          @focus="focusedField = 'confirmPassword'"
+          @blur="focusedField = null"
+        />
+        <label
+          class="auth-form__label floating-label"
+          :class="{
+            'floating-label--active':
+              form.confirmPassword || focusedField === 'confirmPassword',
+          }"
+        >
           Confirm Password
         </label>
       </div>
-      <div v-if="showPasswordError" class="auth-form__error">🚫 Passwords don't match</div>
-      <div v-if="showPasswordSuccess" class="auth-form__success">✅ Passwords match</div>
+      <div v-if="showPasswordError" class="auth-form__error">
+        🚫 Passwords don't match
+      </div>
+      <div v-if="showPasswordSuccess" class="auth-form__success">
+        ✅ Passwords match
+      </div>
     </div>
 
     <div class="auth-form__actions">
       <BaseButton type="submit" size="large" class="auth-form__submit">
-        Sign In
+        {{ submitText }}
       </BaseButton>
     </div>
   </form>
 </template>
-  
+
 <script>
-import BaseButton from './BaseButton.vue'
+import BaseButton from "./BaseButton.vue";
+import { showError } from "@/utils/notification-wrapper";
 
 export default {
-  name: 'AuthForm',
+  name: "AuthForm",
+  components: { BaseButton },
 
-  components: {
-    BaseButton
+  props: {
+    fields: {
+      type: Array,
+      default: () => ["name", "password", "confirmPassword"],
+    },
+    submitText: {
+      type: String,
+      default: "Sign Up",
+    },
+    initialData: {
+      type: Object,
+      default: () => ({}),
+    },
   },
 
-  emits: ['submit'],
+  emits: ["submit"],
 
   data() {
     return {
       form: {
-        name: '',
-        password: '',
-        confirmPassword: ''
+        name: "",
+        password: "",
+        confirmPassword: "",
+        ...this.initialData,
       },
-      focusedField: null
-    }
+      focusedField: null,
+    };
   },
 
   computed: {
     showPasswordError() {
-      return this.form.confirmPassword && this.form.password !== this.form.confirmPassword
+      return (
+        this.fields.includes("confirmPassword") &&
+        this.form.confirmPassword &&
+        this.form.password !== this.form.confirmPassword
+      );
     },
     showPasswordSuccess() {
-      return this.form.confirmPassword && this.form.password === this.form.confirmPassword
-    }
+      return (
+        this.fields.includes("confirmPassword") &&
+        this.form.confirmPassword &&
+        this.form.password === this.form.confirmPassword
+      );
+    },
   },
 
   methods: {
     handleSubmit() {
-      if (this.form.password !== this.form.confirmPassword) {
-        return
+      if (
+        this.fields.includes("confirmPassword") &&
+        this.form.password !== this.form.confirmPassword
+      ) {
+        showError("Passwords don't match");
+        return;
       }
 
-      this.$emit('submit', { ...this.form })
-    }
-  }
-}
+      this.$emit("submit", { ...this.form });
+    },
+  },
+};
 </script>
-  
+
 <style scoped>
 input,
 label {
@@ -170,14 +232,14 @@ label {
 
 .auth-form__submit {
   width: 100%;
-    transition: all 0.2s ease-in-out;
-    border-radius: 8px;
-    max-width: 100%;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  max-width: 100%;
 }
 
 .auth-form__submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 480px) {
