@@ -43,9 +43,11 @@
       @submit="handleSignOn"
     />
 
-    <RulesModal
+    <AuthModal
       v-if="showRulesModal"
-      @close="showRulesModal = false"
+      title="Rules"
+      type="rules"
+      @close="showRulesModal= false"
     />
   </div>
 </template>
