@@ -32,7 +32,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .base-button {
   display: inline-flex;
   align-items: center;
@@ -52,6 +52,15 @@ export default {
   font-family: "Irish Grover", system-ui;
   font-weight: 400;
   font-style: normal;
+
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.base-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .base-button--small {

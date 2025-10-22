@@ -1,27 +1,20 @@
 <template>
-  <div class="simple-auth-page">
-    <div class="simple-auth-container">
+  <div class="home-page">
+    <div class="home-container">
       <div class="buttons-container">
         <BaseButton
           label="Sign Up"
           size="large"
-          class="action-button"
           @click="showSignUpModal = true"
         />
 
         <BaseButton
           label="Sign On"
           size="large"
-          class="action-button"
           @click="showSignOnModal = true"
         />
 
-        <BaseButton
-          label="Rules"
-          size="large"
-          class="action-button"
-          @click="showRulesModal = true"
-        />
+        <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
       </div>
     </div>
 
@@ -47,7 +40,7 @@
       v-if="showRulesModal"
       title=""
       type="rules"
-      @close="showRulesModal= false"
+      @close="showRulesModal = false"
     />
   </div>
 </template>
@@ -56,14 +49,12 @@
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { showSuccess } from "@/utils/notification-wrapper";
-import RulesModal from '@/components/base/RulesModal.vue'
 
 export default {
   name: "SimpleAuthPage",
   components: {
     BaseButton,
     UniversalModal,
-    RulesModal
   },
 
   data() {
@@ -79,19 +70,21 @@ export default {
       // Логика регистрации
       this.showSignInModal = false;
       showSuccess("Login successful!");
+      this.$router.push("/lobby");
     },
 
     handleSignOn() {
       // Логика входа
       this.showSignOnModal = false;
       showSuccess("Login successful!");
+      this.$router.push("/lobby");
     },
   },
 };
 </script>
 
 <style scoped>
-.simple-auth-page {
+.home-page {
   height: 100vh;
   width: 100vw;
   display: flex;
@@ -106,7 +99,7 @@ export default {
   box-sizing: border-box;
 }
 
-.simple-auth-container {
+.home-container {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 40px 32px;
@@ -122,17 +115,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.action-button {
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
-  max-width: 100%;
-}
-
-.action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 480px) {

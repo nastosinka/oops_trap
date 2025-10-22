@@ -72,7 +72,7 @@
     </div>
 
     <div class="auth-form__actions">
-      <BaseButton type="submit" size="large" class="auth-form__submit">
+      <BaseButton type="submit" size="large">
         {{ submitText }}
       </BaseButton>
     </div>
@@ -228,18 +228,6 @@ label {
 
 .auth-form__actions {
   margin-top: 32px;
-}
-
-.auth-form__submit {
-  width: 100%;
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
-  max-width: 100%;
-}
-
-.auth-form__submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 480px) {

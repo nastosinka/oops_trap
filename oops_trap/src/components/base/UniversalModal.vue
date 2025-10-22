@@ -15,13 +15,13 @@
           :initial-data="initialData"
           @submit="handleAuthSubmit"
         />
-        
+
         <!-- Правила игры -->
         <RulesModal
           v-else-if="type === 'rules'"
           :initial-section="initialSection"
         />
-        
+
         <!-- Кастомный контент -->
         <slot v-else>
           {{ content }}
@@ -71,7 +71,7 @@ export default {
     size: {
       type: String,
       default: "medium", // 'small', 'medium', 'large'
-    }
+    },
   },
 
   emits: ["close", "submit"],
@@ -79,12 +79,12 @@ export default {
   computed: {
     modalClass() {
       return {
-        'modal--small': this.size === 'small',
-        'modal--medium': this.size === 'medium',
-        'modal--large': this.size === 'large',
-        'modal--rules': this.type === 'rules'
-      }
-    }
+        "modal--small": this.size === "small",
+        "modal--medium": this.size === "medium",
+        "modal--large": this.size === "large",
+        "modal--rules": this.type === "rules",
+      };
+    },
   },
 
   methods: {
