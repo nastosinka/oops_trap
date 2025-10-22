@@ -28,7 +28,6 @@
     title=""
     type="stats"
     :stats-data="statsData"
-    size="xlarge"
     @close="showStatsModal = false"
   />
 

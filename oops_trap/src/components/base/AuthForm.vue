@@ -27,7 +27,6 @@
         </label>
       </div>
 
-      <!-- Валидация пароля -->
       <div
         v-if="field === 'confirmPassword' && showPasswordError"
         class="auth-form__error"
@@ -119,12 +118,9 @@ export default {
     },
 
     isFormValid() {
-      // Для lobbyCode проверяем что поле не пустое
       if (this.fields.includes("lobbyCode")) {
         return this.form.lobbyCode.trim().length > 0;
       }
-
-      // Для остальных форм оставляем старую логику
       if (
         this.fields.includes("confirmPassword") &&
         this.form.password !== this.form.confirmPassword
@@ -240,28 +236,5 @@ label {
 
 .auth-form__actions {
   margin-top: 32px;
-}
-
-@media (max-width: 480px) {
-  .auth-form {
-    padding: 32px 24px;
-    max-width: 280px;
-  }
-}
-
-@media (min-width: 768px) {
-  .auth-form {
-    max-width: 350px;
-    padding: 45px 35px;
-    border-radius: 14px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .auth-form {
-    max-width: 380px;
-    padding: 50px 40px;
-    border-radius: 16px;
-  }
 }
 </style>

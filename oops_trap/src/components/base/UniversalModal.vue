@@ -75,10 +75,6 @@ export default {
       type: String,
       default: "",
     },
-    size: {
-      type: String,
-      default: "medium", // 'small', 'medium', 'large'
-    },
     statsData: {
       type: Array,
       default: () => [],
@@ -90,12 +86,8 @@ export default {
   computed: {
     modalClass() {
       return {
-        "modal--small": this.size === "small",
-        "modal--medium": this.size === "medium",
-        "modal--large": this.size === "large",
         "modal--rules": this.type === "rules",
         "modal--stats": this.type === "stats",
-        "modal--xlarge": this.size === "xlarge",
       };
     },
   },
@@ -131,7 +123,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 420px;
+  width: 90vw;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -164,5 +156,53 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
+}
+
+@media (min-width: 992px) {
+  .modal, .modal--stats {
+    width: 70vw;
+    padding: 70px 70px;
+  }
+
+  .modal__title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 992px) {
+  .modal, .modal--stats {
+    width: 70vw;
+    padding: 55px 55px;
+  }
+
+  .modal__title {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal, .modal--stats {
+    width: 70vw;
+    padding: 35px 35px;
+  }
+  .modal__title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal, .modal--stats {
+    width: 70vw;
+    border-radius: 12px;
+    padding: 20px 20px;
+  }
+  .modal__title {
+    font-size: 20px;
+  }
+  .modal__close {
+    font-size: 28px;
+    width: 36px;
+    height: 36px;
+  }
 }
 </style>

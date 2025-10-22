@@ -205,7 +205,6 @@ export default {
   color: #f5f5f5;
 }
 
-/* Анимации */
 .accordion-content {
   animation: slideDown 0.3s ease-out;
 }
@@ -221,7 +220,6 @@ export default {
   }
 }
 
-/* Стилизация скроллбара */
 .rules-text-content::-webkit-scrollbar {
   width: 6px;
 }

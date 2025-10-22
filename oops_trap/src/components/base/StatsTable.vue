@@ -141,4 +141,41 @@ export default {
   color: #ffd700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
+@media (max-width: 768px) {
+  .stats-table-container {
+    padding: 16px;
+    max-height: 50vh;
+  }
+  
+  .stats-table-wrapper {
+    max-height: 40vh;
+    min-height: 150px;
+  }
+  
+  .stats-table__cell {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .stats-table__cell--header {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-table-container {
+    padding: 12px;
+    max-height: 45vh;
+  }
+  
+  .stats-table-wrapper {
+    max-height: 35vh;
+  }
+  
+  .stats-table__cell {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
 </style>
