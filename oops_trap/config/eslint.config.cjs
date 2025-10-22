@@ -24,7 +24,7 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 'off',
     'vue/component-name-in-template-casing': ['error', 'PascalCase'],
-    'vue/html-self-closing': 'off', 
+    'vue/html-self-closing': 'off',
     'vue/attribute-hyphenation': 'error',
     'vue/v-on-event-hyphenation': 'error',
 
