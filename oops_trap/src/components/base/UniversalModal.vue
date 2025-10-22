@@ -22,6 +22,9 @@
           :initial-section="initialSection"
         />
 
+        <!-- Таблица статистики -->
+        <StatsTable v-else-if="type === 'stats'" :data="statsData" />
+
         <!-- Кастомный контент -->
         <slot v-else>
           {{ content }}
@@ -34,11 +37,15 @@
 <script>
 import AuthForm from "@/components/base/AuthForm.vue";
 import RulesModal from "@/components/base/RulesModal.vue";
+import StatsTable from "@/components/base/StatsTable.vue";
 
 export default {
   name: "UniversalModal",
-  components: { AuthForm, RulesModal },
-
+  components: {
+    AuthForm,
+    RulesModal,
+    StatsTable,
+  },
   props: {
     title: {
       type: String,
@@ -72,6 +79,10 @@ export default {
       type: String,
       default: "medium", // 'small', 'medium', 'large'
     },
+    statsData: {
+      type: Array,
+      default: () => [],
+    },
   },
 
   emits: ["close", "submit"],
@@ -83,6 +94,8 @@ export default {
         "modal--medium": this.size === "medium",
         "modal--large": this.size === "large",
         "modal--rules": this.type === "rules",
+        "modal--stats": this.type === "stats",
+        "modal--xlarge": this.size === "xlarge",
       };
     },
   },
@@ -118,8 +131,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 420px;
+  width: 420px;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -152,9 +164,5 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-}
-
-.modal__body {
-  padding: 0 24px 24px;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="create-lobby-page">
     <div class="header-panel">
-      <div class="trophy-icon">
+      <div class="trophy-icon" @click="showStatsModal = true">
         <i class="mdi mdi-trophy"></i>
       </div>
       <div class="nickname-section">
@@ -22,6 +22,15 @@
       </div>
     </div>
   </div>
+
+  <UniversalModal
+    v-if="showStatsModal"
+    title=""
+    type="stats"
+    :stats-data="statsData"
+    size="xlarge"
+    @close="showStatsModal = false"
+  />
 
   <UniversalModal
     v-if="showJoinLobby"
@@ -57,6 +66,25 @@ export default {
     return {
       showRulesModal: false,
       showJoinLobby: false,
+      showStatsModal: false,
+      statsData: [
+        { map: "Vector", role: "trapmaker", time: "1:08" },
+        { map: "Lucky", role: "runner", time: "2:09" },
+        { map: "Vector", role: "runner", time: "1:15" },
+        { map: "Lucky", role: "trapmaker", time: "2:25" },
+        { map: "Vector", role: "trapmaker", time: "1:08" },
+        { map: "Lucky", role: "runner", time: "2:09" },
+        { map: "Vector", role: "runner", time: "1:15" },
+        { map: "Lucky", role: "trapmaker", time: "2:25" },
+        { map: "Vector", role: "trapmaker", time: "1:08" },
+        { map: "Lucky", role: "runner", time: "2:09" },
+        { map: "Vector", role: "runner", time: "1:15" },
+        { map: "Lucky", role: "trapmaker", time: "2:25" },
+        { map: "Vector", role: "trapmaker", time: "1:08" },
+        { map: "Lucky", role: "runner", time: "2:09" },
+        { map: "Vector", role: "runner", time: "1:15" },
+        { map: "Lucky", role: "trapmaker", time: "2:25" },
+      ],
     };
   },
 
