@@ -25,6 +25,14 @@
         <!-- Таблица статистики -->
         <StatsTable v-else-if="type === 'stats'" :data="statsData" />
 
+        <!-- Настройки игры -->
+        <SettingsModal
+          v-else-if="type === 'settings'"
+          :players="players"
+          :initial-settings="initialSettings"
+          @apply="handleSettingsApply"
+        />
+
         <!-- Кастомный контент -->
         <slot v-else>
           {{ content }}
@@ -38,6 +46,7 @@
 import UniversalForm from "@/components/base/UniversalForm.vue";
 import RulesModal from "@/components/base/RulesModal.vue";
 import StatsTable from "@/components/base/StatsTable.vue";
+import SettingsModal from "@/components/base/SettingsModal.vue";
 
 export default {
   name: "UniversalModal",
@@ -45,6 +54,7 @@ export default {
     UniversalForm,
     RulesModal,
     StatsTable,
+    SettingsModal,
   },
   props: {
     title: {
@@ -79,6 +89,14 @@ export default {
       type: Array,
       default: () => [],
     },
+    players: {
+      type: Array,
+      default: () => []
+    },
+    initialSettings: {
+      type: Object,
+      default: () => ({})
+    }
   },
 
   emits: ["close", "submit"],
@@ -100,6 +118,11 @@ export default {
     handleAuthSubmit(formData) {
       this.$emit("submit", formData);
     },
+
+    handleSettingsApply(settings) {
+      this.$emit('settings-apply', settings)
+      this.closeModal()
+    }
   },
 };
 </script>

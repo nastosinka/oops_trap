@@ -70,14 +70,14 @@ export default {
       // Логика регистрации
       this.showSignInModal = false;
       showSuccess("Login successful!");
-      this.$router.push("/lobby");
+      this.$router.push("/createLobby");
     },
 
     handleSignOn() {
       // Логика входа
       this.showSignOnModal = false;
       showSuccess("Login successful!");
-      this.$router.push("/lobby");
+      this.$router.push("/createLobby");
     },
   },
 };

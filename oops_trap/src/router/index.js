@@ -7,15 +7,15 @@ const routes = [
     component: () => import("@/views/HomePage.vue"),
   },
   {
-    path: "/lobby",
-    name: "Lobby",
+    path: "/createLobby",
+    name: "CreateLobby",
     component: () => import("@/views/CreateLobbyPage.vue"),
   },
-  // {
-  //   path: '/game',
-  //   name: 'Game',
-  //   component: () => import('@/views/GameView.vue')
-  // },
+  {
+    path: "/lobby",
+    name: "Lobby",
+    component: () => import("@/views/LobbyPage.vue"),
+  },
   // {
   //   path: '/results',
   //   name: 'Results',

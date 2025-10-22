@@ -4,9 +4,7 @@
       <div class="trophy-icon" @click="showStatsModal = true">
         <i class="mdi mdi-trophy"></i>
       </div>
-      <div class="nickname-section">
-        <div class="nickname-label">Nickname</div>
-      </div>
+      <div class="nickname-label">Nickname</div>
     </div>
 
     <div class="create-lobby-container">
@@ -89,11 +87,11 @@ export default {
 
   methods: {
     createLobby() {
-      // Логика создания лобби
+      this.$router.push("/lobby?mode=create");
     },
 
     joinLobby() {
-      // Логика присоединения к лобби
+      this.$router.push("/lobby");
     },
 
     showExitConfirm() {
@@ -153,17 +151,10 @@ export default {
   }
 }
 
-.nickname-section {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
 .nickname-label {
   font-family: "Irish Grover", system-ui;
   font-size: 30px;
-  color: #e5e5e5;
+  color: #ffcc00;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 
   background: rgb(0, 0, 0, 0.15);
