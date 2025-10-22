@@ -1,78 +1,49 @@
 <template>
   <form class="auth-form" @submit.prevent="handleSubmit">
-    <div v-if="fields.includes('name')" class="auth-form__field">
+    <div v-for="field in visibleFields" :key="field" class="auth-form__field">
       <div class="input-container">
         <input
-          v-model="form.name"
-          type="text"
+          v-model="form[field]"
+          :type="getInputType(field)"
           class="auth-form__input"
-          required
-          @focus="focusedField = 'name'"
+          :required="field !== 'confirmPassword'"
+          :maxlength="field === 'lobbyCode' ? 6 : null"
+          :style="field === 'lobbyCode' ? 'text-transform: uppercase;' : ''"
+          @focus="focusedField = field"
           @blur="focusedField = null"
+          @input="
+            field === 'lobbyCode'
+              ? (form.lobbyCode = form.lobbyCode.toUpperCase())
+              : null
+          "
         />
         <label
           class="auth-form__label floating-label"
           :class="{
-            'floating-label--active': form.name || focusedField === 'name',
+            'floating-label--active': form[field] || focusedField === field,
           }"
         >
-          Name
+          {{ fieldLabels[field] }}
         </label>
       </div>
-    </div>
 
-    <div v-if="fields.includes('password')" class="auth-form__field">
-      <div class="input-container">
-        <input
-          v-model="form.password"
-          type="password"
-          class="auth-form__input"
-          required
-          @focus="focusedField = 'password'"
-          @blur="focusedField = null"
-        />
-        <label
-          class="auth-form__label floating-label"
-          :class="{
-            'floating-label--active':
-              form.password || focusedField === 'password',
-          }"
-        >
-          Password
-        </label>
-      </div>
-    </div>
-
-    <div v-if="fields.includes('confirmPassword')" class="auth-form__field">
-      <div class="input-container">
-        <input
-          v-model="form.confirmPassword"
-          type="password"
-          class="auth-form__input"
-          required
-          @focus="focusedField = 'confirmPassword'"
-          @blur="focusedField = null"
-        />
-        <label
-          class="auth-form__label floating-label"
-          :class="{
-            'floating-label--active':
-              form.confirmPassword || focusedField === 'confirmPassword',
-          }"
-        >
-          Confirm Password
-        </label>
-      </div>
-      <div v-if="showPasswordError" class="auth-form__error">
+      <!-- Валидация пароля -->
+      <div
+        v-if="field === 'confirmPassword' && showPasswordError"
+        class="auth-form__error"
+      >
         🚫 Passwords don't match
       </div>
-      <div v-if="showPasswordSuccess" class="auth-form__success">
+      <div
+        v-if="field === 'confirmPassword' && showPasswordSuccess"
+        class="auth-form__success"
+      >
         ✅ Passwords match
       </div>
     </div>
 
     <div class="auth-form__actions">
-      <BaseButton type="submit" size="large">
+      <BaseButton type="submit" size="large" :disabled="!isFormValid">
         {{ submitText }}
       </BaseButton>
     </div>
@@ -110,6 +81,7 @@ export default {
         name: "",
         password: "",
         confirmPassword: "",
+        lobbyCode: "",
         ...this.initialData,
       },
       focusedField: null,
@@ -117,6 +89,19 @@ export default {
   },
 
   computed: {
+    visibleFields() {
+      return this.fields.filter((field) => this.fieldLabels[field]);
+    },
+
+    fieldLabels() {
+      return {
+        name: "Name",
+        password: "Password",
+        confirmPassword: "Confirm Password",
+        lobbyCode: "Lobby Code",
+      };
+    },
+
     showPasswordError() {
       return (
         this.fields.includes("confirmPassword") &&
@@ -124,6 +109,7 @@ export default {
         this.form.password !== this.form.confirmPassword
       );
     },
+
     showPasswordSuccess() {
       return (
         this.fields.includes("confirmPassword") &&
@@ -131,15 +117,41 @@ export default {
         this.form.password === this.form.confirmPassword
       );
     },
-  },
 
-  methods: {
-    handleSubmit() {
+    isFormValid() {
+      // Для lobbyCode проверяем что поле не пустое
+      if (this.fields.includes("lobbyCode")) {
+        return this.form.lobbyCode.trim().length > 0;
+      }
+
+      // Для остальных форм оставляем старую логику
       if (
         this.fields.includes("confirmPassword") &&
         this.form.password !== this.form.confirmPassword
       ) {
-        showError("Passwords don't match");
+        return false;
+      }
+
+      return true;
+    },
+  },
+
+  methods: {
+    getInputType(field) {
+      if (field.includes("password")) return "password";
+      return "text";
+    },
+
+    handleSubmit() {
+      if (!this.isFormValid) {
+        if (this.fields.includes("lobbyCode") && !this.form.lobbyCode.trim()) {
+          showError("Please enter lobby code");
+        } else if (
+          this.fields.includes("confirmPassword") &&
+          this.form.password !== this.form.confirmPassword
+        ) {
+          showError("Passwords don't match");
+        }
         return;
       }
 

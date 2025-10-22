@@ -1,7 +1,5 @@
 <template>
   <div class="create-lobby-page">
-
-
     <div class="header-panel">
       <div class="trophy-icon">
         <i class="mdi mdi-trophy"></i>
@@ -11,46 +9,54 @@
       </div>
     </div>
 
-
     <div class="create-lobby-container">
       <div class="buttons-container">
-          <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
-          <BaseButton
-            size="large"
-            label="Create a lobby"
-            @click="createLobby"
-          />
-          <BaseButton size="large" label="Join the lobby" @click="joinLobby" />
-          <BaseButton size="large" label="Exit" @click="showExitConfirm" />
+        <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
+        <BaseButton size="large" label="Create a lobby" @click="createLobby" />
+        <BaseButton
+          size="large"
+          label="Join the lobby"
+          @click="showJoinLobby = true"
+        />
+        <BaseButton size="large" label="Exit" @click="showExitConfirm" />
       </div>
     </div>
   </div>
 
   <UniversalModal
-      v-if="showRulesModal"
-      title=""
-      type="rules"
-      @close="showRulesModal = false"
-    />
-  <div class="footer">Game Lobby v1.0</div>
+    v-if="showJoinLobby"
+    title=""
+    :fields="['lobbyCode']"
+    submit-text="Join"
+    @close="showJoinLobby = false"
+    @submit="joinLobby"
+  />
+
+  <UniversalModal
+    v-if="showRulesModal"
+    title=""
+    type="rules"
+    @close="showRulesModal = false"
+  />
 </template>
 
 <script>
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
-import { Modal } from 'ant-design-vue'
+import { Modal } from "ant-design-vue";
 
 export default {
   name: "LobbyPage",
 
   components: {
     BaseButton,
-    UniversalModal
+    UniversalModal,
   },
 
   data() {
     return {
       showRulesModal: false,
+      showJoinLobby: false,
     };
   },
 
@@ -65,34 +71,33 @@ export default {
 
     showExitConfirm() {
       Modal.confirm({
-        title: 'Exit Game',
-        content: 'Are you sure you want to exit the game?',
-        okText: 'Yes, Exit',
-        cancelText: 'Cancel',
-        okType: 'danger',
+        title: "Exit Game",
+        content: "Are you sure you want to exit the game?",
+        okText: "Yes, Exit",
+        cancelText: "Cancel",
+        okType: "danger",
         centered: true,
         onOk: () => {
-          this.exitGame()
-        }
-      })
+          this.exitGame();
+        },
+      });
     },
 
     exitGame() {
       Modal.success({
-        title: 'Game Exited',
-        content: 'Thank you for playing!',
-        okText: 'OK',
+        title: "Game Exited",
+        content: "Thank you for playing!",
+        okText: "OK",
         onOk: () => {
-          this.$router.push('/')
-        }
-      })
+          this.$router.push("/");
+        },
+      });
     },
   },
 };
 </script>
 
 <style scoped>
-
 .header-panel {
   position: absolute;
   top: 20px;
@@ -106,7 +111,7 @@ export default {
 }
 
 .trophy-icon {
-  font-size:60px;
+  font-size: 60px;
   color: #ffd700;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   animation: glow 2s ease-in-out infinite alternate;
@@ -131,7 +136,7 @@ export default {
 .nickname-label {
   font-family: "Irish Grover", system-ui;
   font-size: 30px;
-  color: #E5E5E5;
+  color: #e5e5e5;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 
   background: rgb(0, 0, 0, 0.15);
