@@ -54,7 +54,7 @@ import BaseButton from "./BaseButton.vue";
 import { showError } from "@/utils/notification-wrapper";
 
 export default {
-  name: "AuthForm",
+  name: "UniversalForm",
   components: { BaseButton },
 
   props: {

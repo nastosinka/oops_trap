@@ -8,7 +8,7 @@
 
       <div class="modal__body">
         <!-- Форма авторизации -->
-        <AuthForm
+        <UniversalForm
           v-if="type === 'auth'"
           :fields="fields"
           :submit-text="submitText"
@@ -35,14 +35,14 @@
 </template>
 
 <script>
-import AuthForm from "@/components/base/AuthForm.vue";
+import UniversalForm from "@/components/base/UniversalForm.vue";
 import RulesModal from "@/components/base/RulesModal.vue";
 import StatsTable from "@/components/base/StatsTable.vue";
 
 export default {
   name: "UniversalModal",
   components: {
-    AuthForm,
+    UniversalForm,
     RulesModal,
     StatsTable,
   },
@@ -159,7 +159,8 @@ export default {
 }
 
 @media (min-width: 992px) {
-  .modal, .modal--stats {
+  .modal,
+  .modal--stats {
     width: 70vw;
     padding: 70px 70px;
   }
@@ -170,7 +171,8 @@ export default {
 }
 
 @media (max-width: 992px) {
-  .modal, .modal--stats {
+  .modal,
+  .modal--stats {
     width: 70vw;
     padding: 55px 55px;
   }
@@ -181,7 +183,8 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .modal, .modal--stats {
+  .modal,
+  .modal--stats {
     width: 70vw;
     padding: 35px 35px;
   }
@@ -191,7 +194,8 @@ export default {
 }
 
 @media (max-width: 576px) {
-  .modal, .modal--stats {
+  .modal,
+  .modal--stats {
     width: 70vw;
     border-radius: 12px;
     padding: 20px 20px;

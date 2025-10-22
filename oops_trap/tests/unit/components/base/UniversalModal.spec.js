@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import AuthModal from "@/components/base/AuthModal.vue";
-import AuthForm from "@/components/base/AuthForm.vue";
+import UniversalModal from "@/components/base/UniversalModal.vue";
+import UniversalForm from "@/components/base/UniversalForm.vue";
 
-describe("AuthModal.vue", () => {
+describe("UniversalModal.vue", () => {
   it("renders modal with correct title", () => {
     const title = "Test Modal Title";
-    const wrapper = mount(AuthModal, {
+    const wrapper = mount(UniversalModal, {
       props: { title },
     });
 
@@ -16,7 +16,7 @@ describe("AuthModal.vue", () => {
   });
 
   it("renders with default title when no prop provided", () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const titleElement = wrapper.find(".modal__title");
     expect(titleElement.exists()).toBe(true);
@@ -24,14 +24,14 @@ describe("AuthModal.vue", () => {
   });
 
   it("renders AuthForm component", () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
-    const authForm = wrapper.findComponent(AuthForm);
+    const authForm = wrapper.findComponent(UniversalForm);
     expect(authForm.exists()).toBe(true);
   });
 
   it("emits close event when close button is clicked", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const closeButton = wrapper.find(".modal__close");
     await closeButton.trigger("click");
@@ -41,7 +41,7 @@ describe("AuthModal.vue", () => {
   });
 
   it("emits close event when modal overlay is clicked", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const overlay = wrapper.find(".modal-overlay");
     await overlay.trigger("click");
@@ -51,7 +51,7 @@ describe("AuthModal.vue", () => {
   });
 
   it("does not emit close event when modal content is clicked", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const modalContent = wrapper.find(".modal");
     await modalContent.trigger("click");
@@ -60,7 +60,7 @@ describe("AuthModal.vue", () => {
   });
 
   it("emits submit event with form data when AuthForm submits", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const formData = {
       name: "John Doe",
@@ -68,15 +68,15 @@ describe("AuthModal.vue", () => {
       confirmPassword: "password123",
     };
 
-    const authForm = wrapper.findComponent(AuthForm);
+    const authForm = wrapper.findComponent(UniversalForm);
     authForm.vm.$emit("submit", formData);
 
     expect(wrapper.emitted("submit")).toBeTruthy();
     expect(wrapper.emitted("submit")[0]).toEqual([formData]);
   });
 
-  it("forwards form data from AuthForm to parent component", async () => {
-    const wrapper = mount(AuthModal);
+  it("forwards form data from UniversalForm to parent component", async () => {
+    const wrapper = mount(UniversalModal);
 
     const testData = {
       name: "Test User",
@@ -84,7 +84,7 @@ describe("AuthModal.vue", () => {
       confirmPassword: "testpass",
     };
 
-    const authForm = wrapper.findComponent(AuthForm);
+    const authForm = wrapper.findComponent(UniversalForm);
     await authForm.vm.$emit("submit", testData);
 
     expect(wrapper.emitted("submit")).toBeTruthy();
@@ -92,7 +92,7 @@ describe("AuthModal.vue", () => {
   });
 
   it("has correct CSS classes structure", () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     expect(wrapper.find(".modal-overlay").exists()).toBe(true);
     expect(wrapper.find(".modal").exists()).toBe(true);
@@ -103,14 +103,14 @@ describe("AuthModal.vue", () => {
   });
 
   it("close button has correct content", () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const closeButton = wrapper.find(".modal__close");
     expect(closeButton.text()).toBe("×");
   });
 
   it("handles multiple close events correctly", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     await wrapper.find(".modal__close").trigger("click");
     expect(wrapper.emitted("close")).toHaveLength(1);
@@ -119,24 +119,24 @@ describe("AuthModal.vue", () => {
     expect(wrapper.emitted("close")).toHaveLength(2);
   });
 
-  it("renders AuthForm in modal body", () => {
-    const wrapper = mount(AuthModal);
+  it("renders UniversalForm in modal body", () => {
+    const wrapper = mount(UniversalModal);
 
     const modalBody = wrapper.find(".modal__body");
-    const authForm = modalBody.findComponent(AuthForm);
+    const authForm = modalBody.findComponent(UniversalForm);
 
     expect(authForm.exists()).toBe(true);
   });
 
   it("maintains proper event handling after multiple interactions", async () => {
-    const wrapper = mount(AuthModal);
+    const wrapper = mount(UniversalModal);
 
     const formData = {
       name: "User",
       password: "pass",
       confirmPassword: "pass",
     };
-    await wrapper.findComponent(AuthForm).vm.$emit("submit", formData);
+    await wrapper.findComponent(UniversalForm).vm.$emit("submit", formData);
 
     await wrapper.find(".modal__close").trigger("click");
 
