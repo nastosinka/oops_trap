@@ -283,7 +283,6 @@ describe("UniversalForm", () => {
     it("disables button when form is invalid", async () => {
       wrapper = createWrapper();
 
-      // Создаем невалидное состояние - разные пароли
       await wrapper.setData({
         form: {
           name: "testuser",
@@ -293,7 +292,6 @@ describe("UniversalForm", () => {
         },
       });
 
-      // Проверим что форма действительно невалидна
       expect(wrapper.vm.isFormValid).toBe(false);
 
       const button = wrapper.findComponent(BaseButton);

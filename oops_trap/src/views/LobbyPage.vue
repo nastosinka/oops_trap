@@ -181,7 +181,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-top: 60px;
+  margin-top: 0px;
   overflow: hidden;
 }
 

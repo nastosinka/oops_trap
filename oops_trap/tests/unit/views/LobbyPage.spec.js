@@ -1,4 +1,3 @@
-// tests/unit/views/LobbyPage.spec.js
 import { mount } from "@vue/test-utils";
 import { Modal } from "ant-design-vue";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -23,7 +22,6 @@ describe("LobbyPage", () => {
     query: {},
   };
 
-  // УБЕДИТЕСЬ ЧТО createWrapper ОПРЕДЕЛЕН ВНУТРИ describe
   const createWrapper = (routeQuery = {}) => {
     mockRoute.query = routeQuery;
     return mount(LobbyPage, {
@@ -95,17 +93,12 @@ describe("LobbyPage", () => {
     });
   });
 
-  // УБРАТЬ лишний describe здесь - он дублируется
-  // tests/unit/views/LobbyPage.spec.js
-
   describe("Modal Windows", () => {
     it("calls handleStart when Start button is clicked", async () => {
       wrapper = createWrapper({ mode: "create" });
 
-      // Создаем spy ПЕРЕД любыми действиями
       const handleStartSpy = vi.spyOn(wrapper.vm, "handleStart");
 
-      // Находим кнопку Start
       const buttons = wrapper.findAllComponents(BaseButton);
       const startButton = buttons.find(
         (button) =>
@@ -114,13 +107,10 @@ describe("LobbyPage", () => {
 
       expect(startButton.exists()).toBe(true);
 
-      // Вместо trigger('click'), используем вызов метода напрямую
-      // Это обходит проблемы с обработкой событий в тестовой среде
       await wrapper.vm.handleStart();
 
       expect(handleStartSpy).toHaveBeenCalled();
 
-      // Дополнительно проверяем что кнопка отображается для хоста
       expect(wrapper.vm.isHost).toBe(true);
     });
 
@@ -129,7 +119,6 @@ describe("LobbyPage", () => {
 
       const showExitConfirmSpy = vi.spyOn(wrapper.vm, "showExitConfirm");
 
-      // Находим кнопку Exit
       const buttons = wrapper.findAllComponents(BaseButton);
       const exitButton = buttons.find(
         (button) =>
@@ -138,7 +127,6 @@ describe("LobbyPage", () => {
 
       expect(exitButton.exists()).toBe(true);
 
-      // Вызываем метод напрямую
       await wrapper.vm.showExitConfirm();
 
       expect(showExitConfirmSpy).toHaveBeenCalled();
