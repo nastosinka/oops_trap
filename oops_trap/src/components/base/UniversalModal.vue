@@ -146,7 +146,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90vw;
+  width: 80vw;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -202,20 +202,9 @@ export default {
   }
 
   /* крупные бедолаги */
-
-  .modal--rules,
-  .modal--stats {
-    max-width: 700px;
-  }
-
   .modal--rules .modal__header,
   .modal--stats .modal__header {
-    padding: 20px 20px 0;
-  }
-  
-  .modal--rules .modal__title,
-  .modal--stats .modal__title {
-    font-size: 24px;
+    padding: 00px 0px 10px;
   }
 }
 
@@ -234,19 +223,9 @@ export default {
 
   /* крупные бедолаги */
 
-  .modal--rules,
-  .modal--stats {
-    max-width: 700px;
-  }
-
   .modal--rules .modal__header,
   .modal--stats .modal__header {
-    padding: 20px 20px 0;
-  }
-  
-  .modal--rules .modal__title,
-  .modal--stats .modal__title {
-    font-size: 24px;
+    padding: 0px 0px 20px;
   }
 }
 @media (min-width: 1200px) {
@@ -266,17 +245,12 @@ export default {
 
   .modal--rules,
   .modal--stats {
-    max-width: 700px;
+    max-width: 1000px;
   }
 
   .modal--rules .modal__header,
   .modal--stats .modal__header {
-    padding: 20px 20px 0;
-  }
-  
-  .modal--rules .modal__title,
-  .modal--stats .modal__title {
-    font-size: 24px;
+    padding: 0px 0px 30px;
   }
 }
 </style>
