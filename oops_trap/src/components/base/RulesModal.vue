@@ -179,7 +179,7 @@ export default {
 
 .rules-text-content {
   padding: 2rem;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
