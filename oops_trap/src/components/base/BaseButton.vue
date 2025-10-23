@@ -55,7 +55,7 @@ export default {
 
   transition: all 0.2s ease-in-out;
   border-radius: 8px;
-  width: 100%;
+  width: 80%;
 }
 
 .base-button:hover {

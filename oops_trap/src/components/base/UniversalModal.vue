@@ -63,7 +63,7 @@ export default {
     },
     type: {
       type: String,
-      default: "auth", // 'auth', 'rules', 'custom'
+      default: "auth",
     },
     fields: {
       type: Array,
@@ -91,12 +91,12 @@ export default {
     },
     players: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     initialSettings: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
 
   emits: ["close", "submit"],
@@ -115,14 +115,14 @@ export default {
       this.$emit("close");
     },
 
-    handleAuthSubmit(formData) {
-      this.$emit("submit", formData);
+    handleAuthSubmit() {
+      // this.$emit("submit", formData);
     },
 
-    handleSettingsApply(settings) {
-      this.$emit('settings-apply', settings)
-      this.closeModal()
-    }
+    handleSettingsApply() {
+      // this.$emit("settings-apply", settings);
+      // this.closeModal();
+    },
   },
 };
 </script>
@@ -146,7 +146,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90vw;
+  overflow-y: auto;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -156,7 +156,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 24px 0;
+  padding: 24px 24px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .modal__title {
@@ -181,11 +184,25 @@ export default {
   border-radius: 8px;
 }
 
-@media (min-width: 992px) {
-  .modal,
+.modal--rules,
+.modal--stats {
+  max-width: 1200px;
+}
+
+.modal:not(.modal--rules):not(.modal--stats) {
+  width: 80vw;
+  max-width: 500px;
+}
+
+@media (min-width: 1200px) {
+  .modal--rules,
   .modal--stats {
-    width: 70vw;
-    padding: 70px 70px;
+    width: 85vw;
+    padding: 40px;
+  }
+
+  .modal:not(.modal--rules):not(.modal--stats) {
+    padding: 30px;
   }
 
   .modal__title {
@@ -193,11 +210,15 @@ export default {
   }
 }
 
-@media (max-width: 992px) {
-  .modal,
+@media (min-width: 768px) and (max-width: 1199px) {
+  .modal--rules,
   .modal--stats {
-    width: 70vw;
-    padding: 55px 55px;
+    width: 90vw;
+    padding: 30px;
+  }
+
+  .modal:not(.modal--rules):not(.modal--stats) {
+    padding: 25px;
   }
 
   .modal__title {
@@ -205,31 +226,59 @@ export default {
   }
 }
 
-@media (max-width: 768px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    padding: 35px 35px;
+@media (max-width: 767px) {
+  .modal-overlay {
+    padding: 10px;
   }
+
+  .modal {
+    width: 95vw;
+    border-radius: 12px;
+  }
+
+  .modal--rules,
+  .modal--stats {
+    padding: 20px 15px;
+  }
+
+  .modal:not(.modal--rules):not(.modal--stats) {
+    padding: 20px;
+  }
+
+  .modal__header {
+    padding: 15px 15px 0;
+  }
+
   .modal__title {
     font-size: 24px;
   }
 }
 
-@media (max-width: 576px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    border-radius: 12px;
-    padding: 20px 20px;
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 5px;
   }
+
+  .modal {
+    width: 98vw;
+    border-radius: 10px;
+  }
+
+  .modal--rules,
+  .modal--stats {
+    padding: 15px 10px;
+  }
+
+  .modal:not(.modal--rules):not(.modal--stats) {
+    padding: 15px;
+  }
+
+  .modal__header {
+    padding: 10px 10px 0;
+  }
+
   .modal__title {
     font-size: 20px;
-  }
-  .modal__close {
-    font-size: 28px;
-    width: 36px;
-    height: 36px;
   }
 }
 </style>

@@ -169,28 +169,35 @@ label {
 .auth-form__field {
   margin-bottom: 24px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .input-container {
   position: relative;
   background-color: #457270;
   border-radius: 8px;
+  width: 80%;
+  margin-bottom: 8px;
 }
 
 .auth-form__error {
   color: #560f0f;
   font-size: 14px;
-  margin-top: 8px;
-  margin-bottom: -22px;
   font-family: "Irish Grover", system-ui;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: -22px;
 }
 
 .auth-form__success {
   color: rgb(19, 41, 46);
   font-size: 14px;
-  margin-top: 8px;
-  margin-bottom: -22px;
   font-family: "Irish Grover", system-ui;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: -22px;
 }
 .auth-form__input {
   width: 100%;
@@ -236,5 +243,8 @@ label {
 
 .auth-form__actions {
   margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

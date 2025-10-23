@@ -52,7 +52,7 @@ export default {
   name: "LobbyPage",
   components: {
     BaseButton,
-    UniversalModal
+    UniversalModal,
   },
   data() {
     return {
@@ -74,7 +74,7 @@ export default {
       showSettings: false,
       currentSettings: {
         // текущие настройки
-      }
+      },
     };
   },
   created() {
@@ -102,7 +102,7 @@ export default {
     },
 
     handleSettingsApply(settings) {
-      this.currentSettings = settings
+      this.currentSettings = settings;
     },
 
     exitGame() {
@@ -133,11 +133,13 @@ export default {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  color: #e5e5e5;
+  font-family: "Irish Grover", system-ui;
 }
 .nickname {
   position: absolute;
   top: 30px;
-  left: 30px;
+  right: 30px;
   font-size: 28px;
   color: #ffcc00;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -152,13 +154,11 @@ export default {
 }
 
 .content {
+  margin: auto auto;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 600px;
-  height: 80vh;
+  width: 90vw;
+  max-width: 800px;
+  height: 70vh;
   background: rgba(40, 75, 99, 0.9);
   border-radius: 20px;
   padding: 40px 30px;
@@ -171,7 +171,7 @@ export default {
 .lobby-code {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px;
   background: rgba(255, 255, 255, 0.15);
   padding: 10px 15px;
   border-radius: 10px;
@@ -184,7 +184,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-top: 60px;
+  margin-top: 20px;
   overflow: hidden;
 }
 
@@ -227,11 +227,11 @@ export default {
 
 .actions {
   margin-top: 30px;
-  display: flex;
   gap: 15px;
   flex-shrink: 0;
-  justify-content: space-between;
+  display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .players-list::-webkit-scrollbar {

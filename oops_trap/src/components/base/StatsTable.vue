@@ -111,71 +111,26 @@ export default {
   background: rgba(69, 114, 112);
   backdrop-filter: blur(5px);
 }
-
-.stats-table__row {
-  transition: background-color 0.2s ease;
-}
-
-.stats-table__row:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .stats-table__row:nth-child(even) {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.stats-table__row:nth-child(even):hover {
-  background: rgba(255, 255, 255, 0.15);
+.stats-table__row:nth-child(even):hover,
+.stats-table__row:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .stats-table__cell {
   padding: 12px 16px;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .stats-table__cell--header {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 20px;
   color: #ffd700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-@media (max-width: 768px) {
-  .stats-table-container {
-    padding: 16px;
-    max-height: 50vh;
-  }
-
-  .stats-table-wrapper {
-    max-height: 40vh;
-    min-height: 150px;
-  }
-
-  .stats-table__cell {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-
-  .stats-table__cell--header {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-table-container {
-    padding: 12px;
-    max-height: 45vh;
-  }
-
-  .stats-table-wrapper {
-    max-height: 35vh;
-  }
-
-  .stats-table__cell {
-    padding: 6px 8px;
-    font-size: 11px;
-  }
 }
 </style>
