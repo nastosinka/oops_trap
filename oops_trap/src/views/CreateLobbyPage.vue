@@ -123,6 +123,21 @@ export default {
 </script>
 
 <style scoped>
+.create-lobby-page {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url("@/assets/images/background.jpg") center/cover no-repeat;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .header-panel {
   position: absolute;
   top: 20px;
@@ -147,7 +162,7 @@ export default {
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
   to {
-    text-shadow: 0 2px 16px rgba(255, 215, 0, 0.8);
+    text-shadow: 0 2px 16px rgba(255, 215, 0, 1);
   }
 }
 
@@ -164,28 +179,15 @@ export default {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-.create-lobby-page {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: url("@/assets/images/background.jpg") center/cover no-repeat;
-  position: fixed;
-  top: 0;
-  left: 0;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  animation: glow 2s ease-in-out infinite alternate;
 }
 
 .create-lobby-container {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 40px 32px;
-  max-width: 320px;
+  width: 90vw;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -195,5 +197,53 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .create-lobby-container {
+    padding: 32px 24px;
+    max-width: 280px;
+  }
+
+  .buttons-container {
+    gap: 14px;
+  }
+}
+
+@media (min-width: 480px) {
+  .create-lobby-container {
+    padding: 32px 24px;
+    max-width: 320px;
+  }
+
+  .buttons-container {
+    gap: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .create-lobby-container {
+    max-width: 350px;
+    padding: 45px 35px;
+    border-radius: 14px;
+  }
+
+  .buttons-container {
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .create-lobby-container {
+    max-width: 380px;
+    padding: 50px 40px;
+    border-radius: 16px;
+  }
+
+  .buttons-container {
+    gap: 20px;
+  }
 }
 </style>

@@ -91,12 +91,12 @@ export default {
     },
     players: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     initialSettings: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
 
   emits: ["close", "submit"],
@@ -120,9 +120,9 @@ export default {
     },
 
     handleSettingsApply(settings) {
-      this.$emit('settings-apply', settings)
-      this.closeModal()
-    }
+      this.$emit("settings-apply", settings);
+      this.closeModal();
+    },
   },
 };
 </script>

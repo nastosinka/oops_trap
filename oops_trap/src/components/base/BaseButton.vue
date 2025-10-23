@@ -1,5 +1,5 @@
 <template>
-  <button :class="['base-button', `base-button--${size}`]" @click="handleClick">
+  <button class='base-button' @click="handleClick">
     <div class="base-button__content">
       <slot>{{ label }}</slot>
     </div>
@@ -15,11 +15,6 @@ export default {
       type: String,
       default: "",
     },
-    size: {
-      type: String,
-      default: "medium",
-      validator: (value) => ["small", "medium", "large"].includes(value),
-    },
   },
 
   emits: ["click"],
@@ -34,9 +29,6 @@ export default {
 
 <style>
 .base-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border: none;
   border-radius: 8px;
   font-family: inherit;
@@ -52,10 +44,7 @@ export default {
   font-family: "Irish Grover", system-ui;
   font-weight: 400;
   font-style: normal;
-
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
-  width: 100%;
+  min-height: 44px;
 }
 
 .base-button:hover {
@@ -63,22 +52,39 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.base-button--small {
-  padding: 8px 16px;
-  font-size: 14px;
-  min-height: 32px;
+@media (min-width: 1200px) {
+  .base-button {
+    max-width: 400px;
+    width: 90%;
+    font-size: 24px;
+    padding: 8px 40px;
+  }
 }
 
-.base-button--medium {
-  padding: 12px 24px;
-  font-size: 16px;
-  min-height: 40px;
+@media (min-width: 768px) and (max-width: 1199px) {
+  .base-button {
+    max-width: 350px;
+    width: 90%;
+    font-size: 20px;
+    padding: 8px 28px;
+  }
 }
 
-.base-button--large {
-  padding: 16px 32px;
-  font-size: 30px;
-  font-weight: bolder;
-  min-height: 48px;
+@media (max-width: 767px) {
+  .base-button {
+    max-width: 300px;
+    width: 80%;
+    font-size: 16px;
+    padding: 8px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .base-button {
+    max-width: 250px;
+    width: 80%;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
 }
 </style>

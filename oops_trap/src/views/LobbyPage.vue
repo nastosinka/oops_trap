@@ -52,11 +52,11 @@ export default {
   name: "LobbyPage",
   components: {
     BaseButton,
-    UniversalModal
+    UniversalModal,
   },
   data() {
     return {
-      nickname: "MyNickname",
+      nickname: "Nickname",
       lobbyCode: "XYZ789",
       players: [
         { id: 1, name: "Player 1", color: "#FF6B6B" },
@@ -74,7 +74,7 @@ export default {
       showSettings: false,
       currentSettings: {
         // текущие настройки
-      }
+      },
     };
   },
   created() {
@@ -102,7 +102,7 @@ export default {
     },
 
     handleSettingsApply(settings) {
-      this.currentSettings = settings
+      this.currentSettings = settings;
     },
 
     exitGame() {
@@ -133,11 +133,13 @@ export default {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Irish Grover", system-ui;
+  color: #e5e5e5;
 }
 .nickname {
   position: absolute;
   top: 30px;
-  left: 30px;
+  right: 30px;
   font-size: 28px;
   color: #ffcc00;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -153,12 +155,7 @@ export default {
 
 .content {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 600px;
-  height: 80vh;
+  height: 65vh;
   background: rgba(40, 75, 99, 0.9);
   border-radius: 20px;
   padding: 40px 30px;
@@ -171,7 +168,7 @@ export default {
 .lobby-code {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px;
   background: rgba(255, 255, 255, 0.15);
   padding: 10px 15px;
   border-radius: 10px;
@@ -192,8 +189,6 @@ export default {
   font-size: 32px;
   text-align: center;
   margin-bottom: 25px;
-  color: #a8e6cf;
-  flex-shrink: 0;
 }
 
 .players-list {
@@ -230,7 +225,7 @@ export default {
   display: flex;
   gap: 15px;
   flex-shrink: 0;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
@@ -250,5 +245,34 @@ export default {
 
 .players-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+
+@media (max-width: 480px) {
+  .content {
+    width: 90vw;
+    max-width: 300px;
+  }
+}
+
+@media (min-width: 480px) {
+  .content {
+    width: 90vw;
+    max-width: 400px;
+  }
+}
+
+@media (min-width: 768px) {
+  .content {
+    width: 90vw;
+    max-width: 700px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    width: 90vw;
+    max-width: 850px;
+  }
 }
 </style>

@@ -135,6 +135,7 @@ export default {
   methods: {
     getInputType(field) {
       if (field.includes("password")) return "password";
+      if (field.includes("confirmPassword")) return "password";
       return "text";
     },
 
@@ -166,32 +167,55 @@ label {
   font-style: normal;
 }
 
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 18px;
+}
+
 .auth-form__field {
-  margin-bottom: 24px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .input-container {
   position: relative;
   background-color: #457270;
   border-radius: 8px;
+  width: 280px;
+  max-width: 90%;
+  margin: 0 auto;
 }
 
 .auth-form__error {
   color: #560f0f;
   font-size: 14px;
-  margin-top: 8px;
-  margin-bottom: -22px;
   font-family: "Irish Grover", system-ui;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: -18px;
+  width: 280px;
+  max-width: 90%;
 }
 
 .auth-form__success {
   color: rgb(19, 41, 46);
   font-size: 14px;
-  margin-top: 8px;
-  margin-bottom: -22px;
   font-family: "Irish Grover", system-ui;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: -18px;
+  width: 280px;
+  max-width: 90%;
 }
+
 .auth-form__input {
   width: 100%;
   padding: 16px 12px 8px;
@@ -203,7 +227,6 @@ label {
   background: transparent;
   z-index: 2;
   position: relative;
-
   box-shadow: 0 4px 4px rgba(255, 255, 255, 0.4);
 }
 
@@ -235,6 +258,16 @@ label {
 }
 
 .auth-form__actions {
-  margin-top: 32px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.auth-form__actions .base-button {
+  width: 280px;
+  max-width: 90%;
+  margin: 0 auto;
 }
 </style>

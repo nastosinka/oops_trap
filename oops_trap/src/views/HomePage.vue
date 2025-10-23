@@ -4,17 +4,15 @@
       <div class="buttons-container">
         <BaseButton
           label="Sign Up"
-          size="large"
           @click="showSignUpModal = true"
         />
 
         <BaseButton
           label="Sign On"
-          size="large"
           @click="showSignOnModal = true"
         />
 
-        <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
+        <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
     </div>
 
@@ -115,14 +113,16 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  align-items: center;
+  justify-content: center;
 }
 
-@media (max-width: 480px) {
-  .simple-auth-page {
+@media (max-width: 767px) {
+  .home-page {
     padding: 16px;
   }
 
-  .simple-auth-container {
+  .home-container {
     padding: 32px 24px;
     max-width: 280px;
   }
@@ -133,7 +133,7 @@ export default {
 }
 
 @media (min-width: 768px) {
-  .simple-auth-container {
+  .home-container {
     max-width: 350px;
     padding: 45px 35px;
     border-radius: 14px;
@@ -145,7 +145,7 @@ export default {
 }
 
 @media (min-width: 1024px) {
-  .simple-auth-container {
+  .home-container {
     max-width: 380px;
     padding: 50px 40px;
     border-radius: 16px;
