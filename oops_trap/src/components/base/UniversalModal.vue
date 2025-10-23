@@ -150,13 +150,14 @@ export default {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 30px;
 }
 
 .modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 24px 0;
+  padding: 24px 24px 24px;
 }
 
 .modal__title {
@@ -181,55 +182,101 @@ export default {
   border-radius: 8px;
 }
 
-@media (min-width: 992px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    padding: 70px 70px;
+.modal:not(.modal--rules):not(.modal--stats) {
+    width: 80vw;
+    border-radius: 12px;
+    max-width: 350px;
   }
-
-  .modal__title {
-    font-size: 40px;
-  }
-}
-
-@media (max-width: 992px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    padding: 55px 55px;
-  }
-
-  .modal__title {
-    font-size: 32px;
-  }
-}
 
 @media (max-width: 768px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    padding: 35px 35px;
+    /* масенькие бедолаги */
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__title {
+    font-size: 18px;
   }
-  .modal__title {
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__close {
+    font-size: 22px;
+    width: 34px;
+    height: 34px;
+  }
+
+  /* крупные бедолаги */
+
+  .modal--rules,
+  .modal--stats {
+    max-width: 700px;
+  }
+
+  .modal--rules .modal__header,
+  .modal--stats .modal__header {
+    padding: 20px 20px 0;
+  }
+  
+  .modal--rules .modal__title,
+  .modal--stats .modal__title {
     font-size: 24px;
   }
 }
 
-@media (max-width: 576px) {
-  .modal,
-  .modal--stats {
-    width: 70vw;
-    border-radius: 12px;
-    padding: 20px 20px;
+@media (min-width: 768px) {
+  /* масенькие бедолаги */
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__title {
+    font-size: 24px;
   }
-  .modal__title {
-    font-size: 20px;
-  }
-  .modal__close {
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__close {
     font-size: 28px;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* крупные бедолаги */
+
+  .modal--rules,
+  .modal--stats {
+    max-width: 700px;
+  }
+
+  .modal--rules .modal__header,
+  .modal--stats .modal__header {
+    padding: 20px 20px 0;
+  }
+  
+  .modal--rules .modal__title,
+  .modal--stats .modal__title {
+    font-size: 24px;
+  }
+}
+@media (min-width: 1200px) {
+  /* масенькие бедолаги */
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__title {
+    font-size: 30px;
+  }
+  
+  .modal:not(.modal--rules):not(.modal--stats) .modal__close {
+    font-size: 34px;
+    width: 46px;
+    height: 46px;
+  }
+
+  /* крупные бедолаги */
+
+  .modal--rules,
+  .modal--stats {
+    max-width: 700px;
+  }
+
+  .modal--rules .modal__header,
+  .modal--stats .modal__header {
+    padding: 20px 20px 0;
+  }
+  
+  .modal--rules .modal__title,
+  .modal--stats .modal__title {
+    font-size: 24px;
   }
 }
 </style>
