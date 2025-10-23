@@ -70,6 +70,9 @@ export default {
       default: () => ({}),
     },
   },
+
+  emits: ["apply"],
+
   data() {
     return {
       selectedMap: "",

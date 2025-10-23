@@ -1,5 +1,5 @@
 <template>
-  <button class='base-button' @click="handleClick">
+  <button class="base-button" @click="handleClick">
     <div class="base-button__content">
       <slot>{{ label }}</slot>
     </div>

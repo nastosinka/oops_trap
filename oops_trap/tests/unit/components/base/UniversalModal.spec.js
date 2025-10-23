@@ -1,147 +1,280 @@
-import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
+import { describe, it, expect } from "vitest";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import UniversalForm from "@/components/base/UniversalForm.vue";
+import RulesModal from "@/components/base/RulesModal.vue";
+import StatsTable from "@/components/base/StatsTable.vue";
+import SettingsModal from "@/components/base/SettingsModal.vue";
 
-describe("UniversalModal.vue", () => {
-  it("renders modal with correct title", () => {
-    const title = "Test Modal Title";
-    const wrapper = mount(UniversalModal, {
-      props: { title },
+describe("UniversalModal", () => {
+  let wrapper;
+
+  const createWrapper = (props = {}) => {
+    return mount(UniversalModal, {
+      props: {
+        title: "Test Modal",
+        type: "auth",
+        ...props,
+      },
+      global: {
+        components: {
+          UniversalForm,
+          RulesModal,
+          StatsTable,
+          SettingsModal,
+        },
+      },
+    });
+  };
+
+  describe("Initial Rendering", () => {
+    it("renders modal with title and close button", () => {
+      wrapper = createWrapper({ title: "Test Title" });
+
+      expect(wrapper.find(".modal__title").text()).toBe("Test Title");
+      expect(wrapper.find(".modal__close").exists()).toBe(true);
+      expect(wrapper.find(".modal__close").text()).toBe("×");
     });
 
-    const titleElement = wrapper.find(".modal__title");
-    expect(titleElement.exists()).toBe(true);
-    expect(titleElement.text()).toBe(title);
+    it("uses default title when not provided", () => {
+      wrapper = createWrapper({ title: undefined });
+
+      expect(wrapper.find(".modal__title").text()).toBe("Modal");
+    });
   });
 
-  it("renders with default title when no prop provided", () => {
-    const wrapper = mount(UniversalModal);
+  describe("Modal Types", () => {
+    it("renders UniversalForm for auth type", () => {
+      wrapper = createWrapper({ type: "auth" });
 
-    const titleElement = wrapper.find(".modal__title");
-    expect(titleElement.exists()).toBe(true);
-    expect(titleElement.text()).toBe("Sign In");
+      expect(wrapper.findComponent(UniversalForm).exists()).toBe(true);
+    });
+
+    it("renders RulesModal for rules type", () => {
+      wrapper = createWrapper({ type: "rules" });
+
+      expect(wrapper.findComponent(RulesModal).exists()).toBe(true);
+    });
+
+    it("renders StatsTable for stats type", () => {
+      wrapper = createWrapper({ type: "stats" });
+
+      expect(wrapper.findComponent(StatsTable).exists()).toBe(true);
+    });
+
+    it("renders SettingsModal for settings type", () => {
+      wrapper = createWrapper({ type: "settings" });
+
+      expect(wrapper.findComponent(SettingsModal).exists()).toBe(true);
+    });
+
+    it("renders slot content for custom type", () => {
+      wrapper = mount(UniversalModal, {
+        props: {
+          type: "custom",
+          content: "Custom content",
+        },
+        global: {
+          components: {
+            UniversalForm,
+            RulesModal,
+            StatsTable,
+            SettingsModal,
+          },
+        },
+      });
+
+      expect(wrapper.text()).toContain("Custom content");
+    });
+
+    it("renders default slot when no content provided", () => {
+      wrapper = mount(UniversalModal, {
+        props: {
+          type: "custom",
+          title: "",
+        },
+        slots: {
+          default: "",
+        },
+        global: {
+          components: {
+            UniversalForm,
+            RulesModal,
+            StatsTable,
+            SettingsModal,
+          },
+        },
+      });
+
+      expect(wrapper.text()).toBe("×");
+    });
   });
 
-  it("renders AuthForm component", () => {
-    const wrapper = mount(UniversalModal);
+  describe("Props Passing", () => {
+    it("passes correct props to UniversalForm", () => {
+      const formProps = {
+        fields: ["name", "password"],
+        submitText: "Login",
+        initialData: { name: "test" },
+      };
 
-    const authForm = wrapper.findComponent(UniversalForm);
-    expect(authForm.exists()).toBe(true);
+      wrapper = createWrapper({
+        type: "auth",
+        ...formProps,
+      });
+
+      const form = wrapper.findComponent(UniversalForm);
+      expect(form.props("fields")).toEqual(["name", "password"]);
+      expect(form.props("submitText")).toBe("Login");
+      expect(form.props("initialData")).toEqual({ name: "test" });
+    });
+
+    it("passes correct props to RulesModal", () => {
+      wrapper = createWrapper({
+        type: "rules",
+        initialSection: "trapmaker",
+      });
+
+      const rulesModal = wrapper.findComponent(RulesModal);
+      expect(rulesModal.props("initialSection")).toBe("trapmaker");
+    });
+
+    it("passes correct props to StatsTable", () => {
+      const statsData = [{ map: "Test", role: "runner", time: "1:00" }];
+
+      wrapper = createWrapper({
+        type: "stats",
+        statsData,
+      });
+
+      const statsTable = wrapper.findComponent(StatsTable);
+      expect(statsTable.props("data")).toEqual(statsData);
+    });
+
+    it("passes correct props to SettingsModal", () => {
+      const players = [{ id: 1, name: "Player1" }];
+      const initialSettings = { map: "city" };
+
+      wrapper = createWrapper({
+        type: "settings",
+        players,
+        initialSettings,
+      });
+
+      const settingsModal = wrapper.findComponent(SettingsModal);
+      expect(settingsModal.props("players")).toEqual(players);
+      expect(settingsModal.props("initialSettings")).toEqual(initialSettings);
+    });
   });
 
-  it("emits close event when close button is clicked", async () => {
-    const wrapper = mount(UniversalModal);
+  describe("Event Handling", () => {
+    it("emits close event when close button is clicked", async () => {
+      wrapper = createWrapper();
 
-    const closeButton = wrapper.find(".modal__close");
-    await closeButton.trigger("click");
+      await wrapper.find(".modal__close").trigger("click");
 
-    expect(wrapper.emitted("close")).toBeTruthy();
-    expect(wrapper.emitted("close")).toHaveLength(1);
+      expect(wrapper.emitted("close")).toHaveLength(1);
+    });
+
+    it("emits close event when overlay is clicked", async () => {
+      wrapper = createWrapper();
+
+      await wrapper.find(".modal-overlay").trigger("click");
+
+      expect(wrapper.emitted("close")).toHaveLength(1);
+    });
+
+    it("does not emit close when modal content is clicked", async () => {
+      wrapper = createWrapper();
+
+      await wrapper.find(".modal").trigger("click");
+
+      expect(wrapper.emitted("close")).toBeUndefined();
+    });
+
+    it("emits submit event when auth form is submitted", async () => {
+      wrapper = createWrapper({ type: "auth" });
+
+      const formData = { name: "test", password: "123" };
+      await wrapper.findComponent(UniversalForm).vm.$emit("submit", formData);
+
+      expect(wrapper.emitted("submit")).toHaveLength(1);
+      expect(wrapper.emitted("submit")[0][0]).toEqual(formData);
+    });
+
+    it("emits settings-apply event and closes when settings are applied", async () => {
+      wrapper = createWrapper({ type: "settings" });
+
+      const settings = { map: "city", time: "normal" };
+      await wrapper.findComponent(SettingsModal).vm.$emit("apply", settings);
+
+      expect(wrapper.emitted("settings-apply")).toHaveLength(1);
+      expect(wrapper.emitted("settings-apply")[0][0]).toEqual(settings);
+      expect(wrapper.emitted("close")).toHaveLength(1);
+    });
   });
 
-  it("emits close event when modal overlay is clicked", async () => {
-    const wrapper = mount(UniversalModal);
+  describe("CSS Classes", () => {
+    it("applies modal--rules class for rules type", () => {
+      wrapper = createWrapper({ type: "rules" });
 
-    const overlay = wrapper.find(".modal-overlay");
-    await overlay.trigger("click");
+      expect(wrapper.find(".modal").classes()).toContain("modal--rules");
+    });
 
-    expect(wrapper.emitted("close")).toBeTruthy();
-    expect(wrapper.emitted("close")).toHaveLength(1);
+    it("applies modal--stats class for stats type", () => {
+      wrapper = createWrapper({ type: "stats" });
+
+      expect(wrapper.find(".modal").classes()).toContain("modal--stats");
+    });
+
+    it("does not apply special classes for auth type", () => {
+      wrapper = createWrapper({ type: "auth" });
+
+      const modal = wrapper.find(".modal");
+      expect(modal.classes()).not.toContain("modal--rules");
+      expect(modal.classes()).not.toContain("modal--stats");
+    });
+
+    it("does not apply special classes for settings type", () => {
+      wrapper = createWrapper({ type: "settings" });
+
+      const modal = wrapper.find(".modal");
+      expect(modal.classes()).not.toContain("modal--rules");
+      expect(modal.classes()).not.toContain("modal--stats");
+    });
   });
 
-  it("does not emit close event when modal content is clicked", async () => {
-    const wrapper = mount(UniversalModal);
+  describe("Default Props", () => {
+    it("uses default fields for auth type", () => {
+      wrapper = createWrapper({ type: "auth" });
 
-    const modalContent = wrapper.find(".modal");
-    await modalContent.trigger("click");
+      const form = wrapper.findComponent(UniversalForm);
+      expect(form.props("fields")).toEqual([
+        "name",
+        "password",
+        "confirmPassword",
+      ]);
+    });
 
-    expect(wrapper.emitted("close")).toBeFalsy();
-  });
+    it("uses default submitText for auth type", () => {
+      wrapper = createWrapper({ type: "auth" });
 
-  it("emits submit event with form data when AuthForm submits", async () => {
-    const wrapper = mount(UniversalModal);
+      const form = wrapper.findComponent(UniversalForm);
+      expect(form.props("submitText")).toBe("Sign Up");
+    });
 
-    const formData = {
-      name: "John Doe",
-      password: "password123",
-      confirmPassword: "password123",
-    };
+    it("uses default initialSection for rules type", () => {
+      wrapper = createWrapper({ type: "rules" });
 
-    const authForm = wrapper.findComponent(UniversalForm);
-    authForm.vm.$emit("submit", formData);
+      const rulesModal = wrapper.findComponent(RulesModal);
+      expect(rulesModal.props("initialSection")).toBe("common");
+    });
 
-    expect(wrapper.emitted("submit")).toBeTruthy();
-    expect(wrapper.emitted("submit")[0]).toEqual([formData]);
-  });
+    it("uses default empty arrays for stats and players", () => {
+      wrapper = createWrapper({ type: "stats" });
 
-  it("forwards form data from UniversalForm to parent component", async () => {
-    const wrapper = mount(UniversalModal);
-
-    const testData = {
-      name: "Test User",
-      password: "testpass",
-      confirmPassword: "testpass",
-    };
-
-    const authForm = wrapper.findComponent(UniversalForm);
-    await authForm.vm.$emit("submit", testData);
-
-    expect(wrapper.emitted("submit")).toBeTruthy();
-    expect(wrapper.emitted("submit")[0][0]).toEqual(testData);
-  });
-
-  it("has correct CSS classes structure", () => {
-    const wrapper = mount(UniversalModal);
-
-    expect(wrapper.find(".modal-overlay").exists()).toBe(true);
-    expect(wrapper.find(".modal").exists()).toBe(true);
-    expect(wrapper.find(".modal__header").exists()).toBe(true);
-    expect(wrapper.find(".modal__title").exists()).toBe(true);
-    expect(wrapper.find(".modal__close").exists()).toBe(true);
-    expect(wrapper.find(".modal__body").exists()).toBe(true);
-  });
-
-  it("close button has correct content", () => {
-    const wrapper = mount(UniversalModal);
-
-    const closeButton = wrapper.find(".modal__close");
-    expect(closeButton.text()).toBe("×");
-  });
-
-  it("handles multiple close events correctly", async () => {
-    const wrapper = mount(UniversalModal);
-
-    await wrapper.find(".modal__close").trigger("click");
-    expect(wrapper.emitted("close")).toHaveLength(1);
-
-    await wrapper.find(".modal-overlay").trigger("click");
-    expect(wrapper.emitted("close")).toHaveLength(2);
-  });
-
-  it("renders UniversalForm in modal body", () => {
-    const wrapper = mount(UniversalModal);
-
-    const modalBody = wrapper.find(".modal__body");
-    const authForm = modalBody.findComponent(UniversalForm);
-
-    expect(authForm.exists()).toBe(true);
-  });
-
-  it("maintains proper event handling after multiple interactions", async () => {
-    const wrapper = mount(UniversalModal);
-
-    const formData = {
-      name: "User",
-      password: "pass",
-      confirmPassword: "pass",
-    };
-    await wrapper.findComponent(UniversalForm).vm.$emit("submit", formData);
-
-    await wrapper.find(".modal__close").trigger("click");
-
-    expect(wrapper.emitted("submit")).toBeTruthy();
-    expect(wrapper.emitted("close")).toBeTruthy();
-    expect(wrapper.emitted("submit")[0][0]).toEqual(formData);
+      const statsTable = wrapper.findComponent(StatsTable);
+      expect(statsTable.props("data")).toEqual([]);
+    });
   });
 });

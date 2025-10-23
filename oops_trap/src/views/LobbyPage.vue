@@ -247,7 +247,6 @@ export default {
   background: rgba(255, 255, 255, 0.5);
 }
 
-
 @media (max-width: 480px) {
   .content {
     width: 90vw;

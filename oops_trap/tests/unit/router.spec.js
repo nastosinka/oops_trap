@@ -13,8 +13,7 @@ describe("router", () => {
 
     expect(routeNames).toContain("Home");
     expect(routeNames).toContain("Lobby");
-    expect(routeNames).toContain("Game");
-    expect(routeNames).toContain("Results");
+    expect(routeNames).toContain("CreateLobby");
   });
 
   it('matches path "/" to Home', () => {

@@ -99,7 +99,7 @@ export default {
     },
   },
 
-  emits: ["close", "submit"],
+  emits: ["close", "submit", "settings-apply"],
 
   computed: {
     modalClass() {
@@ -183,18 +183,18 @@ export default {
 }
 
 .modal:not(.modal--rules):not(.modal--stats) {
-    width: 80vw;
-    border-radius: 12px;
-    max-width: 350px;
-  }
+  width: 80vw;
+  border-radius: 12px;
+  max-width: 350px;
+}
 
 @media (max-width: 768px) {
-    /* масенькие бедолаги */
-  
+  /* масенькие бедолаги */
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 18px;
   }
-  
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__close {
     font-size: 22px;
     width: 34px;
@@ -210,11 +210,11 @@ export default {
 
 @media (min-width: 768px) {
   /* масенькие бедолаги */
-  
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 24px;
   }
-  
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__close {
     font-size: 28px;
     width: 40px;
@@ -230,11 +230,11 @@ export default {
 }
 @media (min-width: 1200px) {
   /* масенькие бедолаги */
-  
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 30px;
   }
-  
+
   .modal:not(.modal--rules):not(.modal--stats) .modal__close {
     font-size: 34px;
     width: 46px;

@@ -2,15 +2,9 @@
   <div class="home-page">
     <div class="home-container">
       <div class="buttons-container">
-        <BaseButton
-          label="Sign Up"
-          @click="showSignUpModal = true"
-        />
+        <BaseButton label="Sign Up" @click="showSignUpModal = true" />
 
-        <BaseButton
-          label="Sign On"
-          @click="showSignOnModal = true"
-        />
+        <BaseButton label="Sign On" @click="showSignOnModal = true" />
 
         <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
@@ -49,7 +43,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 
 export default {
-  name: "SimpleAuthPage",
+  name: "HomePage",
   components: {
     BaseButton,
     UniversalModal,

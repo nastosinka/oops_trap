@@ -1,69 +1,115 @@
-import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
+import { describe, it, expect } from "vitest";
 import BaseButton from "@/components/base/BaseButton.vue";
 
-describe("BaseButton.vue", () => {
-  it("renders with default props", () => {
-    const wrapper = mount(BaseButton);
-
-    expect(wrapper.classes()).toContain("base-button");
-    expect(wrapper.classes()).toContain("base-button--medium");
-    expect(wrapper.find(".base-button__content").exists()).toBe(true);
-  });
-
-  it("renders with different sizes", () => {
-    const sizes = ["small", "medium", "large"];
-
-    sizes.forEach((size) => {
+describe("BaseButton", () => {
+  describe("Rendering", () => {
+    it("renders button with label from prop", () => {
       const wrapper = mount(BaseButton, {
-        props: { size },
+        props: {
+          label: "Test Button",
+        },
       });
 
-      expect(wrapper.classes()).toContain(`base-button--${size}`);
+      expect(wrapper.text()).toBe("Test Button");
+      expect(wrapper.find("button").exists()).toBe(true);
+    });
+
+    it("renders button with slot content when no label provided", () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          default: "Slot Content",
+        },
+      });
+
+      expect(wrapper.text()).toBe("Slot Content");
+    });
+
+    it("prioritizes slot content over label prop", () => {
+      const wrapper = mount(BaseButton, {
+        props: {
+          label: "Prop Label",
+        },
+        slots: {
+          default: "Slot Label",
+        },
+      });
+
+      expect(wrapper.text()).toBe("Slot Label");
+    });
+
+    it("renders empty button when no label or slot provided", () => {
+      const wrapper = mount(BaseButton);
+
+      expect(wrapper.text()).toBe("");
+      expect(wrapper.find("button").exists()).toBe(true);
     });
   });
 
-  it("renders label from prop when no slot", () => {
-    const label = "Test Button";
-    const wrapper = mount(BaseButton, {
-      props: { label },
+  describe("Click Events", () => {
+    it("emits click event when button is clicked", async () => {
+      const wrapper = mount(BaseButton);
+
+      await wrapper.trigger("click");
+
+      expect(wrapper.emitted("click")).toHaveLength(1);
     });
 
-    expect(wrapper.text()).toBe(label);
-  });
+    it("passes native event object when clicked", async () => {
+      const wrapper = mount(BaseButton);
 
-  it("renders slot content instead of label", () => {
-    const wrapper = mount(BaseButton, {
-      props: { label: "Prop Label" },
-      slots: { default: "Slot Content" },
+      await wrapper.trigger("click");
+
+      const emittedEvent = wrapper.emitted("click")[0][0];
+      expect(emittedEvent).toBeInstanceOf(Event);
     });
 
-    expect(wrapper.text()).toBe("Slot Content");
+    it("emits multiple click events when clicked multiple times", async () => {
+      const wrapper = mount(BaseButton);
+
+      await wrapper.trigger("click");
+      await wrapper.trigger("click");
+      await wrapper.trigger("click");
+
+      expect(wrapper.emitted("click")).toHaveLength(3);
+    });
   });
 
-  it("emits click event when clicked", async () => {
-    const wrapper = mount(BaseButton);
+  describe("CSS Classes and Structure", () => {
+    it("has correct CSS classes", () => {
+      const wrapper = mount(BaseButton);
 
-    await wrapper.trigger("click");
+      const button = wrapper.find("button");
+      expect(button.classes()).toContain("base-button");
+      expect(button.find(".base-button__content").exists()).toBe(true);
+    });
 
-    expect(wrapper.emitted("click")).toHaveLength(1);
+    it("maintains proper DOM structure", () => {
+      const wrapper = mount(BaseButton, {
+        props: {
+          label: "Test",
+        },
+      });
+
+      const button = wrapper.find("button");
+      const contentDiv = button.find(".base-button__content");
+
+      expect(contentDiv.exists()).toBe(true);
+      expect(contentDiv.text()).toBe("Test");
+    });
   });
 
-  it("calls handleClick method and emits event", async () => {
-    const wrapper = mount(BaseButton);
+  describe("Accessibility", () => {
+    it("is a button element for proper semantics", () => {
+      const wrapper = mount(BaseButton);
 
-    await wrapper.trigger("click");
+      expect(wrapper.element.tagName).toBe("BUTTON");
+    });
 
-    expect(wrapper.emitted("click")).toBeTruthy();
-    expect(wrapper.emitted("click")[0]).toBeInstanceOf(Array);
-  });
+    it("has default type attribute", () => {
+      const wrapper = mount(BaseButton);
 
-  it("validates size prop", () => {
-    const validator = BaseButton.props.size.validator;
-
-    expect(validator("small")).toBe(true);
-    expect(validator("medium")).toBe(true);
-    expect(validator("large")).toBe(true);
-    expect(validator("invalid")).toBe(false);
+      expect(wrapper.attributes("type")).toBeUndefined();
+    });
   });
 });
