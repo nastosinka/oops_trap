@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     environment: 'jsdom',
-    include: ['tests/unit/**/*.{test,spec}.{js,ts}'], 
+    include: ['tests/unit/**/*.{test,spec}.{js,ts}'],
     outputFile: {
       html: 'test-results-unit/vitest-report.html',
       json: 'test-results-unit/vitest-report.json'
@@ -26,7 +26,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(process.cwd(), 'src') 
+      '@': resolve(process.cwd(), 'src')
     }
   }
 })
