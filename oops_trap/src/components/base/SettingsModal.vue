@@ -1,5 +1,6 @@
 <template>
   <div class="settings-modal">
+
     <div class="setting-group">
       <div class="setting-header">
         <span class="setting-title">map type</span>
@@ -7,7 +8,11 @@
       <div class="select-wrapper">
         <select v-model="selectedMap" class="setting-select">
           <option value="" disabled>select map type</option>
-          <option v-for="map in mapTypes" :key="map.value" :value="map.value">
+          <option 
+            v-for="map in mapTypes" 
+            :key="map.value" 
+            :value="map.value"
+          >
             {{ map.label }}
           </option>
         </select>
@@ -21,7 +26,11 @@
       <div class="select-wrapper">
         <select v-model="selectedMafia" class="setting-select">
           <option value="" disabled>select mafia</option>
-          <option v-for="player in players" :key="player.id" :value="player.id">
+          <option 
+            v-for="player in players" 
+            :key="player.id" 
+            :value="player.id"
+          >
             {{ player.name }}
           </option>
         </select>
@@ -35,9 +44,9 @@
       <div class="select-wrapper">
         <select v-model="selectedTime" class="setting-select">
           <option value="" disabled>select time</option>
-          <option
-            v-for="timeOption in timeOptions"
-            :key="timeOption.value"
+          <option 
+            v-for="timeOption in timeOptions" 
+            :key="timeOption.value" 
             :value="timeOption.value"
           >
             {{ timeOption.label }}
@@ -47,69 +56,73 @@
     </div>
 
     <div class="settings-actions">
-      <BaseButton label="Apply" size="large" @click="handleApply" />
+      <BaseButton 
+        label="Apply" 
+        size="large" 
+        @click="handleApply" 
+      />
     </div>
   </div>
 </template>
 
 <script>
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseButton from '@/components/base/BaseButton.vue'
 
 export default {
-  name: "SettingsModal",
+  name: 'SettingsModal',
   components: {
-    BaseButton,
+    BaseButton
   },
   props: {
     players: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     initialSettings: {
       type: Object,
-      default: () => ({}),
-    },
+      default: () => ({})
+    }
   },
   data() {
     return {
-      selectedMap: "",
-      selectedMafia: "",
-      selectedTime: "",
+      selectedMap: '',
+      selectedMafia: [],
+      selectedTime: '',
       mapTypes: [
-        { value: "city", label: "city" },
-        { value: "village", label: "village" },
-        { value: "forest", label: "forest" },
-        { value: "desert", label: "desert" },
+        { value: 'city', label: 'city' },
+        { value: 'village', label: 'village' },
+        { value: 'forest', label: 'forest' },
+        { value: 'desert', label: 'desert' },
       ],
       timeOptions: [
-        { value: "slow", label: "slow" },
-        { value: "normal", label: "normal" },
-        { value: "quick", label: "quick" },
-      ],
-    };
+        { value: 'slow', label: 'slow' },
+        { value: 'normal', label: 'normal' },
+        { value: 'quick', label: 'quick' }
+      ]
+    }
   },
   created() {
     if (this.initialSettings.map) {
-      this.selectedMap = this.initialSettings.map;
+      this.selectedMap = this.initialSettings.map
     }
     if (this.initialSettings.mafia) {
-      this.selectedMafia = this.initialSettings.mafia;
+      this.selectedMafia = this.initialSettings.mafia
     }
     if (this.initialSettings.time) {
-      this.selectedTime = this.initialSettings.time;
+      this.selectedTime = this.initialSettings.time
     }
   },
   methods: {
     handleApply() {
-      // const settings = {
-      //   map: this.selectedMap,
-      //   mafia: this.selectedMafia,
-      //   time: this.selectedTime,
-      // };
-      // this.$emit("apply", settings);
-    },
-  },
-};
+      const settings = {
+        map: this.selectedMap,
+        mafia: this.selectedMafia,
+        time: this.selectedTime
+      }
+      this.$emit('apply', settings)
+    }
+  }
+}
 </script>
 
 <style scoped>

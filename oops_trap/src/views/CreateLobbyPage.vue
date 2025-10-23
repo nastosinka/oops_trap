@@ -185,8 +185,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 40px 32px;
-  width: 100%;
-  max-width: 400px;
+  max-width: 320px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -196,8 +195,5 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style>
