@@ -1,0 +1,618 @@
+openapi: '3.0.2'
+info:
+  title: OoopsTrap Project
+  version: '1.1'
+  description: |
+    API для управления игровыми персонажами, пользовательскими данными, играми.
+    Поле `x-available-for` указывает, какие роли имеют доступ к эндпоинту:
+    - Guest: неаутентифицированные пользователи
+    - User: зарегистрированные игроки
+    - Admin: администраторы системы
+    
+    ### Кастомные параметры
+    - `x-max-players-for-map`: максимальное количество участников для данной опции.
+
+servers:
+  - url: 'http://localhost:8080'
+    description: 'Локальный сервер для тестирования'
+
+tags:
+  - name: Auth
+    description: Регистрация и авторизация пользователей
+  - name: Stats
+    description: Работа со статистикой игроков
+  - name: Maps
+    description: Получение информации о картах
+  - name: Lobbies
+    description: Управление лобби и игровыми сессиями
+
+
+components:
+  securitySchemes:
+    cookieAuth: # тут пока что надо подумать
+      type: apiKey
+      in: cookie
+      name: INTERNAL_OOPS_TOKEN
+
+  schemas:
+    Error:
+      type: object
+      required: 
+        - error
+        - code
+        - details
+      properties:
+        error:
+          type: string
+          example: "User not found"
+          description: Тип ошибки
+        code:
+          type: integer
+          example: 404
+          description: Код ошибки
+        details:
+          type: string
+          example: "Пользователь с id=7 не найден"
+          description: Детали ошибки
+
+    User:
+      type: object
+      required: 
+        - id
+        - username
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: ID пользователя
+        username:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Runner123
+          description: Имя пользователя
+
+    AuthRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: Runner123
+          minLength: 1
+          maxLength: 50
+          description: Имя пользователя
+        password:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 60
+          example: MyPassword123
+          description: Пароль пользователя
+
+    RegisterRequest:
+      type: object
+      required:
+        - username 
+        - password
+      properties:
+        username:
+          type: string
+          example: Runner123
+          minLength: 1
+          maxLength: 50
+          description: Имя пользователя
+        password:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 60
+          example: MyPassword123
+          description: Пароль пользователя
+
+    Map:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: First Map
+          minLength: 1
+          maxLength: 100
+          description: Название карты
+        description:
+          type: string
+          example: Карта1 представляет собой пещеру и тд.
+          description: Описание карты
+        hp:
+          type: integer
+          example: 2
+          minimum: 1
+          description: Количество жизней у игроков на карте
+        max_players:
+          type: integer
+          example: 10
+          minimum: 3
+          description: Максимальное количество игроков на карте
+        picture_url:
+          type: string
+          example: '/design/Map1/st1.png'
+          description: Изображение карты
+  
+    StatsEntry:
+      type: object
+      properties:
+        map_id:
+          type: integer
+          example: 1
+          description: ID карты
+        best_time:
+          type: integer
+          example: 36
+          description: Лучшее время в секундах
+        role:
+          type: string
+          enum: [runner, trapmaker]
+          example: runner
+          description: Роль игрока на карте
+          
+    Lobby:
+      type: object
+      properties:
+        lobby_id:
+          type: integer
+          example: 1234
+          description: ID лобби
+        invite_code:
+          type: string
+          example: AB12CD
+          description: Код для подключения к лобби
+        map_id:
+          type: integer
+          example: 2
+          description: ID выбранной карты
+        creator_id:
+          type: integer
+          example: 1
+          description: ID создателя лобби
+        status:
+          type: string
+          enum: 
+            - waiting
+            - started
+            - ended
+          example: waiting
+          description: Текущий статус лобби - ожидание, игра идет, игры завершена
+        settings:
+          type: object
+          properties:
+            max_players:
+              type: integer
+              example: 6
+            time_mode:
+              type: string
+              enum: [easy, normal, hard]
+              example: normal
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+  
+  responses:
+    400BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid input"
+            code: 400
+            details: "Введены неверные данные"
+    401Unauthorized:
+      description: Ошибка авторизации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Auth token missing"
+            code: 401
+            details: "Пользователь не авторизован"
+    403Forbidden:
+      description: Нет прав доступа к этому ресурсу
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Role not authorized"
+            code: 403
+            details: "Нет прав доступа"
+    404NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not found"
+            code: 404
+            details: "Лобби не найдено"
+    409Conflict:
+      description: Конфликт данных
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "User already exists"
+            code: 409
+            details: "Пользователь с таким email уже зарегистрирован"
+
+paths:
+
+# ================= AUTH =================
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        201:
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        409:
+          $ref: '#/components/responses/409Conflict'
+          
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Авторизация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        200:
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    $ref: '#/components/schemas/User'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+          
+  /api/auth/logout:
+    post:
+      security:
+        - cookieAuth: []    
+      tags: [Auth]
+      summary: Выход пользователя из системы
+      description: Завершает текущую пользовательскую сессию
+      responses:
+        204:
+          description: Пользователь успешно вышел
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+
+# ================= STATS =================
+
+  /api/stats/{id_user}:
+    get:
+      tags: 
+      - Stats
+      summary: Получить статистику игрока по всем картам
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id_user
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Статистика игрока
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatsEntry'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  /api/stats/{id_lobby}:
+    post:
+      security:
+        - cookieAuth: []
+      tags: [Stats]
+      summary: Отправить статистику по завершении игры
+      parameters:
+        - in: path
+          name: id_lobby
+          required: true
+          schema:
+            type: string
+            example: AB12CD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                time:
+                  type: integer
+                  format: float
+                  example: 36
+                role:
+                  type: string
+                  enum: 
+                    - runner
+                    - trapmaker
+                  example: runner
+      responses:
+        200:
+          description: Статистика успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsEntry'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        409:
+          $ref: '#/components/responses/409Conflict'
+          
+    get:
+      security:
+        - cookieAuth: []
+      tags: [Stats]
+      summary: Получить статистику игрока по конкретной карте
+      parameters:
+        - in: path
+          name: id_lobby
+          required: true
+          schema:
+            type: string
+            example: AB12CD
+      responses:
+        200:
+          description: Статистика по конкретной карте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsEntry'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  # ================= MAPS =================
+  
+  /api/maps:
+    get:
+      tags: [Maps]
+      summary: Получить список всех карт
+      responses:
+        200:
+          description: Список всех карт
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Map'
+
+  /api/maps/{id_map}:
+    get:
+      tags: [Maps]
+      summary: Получить информацию по конкретной карте
+      parameters:
+        - in: path
+          name: id_map
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Информация по карте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Map'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  # ================= LOBBIES =================
+  
+  /api/lobbies/{lobby_id}/join:
+    post:
+      security:
+        - cookieAuth: []
+      tags: [Lobbies]
+      summary: Присоединиться к существующему лобби
+      parameters:
+        - in: path
+          name: lobby_id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Успешное присоединение к лобби
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lobby'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        409:
+          $ref: '#/components/responses/409Conflict'
+          
+  /api/lobbies/{lobby_id}/exit:
+    post:
+      security:
+        - cookieAuth: []    
+      tags: [Lobbies]
+      summary: Выйти из лобби
+      description: Позволяет пользователю покинуть лобби, не удаляя его.
+      parameters:
+        - in: path
+          name: lobby_id
+          required: true
+          schema:
+            type: string
+          description: ID лобби, из которого выходит пользователь
+      responses:
+        204:
+          description: Пользователь успешно покинул лобби
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        409:
+          $ref: '#/components/responses/409Conflict'
+  
+  /api/lobbies:
+    post:
+      security:
+        - cookieAuth: []    
+      tags: [Lobbies]
+      summary: Создать новое лобби
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - map_id
+                - max_players
+                - time_mode
+              properties:
+                map_id:
+                  type: integer
+                  example: 1
+                max_players:
+                  type: integer
+                  example: 8
+                time_mode:
+                  type: string
+                  enum:
+                    - easy
+                    - normal
+                    - hard
+                  example: normal
+      responses:
+        201:
+          description: Лобби успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lobby'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+          
+  /api/lobbies/{lobby_id}:
+      get:
+        security:
+          - cookieAuth: []      
+        tags: [Lobbies]
+        summary: Получить информацию о лобби
+        parameters:
+          - in: path
+            name: lobby_id
+            required: true
+            schema:
+              type: string
+        responses:
+          200:
+            description: Информация о лобби
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Lobby'
+          404:
+            $ref: '#/components/responses/404NotFound'
+          401:
+            $ref: '#/components/responses/401Unauthorized'
+  
+      delete:
+        security:
+          - cookieAuth: []      
+        tags: [Lobbies]
+        summary: Удалить лобби (создателем)
+        parameters:
+          - in: path
+            name: lobby_id
+            required: true
+            schema:
+              type: string
+        responses:
+          204:
+            description: Лобби удалено
+          401:
+            $ref: '#/components/responses/401Unauthorized'
+          403:
+            $ref: '#/components/responses/403Forbidden'
+          404:
+            $ref: '#/components/responses/404NotFound'
+          
+  /api/lobbies/{lobby_id}/start:
+      post:
+        security:
+          - cookieAuth: []      
+        tags: [Lobbies]
+        summary: Начать игру (только для лидера лобби)
+        parameters:
+          - in: path
+            name: lobby_id
+            required: true
+            schema:
+              type: string
+        responses:
+          200:
+            description: Игра успешно запущена
+          401:
+            $ref: '#/components/responses/401Unauthorized'
+          403:
+            $ref: '#/components/responses/403Forbidden'
+          404:
+            $ref: '#/components/responses/404NotFound'
