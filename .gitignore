@@ -15,6 +15,7 @@ enthumbs_vista.db
 *.msm
 *.msp
 *.lnk
+.idea
 
 #frontend
 node_modules/
