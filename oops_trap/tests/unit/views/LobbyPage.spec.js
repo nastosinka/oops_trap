@@ -12,25 +12,20 @@ vi.mock("ant-design-vue", () => ({
   },
 }));
 
-vi.mock("@/router", () => ({
-  push: vi.fn(),
-}));
-
 describe("LobbyPage", () => {
   let wrapper;
-  const mockRoute = {
-    query: {},
+  const mockRouter = {
+    push: vi.fn(),
   };
 
   const createWrapper = (routeQuery = {}) => {
-    mockRoute.query = routeQuery;
     return mount(LobbyPage, {
       global: {
         mocks: {
-          $route: mockRoute,
-          $router: {
-            push: vi.fn(),
+          $route: {
+            query: routeQuery,
           },
+          $router: mockRouter,
         },
         components: {
           BaseButton,
@@ -94,47 +89,51 @@ describe("LobbyPage", () => {
   });
 
   describe("Modal Windows", () => {
-    it("calls handleStart when Start button is clicked", async () => {
+    it("shows settings modal when Settings button is clicked", async () => {
       wrapper = createWrapper({ mode: "create" });
 
-      const handleStartSpy = vi.spyOn(wrapper.vm, "handleStart");
-
       const buttons = wrapper.findAllComponents(BaseButton);
-      const startButton = buttons.find(
-        (button) =>
-          button.text().includes("Start") || button.props("label") === "Start"
+      const settingsButton = buttons.find(
+        (button) => button.props("label") === "Settings"
       );
 
-      expect(startButton.exists()).toBe(true);
+      await settingsButton.trigger("click");
 
-      await wrapper.vm.handleStart();
-
-      expect(handleStartSpy).toHaveBeenCalled();
-
-      expect(wrapper.vm.isHost).toBe(true);
+      expect(wrapper.vm.showSettings).toBe(true);
     });
 
-    it("calls showExitConfirm when Exit button is clicked", async () => {
+    it("shows exit confirmation when Exit button is clicked", async () => {
       wrapper = createWrapper();
-
-      const showExitConfirmSpy = vi.spyOn(wrapper.vm, "showExitConfirm");
 
       const buttons = wrapper.findAllComponents(BaseButton);
       const exitButton = buttons.find(
-        (button) =>
-          button.text().includes("Exit") || button.props("label") === "Exit"
+        (button) => button.props("label") === "Exit"
       );
 
-      expect(exitButton.exists()).toBe(true);
+      await exitButton.trigger("click");
 
-      await wrapper.vm.showExitConfirm();
-
-      expect(showExitConfirmSpy).toHaveBeenCalled();
+      expect(Modal.confirm).toHaveBeenCalled();
     });
   });
 
   describe("Modal Confirmations", () => {
-    it("calls exitGame when exit confirmation is confirmed", () => {
+    it("shows exit confirmation modal with correct options", () => {
+      wrapper = createWrapper();
+
+      wrapper.vm.showExitConfirm();
+
+      expect(Modal.confirm).toHaveBeenCalledWith({
+        title: "Exit Game",
+        content: "Are you sure you want to exit the game?",
+        okText: "Yes, Exit",
+        cancelText: "Cancel",
+        okType: "danger",
+        centered: true,
+        onOk: expect.any(Function),
+      });
+    });
+
+    it("redirects to createLobby when exit confirmation is confirmed", () => {
       wrapper = createWrapper();
 
       let savedOnOk;
@@ -145,26 +144,37 @@ describe("LobbyPage", () => {
 
       wrapper.vm.showExitConfirm();
 
-      const exitSpy = vi.spyOn(wrapper.vm, "exitGame");
+      expect(Modal.confirm).toHaveBeenCalled();
 
       if (savedOnOk) {
         savedOnOk();
       }
 
-      expect(exitSpy).toHaveBeenCalled();
+      expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+    });
+  });
+
+  describe("Settings Modal", () => {
+    it("closes settings modal when close event is emitted", async () => {
+      wrapper = createWrapper({ mode: "create" });
+      wrapper.vm.showSettings = true;
+      await wrapper.vm.$nextTick();
+
+      const settingsModal = wrapper.findComponent(UniversalModal);
+      expect(settingsModal.exists()).toBe(true);
+
+      settingsModal.vm.$emit("close");
+
+      expect(wrapper.vm.showSettings).toBe(false);
     });
 
-    it("shows success modal and redirects when exitGame is called", () => {
-      wrapper = createWrapper();
+    it("applies settings when settings-apply event is emitted", async () => {
+      wrapper = createWrapper({ mode: "create" });
 
-      wrapper.vm.exitGame();
+      const testSettings = { map: "cave", time: "medium" };
+      wrapper.vm.handleSettingsApply(testSettings);
 
-      expect(Modal.success).toHaveBeenCalledWith({
-        title: "Game Exited",
-        content: "Thank you for playing!",
-        okText: "OK",
-        onOk: expect.any(Function),
-      });
+      expect(wrapper.vm.currentSettings).toEqual(testSettings);
     });
   });
 
