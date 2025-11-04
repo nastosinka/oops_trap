@@ -58,3 +58,14 @@
 После окончания времени (либо все игроки умерли или добежали) открывается *статистика катки* (продумаем позже), снизу две кнопки: 
 - *"вернуться"* - переход в лобби
 - *"выйти"* - переход на главный экран
+
+# **Запуск проекта**
+Запуск всего проекта:
+- docker-compose up --build
+Завершение работы контейнера/ов:
+- docker-compose down
+Запуск отдельного сервиса:
+- docker-compose up --build backend
+- docker-compose up --build frontend
+- docker-compose up --build liquibase
+- docker-compose up --build postgres
