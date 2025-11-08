@@ -116,14 +116,29 @@ describe("RulesModal", () => {
 
       const commonContent = wrapper.find(".accordion-content");
       expect(commonContent.text()).toContain("Basic Game Rules");
-      expect(commonContent.text()).toContain("trapmaker нажимает на кнопочки");
+      expect(commonContent.text()).toContain("2d стилистике"); // исправлено на строчную d
+      expect(commonContent.text()).toContain("личный кабинет");
 
       const trapmakerHeader = wrapper.findAll(".accordion-header")[1];
       await trapmakerHeader.trigger("click");
 
       const trapmakerContent = wrapper.find(".accordion-content");
       expect(trapmakerContent.text()).toContain("Trapmaker Responsibilities");
-      expect(trapmakerContent.text()).toContain("Поимать всех!");
+      expect(trapmakerContent.text()).toContain("активацию ловушек");
+
+      const runnerHeader = wrapper.findAll(".accordion-header")[2];
+      await runnerHeader.trigger("click");
+
+      const runnerContent = wrapper.find(".accordion-content");
+      expect(runnerContent.text()).toContain("Runner Objectives");
+      expect(runnerContent.text()).toContain("двойной прыжок");
+
+      const mapsHeader = wrapper.findAll(".accordion-header")[3];
+      await mapsHeader.trigger("click");
+
+      const mapsContent = wrapper.find(".accordion-content");
+      expect(mapsContent.text()).toContain("Map Types");
+      expect(mapsContent.text()).toContain("Я вижу свет");
     });
   });
 

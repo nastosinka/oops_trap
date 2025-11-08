@@ -87,6 +87,9 @@ export default {
     handleStart() {
       // начать игру
     },
+    handleSettingsApply(settings) {
+      this.currentSettings = settings;
+    },
     showExitConfirm() {
       Modal.confirm({
         title: "Exit Game",
@@ -95,21 +98,6 @@ export default {
         cancelText: "Cancel",
         okType: "danger",
         centered: true,
-        onOk: () => {
-          this.exitGame();
-        },
-      });
-    },
-
-    handleSettingsApply(settings) {
-      this.currentSettings = settings;
-    },
-
-    exitGame() {
-      Modal.success({
-        title: "Game Exited",
-        content: "Thank you for playing!",
-        okText: "OK",
         onOk: () => {
           this.$router.push("/createLobby");
         },
