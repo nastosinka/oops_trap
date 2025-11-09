@@ -1,4 +1,3 @@
-# Сборка фронтенда
 FROM node:20-alpine AS build
 WORKDIR /app
 
@@ -7,5 +6,3 @@ RUN npm ci
 
 COPY . .
 RUN npm run build
-
-# На этом всё, nginx будет отдавать статику, поэтому production stage тут не нужен
