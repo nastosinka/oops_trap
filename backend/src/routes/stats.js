@@ -19,8 +19,10 @@ router.get('/:id_user', async (req, res) => {
 
     const stats = await prisma.stats.findMany({
       where: { id_user: parseInt(id_user) },
-      include: {
-        maps: true,
+      select: {
+        id_map: true,
+        time: true,
+        role: true
       },
     });
 
@@ -31,7 +33,13 @@ router.get('/:id_user', async (req, res) => {
       });
     }
 
-    res.status(200).json(stats);
+    const formattedUserStats = stats.map(stat => ({
+      map_id: stat.id_map,
+      best_time: stat.time,
+      role: stat.role ? 'runner' : 'trapper',
+    }));
+
+    res.status(200).json(formattedUserStats);
   } catch (err) {
     console.error('Ошибка при получении статистики:', err);
     res.status(500).json({
@@ -45,12 +53,12 @@ router.get('/:id_user', async (req, res) => {
 
 /**
  * ===========================
- * GET /api/stats/lobby/:id_lobby
+ * GET /api/stats/map/:id_map
  * ===========================
- * Получить статистику игрока по конкретной карте (лобби)
+ * Получить статистику игрока по конкретной карте
  */
-router.get('/lobby/:id_lobby', async (req, res) => {
-  const { id_lobby } = req.params;
+router.get('/map/:id_map', async (req, res) => {
+  const { id_map } = req.params;
 
   try {
     // TODO: добавить cookieAuth позже
@@ -58,10 +66,11 @@ router.get('/lobby/:id_lobby', async (req, res) => {
     // if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
     const stats = await prisma.stats.findMany({
-      where: { id_map: parseInt(id_lobby) },
-      include: {
-        user: true,
-        maps: true,
+      where: { id_map: parseInt(id_map) },
+      select: {
+        id_map: true,
+        time: true,
+        role: true,
       },
     });
 
@@ -72,7 +81,13 @@ router.get('/lobby/:id_lobby', async (req, res) => {
       });
     }
 
-    res.status(200).json(stats);
+    const formattedMapStats = stats.map(stat => ({
+      map_id: stat.id_map,
+      best_time: stat.time,
+      role: stat.role ? 'runner' : 'trapper',
+    }));
+
+    res.status(200).json(formattedMapStats);
   } catch (err) {
     console.error('Ошибка при получении статистики лобби:', err);
     res.status(500).json({
