@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+
+  # frontend:
+  #   build:
+  #     context: ./oops_trap
+  #     dockerfile: Dockerfile.prod
+  #   container_name: frontend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    expose:
+      - "8080"
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+
+  liquibase:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    working_dir: /liquibase
+    command: [
+      "--changeLogFile=changelog/master.xml",
+      "--url=${LIQUIBASE_COMMAND_URL}",
+      "--username=${LIQUIBASE_COMMAND_USERNAME}",
+      "--password=${LIQUIBASE_COMMAND_PASSWORD}",
+      "update"
+    ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    env_file: .env
+
+volumes:
+  postgres_data:
