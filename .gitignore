@@ -20,7 +20,6 @@ enthumbs_vista.db
 #frontend
 node_modules/
 dist/
-package-lock.json
 oops_trap/test-results-unit/
 oops_trap/test-results-e2e/
 oops_trap/test-results/
