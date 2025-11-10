@@ -1,3 +1,7 @@
+//ownerId подумать
+
+
+
 const express = require('express');
 const prisma = require('../db/prismaClient');
 
@@ -37,8 +41,7 @@ router.post('/newlobby', async (req, res) => {
       players: [user],
       createdAt: new Date(),
       trapper: null,
-      time: 'normal', // easy, normall, hard
-      startedAt: null
+      time: 'normal' // easy, normall, hard
     };
 
     lobbies.set(lobby.id, lobby);
@@ -50,7 +53,7 @@ router.post('/newlobby', async (req, res) => {
   }
 });
 
-router.get('/alllobbies', (req, res) => {
+router.get('/all-lobbies', (req, res) => {
   const lobbyList = Array.from(lobbies.values()).map(lobby => ({
     id: lobby.id,
     owner: lobby.players[0].name,
@@ -61,7 +64,7 @@ router.get('/alllobbies', (req, res) => {
   res.json({ lobbies: lobbyList, total: lobbies.size });
 });
 
-
+// подумать над хранилищем
 router.post('/lobbies/:id/delete', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
