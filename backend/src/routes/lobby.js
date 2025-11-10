@@ -41,7 +41,7 @@ router.post('/newlobby', async (req, res) => {
       players: [user],
       createdAt: new Date(),
       trapper: null,
-      time: 'normal' // easy, normall, hard
+      time: 'normal' // easy, normal, hard
     };
 
     lobbies.set(lobby.id, lobby);
