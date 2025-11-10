@@ -8,7 +8,7 @@ services:
       - "5173:5173"
     volumes:
       - ./oops_trap:/app
-      - /app/node_modules
+      - node_modules_frontend:/app/node_modules
     environment:
       - NODE_ENV=development
     depends_on:
@@ -28,8 +28,9 @@ services:
       - postgres
     volumes:
       - ./backend:/app
-      - /app/node_modules
+      - node_modules_backend:/app/node_modules
     command: sh -c "npx prisma generate && npm run dev"
+ 
 
   liquibase:
     build:
@@ -67,3 +68,5 @@ services:
 
 volumes:
   postgres_data:
+  node_modules_frontend:
+  node_modules_backend:
