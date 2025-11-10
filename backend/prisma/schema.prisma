@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model databasechangelog {
+  id            String   @db.VarChar(255)
+  author        String   @db.VarChar(255)
+  filename      String   @db.VarChar(255)
+  dateexecuted  DateTime @db.Timestamp(6)
+  orderexecuted Int
+  exectype      String   @db.VarChar(10)
+  md5sum        String?  @db.VarChar(35)
+  description   String?  @db.VarChar(255)
+  comments      String?  @db.VarChar(255)
+  tag           String?  @db.VarChar(255)
+  liquibase     String?  @db.VarChar(20)
+  contexts      String?  @db.VarChar(255)
+  labels        String?  @db.VarChar(255)
+  deployment_id String?  @db.VarChar(10)
+
+  @@ignore
+}
+
+model databasechangeloglock {
+  id          Int       @id
+  locked      Boolean
+  lockgranted DateTime? @db.Timestamp(6)
+  lockedby    String?   @db.VarChar(255)
+}
+
+model maps {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique @db.VarChar(100)
+  description  String?
+  hp           Int
+  time_1       Int
+  time_2       Int
+  time_3       Int
+  max_players  Int
+  picture_url  String
+  stats        stats[]
+  trap_for_map trap_for_map[]
+}
+
+model pictures {
+  id      Int    @id @default(autoincrement())
+  trap_id Int
+  picture String @unique
+  number  Int
+  traps   traps  @relation(fields: [trap_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pictures_trap")
+}
+
+model stats {
+  id      Int      @id @default(autoincrement())
+  id_user Int
+  id_map  Int
+  time    Int
+  role    Boolean?
+  maps    maps     @relation(fields: [id_map], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_stats_maps")
+  user    user     @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_stats_user")
+}
+
+model trap_for_map {
+  id       Int   @id @default(autoincrement())
+  id_map   Int
+  id_traps Int
+  maps     maps  @relation(fields: [id_map], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trap_for_map_map")
+  traps    traps @relation(fields: [id_traps], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trap_for_map_traps")
+}
+
+model traps {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique
+  description  String?
+  cooldown     Int
+  pictures     pictures[]
+  trap_for_map trap_for_map[]
+}
+
+model user {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique @db.VarChar(50)
+  password String  @db.VarChar(60)
+  stats    stats[]
+}
