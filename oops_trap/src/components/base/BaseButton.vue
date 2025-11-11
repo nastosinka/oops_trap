@@ -37,7 +37,7 @@ export default {
   outline: none;
   line-height: 1;
 
-  background-color: rgba(255, 114, 112);
+  background-color: rgba(69, 114, 112);
   color: white;
   box-shadow: 0 4px 4px rgba(255, 255, 255, 0.4);
 
