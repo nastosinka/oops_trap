@@ -41,7 +41,7 @@ router.post('/newlobby', async (req, res) => {
       players: [user],
       createdAt: new Date(),
       trapper: null,
-      time: 'normal' // easy, normall, hard
+      time: 'normal' // easy, normal, hard
     };
 
     lobbies.set(lobby.id, lobby);
@@ -319,6 +319,139 @@ router.post('/lobbies/:id/status', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating lobby status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/lobbies/:id/join', async (req, res) => {
+  try {
+    const lobbyId = parseInt(req.params.id);
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    if (isNaN(lobbyId) || lobbyId <= 0) {
+      return res.status(400).json({ error: 'Invalid lobby ID' });
+    }
+
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+
+    if (lobby.status !== 'waiting') {
+      return res.status(400).json({ error: 'Cannot join lobby - game already started' });
+    }
+
+    for (let [existingLobbyId, existingLobby] of lobbies.entries()) {
+      if (existingLobbyId !== lobbyId && existingLobby.players.some(player => player.id === userId)) {
+        return res.status(400).json({ error: 'User already in another lobby' });
+      }
+    }
+
+    if (lobby.players.some(player => player.id === userId)) {
+      return res.status(400).json({ error: 'User already in this lobby' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    lobby.players.push(user);
+
+    console.log(`Пользователь ${user.name} (ID: ${userId}) присоединился к лобби ${lobbyId}`);
+    console.log(`Теперь в лобби ${lobby.players.length} игроков`);
+
+    res.status(200).json({ 
+      message: 'User joined lobby successfully',
+      lobby: {
+        id: lobby.id,
+        status: lobby.status,
+        players: lobby.players,
+        playerCount: lobby.players.length
+      }
+    });
+  } catch (error) {
+    console.error('Error joining lobby:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/lobbies/:id/leave', async (req, res) => {
+  try {
+    const lobbyId = parseInt(req.params.id);
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    if (isNaN(lobbyId) || lobbyId <= 0) {
+      return res.status(400).json({ error: 'Invalid lobby ID' });
+    }
+
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+
+    const playerIndex = lobby.players.findIndex(player => player.id === userId);
+    if (playerIndex === -1) {
+      return res.status(404).json({ error: 'User not found in this lobby' });
+    }
+
+    const removedPlayer = lobby.players[playerIndex];
+
+    lobby.players.splice(playerIndex, 1);
+
+    if (lobby.trapper === userId) {
+      lobby.trapper = null;
+    }
+
+    let lobbyDeleted = false;
+
+    if (lobby.players.length === 0) {
+      lobbies.delete(lobbyId);
+      lobbyDeleted = true;
+      console.log(`Лобби ${lobbyId} удалено, так как все игроки вышли`);
+    }
+    else if (lobby.ownerId === userId) {
+      lobby.ownerId = lobby.players[0].id;
+      console.log(`Новый владелец лобби ${lobbyId}: ${lobby.players[0].name} (ID: ${lobby.players[0].id})`);
+    }
+
+    console.log(`Пользователь ${removedPlayer.name} (ID: ${userId}) покинул лобби ${lobbyId}`);
+    console.log(`В лобби осталось ${lobby.players.length} игроков`);
+
+    if (lobbyDeleted) {
+      res.status(200).json({ 
+        message: 'User left lobby and lobby was deleted',
+        lobbyDeleted: true,
+        deletedLobbyId: lobbyId
+      });
+    } else {
+      res.status(200).json({ 
+        message: 'User left lobby successfully',
+        lobbyDeleted: false,
+        lobby: {
+          id: lobby.id,
+          ownerId: lobby.ownerId,
+          status: lobby.status,
+          players: lobby.players,
+          playerCount: lobby.players.length,
+          trapper: lobby.trapper
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error leaving lobby:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
