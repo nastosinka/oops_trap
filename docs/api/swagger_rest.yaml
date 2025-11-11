@@ -516,7 +516,7 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
-  /api/lobby/{id}/delete:
+  /api/lobby/lobbies/{id}/delete:
     post:
       tags:
         - Lobby
@@ -563,7 +563,7 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
-  /api/lobby/{id}/settings:
+  /api/lobby/lobbies/{id}/settings:
     post:
       tags:
         - Lobby
@@ -690,7 +690,7 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
-  /api/lobby/{id}/status:
+  /api/lobby/lobbies/{id}/status:
     post:
       tags:
         - Lobby
@@ -739,7 +739,7 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
-  /api/lobby/{id}/join:
+  /api/lobby/lobbies/{id}/join:
     post:
       tags:
         - Lobby
@@ -795,7 +795,7 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
-  /api/lobby/{id}/leave:
+  /api/lobby/lobbies/{id}/leave:
     post:
       tags:
         - Lobby
