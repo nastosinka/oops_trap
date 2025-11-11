@@ -97,6 +97,7 @@ components:
       required:
         - username 
         - password
+        - password_repeat
       properties:
         username:
           type: string
@@ -242,7 +243,7 @@ components:
           example:
             error: "Not found"
             code: 404
-            details: "Лобби не найдено"
+            details: "Информация не найдена"
     409Conflict:
       description: Конфликт данных
       content:
@@ -338,31 +339,73 @@ paths:
             type: integer
       responses:
         200:
-          description: Статистика игрока
+          description: Статистика игрока по всем картам
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/StatsEntry'
+              example:
+                - map_id: 1
+                  best_time: 36
+                  role: runner
+                - map_id: 2
+                  best_time: 42
+                  role: runner
         401:
           $ref: '#/components/responses/401Unauthorized'
         404:
           $ref: '#/components/responses/404NotFound'
-
-  /api/stats/{id_lobby}:
-    post:
+  
+  /api/stats/map/{id_map}:
+    get:
+      tags:
+      - Stats
       security:
         - cookieAuth: []
-      tags: [Stats]
+      summary: Получить статистику игрока по конкретной карте
+      parameters:
+        - in: path
+          name: id_map
+          required: true
+          schema:
+            type: integer
+          description: ID карты
+      responses:
+        200:
+          description: Статистика игрока по указанной карте
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatsEntry'
+              example:
+                - map_id: 1
+                  best_time: 36
+                  role: runner
+                - map_id: 1
+                  best_time: 42
+                  role: trapmaker
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+  
+  /api/stats/{id_lobby}:
+    post:
+      tags: 
+      - Stats
+      security:
+        - cookieAuth: []
       summary: Отправить статистику по завершении игры
       parameters:
         - in: path
           name: id_lobby
           required: true
           schema:
-            type: string
-            example: AB12CD
+            type: integer
       requestBody:
         required: true
         content:
@@ -396,30 +439,6 @@ paths:
         409:
           $ref: '#/components/responses/409Conflict'
           
-    get:
-      security:
-        - cookieAuth: []
-      tags: [Stats]
-      summary: Получить статистику игрока по конкретной карте
-      parameters:
-        - in: path
-          name: id_lobby
-          required: true
-          schema:
-            type: string
-            example: AB12CD
-      responses:
-        200:
-          description: Статистика по конкретной карте
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatsEntry'
-        401:
-          $ref: '#/components/responses/401Unauthorized'
-        404:
-          $ref: '#/components/responses/404NotFound'
-
   # ================= MAPS =================
   
   /api/maps:
