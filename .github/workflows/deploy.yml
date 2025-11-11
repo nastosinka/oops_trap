@@ -23,7 +23,7 @@ jobs:
             set -e
             cd /srv/oops_trap
             echo "Pulling latest changes..."
-            git pull origin main
+            git pull origin devops/add-deploy-actions
             echo "Rebuilding and restarting containers..."
             docker compose down --rmi all --volumes --remove-orphans
             docker compose -f docker-compose.prod.yml up -d --build
