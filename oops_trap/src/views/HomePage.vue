@@ -2,7 +2,7 @@
   <div class="home-page">
     <div class="home-container">
       <div class="buttons-container">
-        <BaseButton label="S1231231231ign Up" @click="showSignUpModal = true" />
+        <BaseButton label="Sign Up" @click="showSignUpModal = true" />
 
         <BaseButton label="Sign On" @click="showSignOnModal = true" />
 
