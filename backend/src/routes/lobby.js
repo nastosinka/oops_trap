@@ -86,6 +86,12 @@ router.post('/lobbies/:id/delete', async (req, res) => {
       return res.status(403).json({ error: 'Only lobby owner can delete the lobby' });
     }
 
+    const relatedGame = Array.from(games.values()).find(g => g.lobbyId === lobbyId);
+    if (relatedGame) {
+      games.delete(relatedGame.id);
+      console.log(`Игра ${relatedGame.id} (из лобби ${lobbyId}) удалена`);
+    }
+
     lobbies.delete(lobbyId);
     
     console.log(`Лобби ${lobbyId} удалено пользователем ${ownerId}`);
