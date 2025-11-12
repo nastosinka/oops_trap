@@ -1,13 +1,18 @@
 const express = require('express');
 const authRouter = require('./routes/auth');
 const statsRouter = require('./routes/stats');
+
+const mapInfoRouter = require('./routes/map-info');
 const lobbyRouter = require('./routes/lobby');
 const userRouter = require('./routes/user');
+
 const app = express();
 
 app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/stats', statsRouter);
+
+app.use('/api/maps', mapInfoRouter);
 app.use('/api/lobby', lobbyRouter);
 app.use('/api/user', userRouter);
 
