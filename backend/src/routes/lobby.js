@@ -4,6 +4,7 @@
 
 const express = require('express');
 const prisma = require('../db/prismaClient');
+const { createGameFromLobby } = require('../websockets/game');
 
 const router = express.Router();
 
@@ -301,6 +302,8 @@ router.post('/lobbies/:id/status', async (req, res) => {
       games.set(game.id, game);
 
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
+
+      createGameFromLobby(game);
     }
 
     if (newStatus === 'finished' && lobby.status !== 'in-progress') {

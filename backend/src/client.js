@@ -1,29 +1,29 @@
 const WebSocket = require('ws');
-const { PING_INTERVAL } = require('./config/serverConfig')
 
-const ws = new WebSocket('ws://localhost:8080/ws/game');
+const gameId = 1; // ID созданной игры
+const userId = 2; // ID пользователя
+
+const ws = new WebSocket(`ws://localhost/ws/game`);
 
 ws.on('open', () => {
-  console.log('Connected to WebSocket!');
+  console.log('Connected to Game WebSocket');
 
-  sendPing();
-
-  setInterval(sendPing, PING_INTERVAL);
+  ws.send(JSON.stringify({ type: 'join', gameId, userId }));
 });
 
 ws.on('message', (msg) => {
-  const data = JSON.parse(msg);
-  if (data.type === 'pong') {
-    console.log('Received pong from server:', new Date(data.data.timestamp).toLocaleTimeString());
-  } else {
-    console.log('Received:', data);
+  try {
+    const data = JSON.parse(msg);
+    console.log('WS Message:', data);
+  } catch (err) {
+    console.error('WS Message parse error:', err);
   }
 });
 
-function sendPing() {
-  if (ws.readyState === ws.OPEN) {
-    const timestamp = Date.now();
-    ws.send(JSON.stringify({ type: 'ping', data: { timestamp } }));
-    console.log('Sent ping:', new Date(timestamp).toLocaleTimeString());
-  }
-}
+ws.on('close', () => {
+  console.log('WS Disconnected');
+});
+
+ws.on('error', (err) => {
+  console.error('WS Error:', err);
+});
