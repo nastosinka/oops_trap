@@ -1,4 +1,6 @@
 const WebSocket = require('ws');
+const axios = require('axios');
+const { getConnection } = require('./wsConnections');
 
 // Временное хранилище активных соединений для каждой игры
 const activeGames = new Map();
@@ -16,8 +18,9 @@ function setupGameWebSocket(server) {
 
         if (data.type === 'join') {
           const { gameId, userId } = data;
-
+          console.log(`User ${userId} wants to join game ${gameId}`);
           if (!gameId || !userId) {
+            console.log(`Game ${gameId} not found for user ${userId}`);
             ws.send(JSON.stringify({ type: 'error', message: 'Missing gameId or userId' }));
             return;
           }
@@ -32,6 +35,7 @@ function setupGameWebSocket(server) {
           activeGames.get(gameId).add(ws);
           ws.gameId = gameId;
           ws.userId = userId;
+          
 
           console.log(`User ${userId} joined WebSocket game ${gameId}`);
           ws.send(JSON.stringify({ type: 'joined', message: `Connected to game ${gameId}` }));
@@ -82,16 +86,32 @@ function setupGameWebSocket(server) {
   });
 }
 
-// Создание игры (вызывается из /lobbies/:id/status при смене в in-progress)
+
 function createGameFromLobby(gameData) {
-  const { id: gameId } = gameData;
+  const { id: gameId, players } = gameData;
+
+  if (games.has(gameId)) {
+    games.delete(gameId);
+    activeGames.delete(gameId);
+  }
   games.set(gameId, gameData);
 
   // Инициализация пустого набора активных подключений для этой игры
   activeGames.set(gameId, new Set());
 
   console.log(`Game ${gameId} initialized in WebSocket`);
+  // ======== пункт 3: уведомляем игроков ========
+  players.forEach(player => {
+    const ws = getConnection(player.id);
+    if (ws && ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'GAME_READY',
+        payload: { gameId }
+      }));
+    }
+  });
 }
+
 
 function broadcastToGame(gameId, message) {
   if (!activeGames.has(gameId)) return;
@@ -106,4 +126,75 @@ function broadcastToGame(gameId, message) {
   }
 }
 
-module.exports = { setupGameWebSocket, createGameFromLobby, broadcastToGame };
+function startGame(gameId) {
+  const game = games.get(gameId);
+  if (!game) return;
+
+  game.status = 'in_progress';
+  game.timeLeft = game.settings?.timeLimit || 60;
+  game.players = game.players || []; // массив { id, score, position }
+
+  console.log(`Game ${gameId} started`);
+
+  broadcastToGame(gameId, {
+    type: 'GAME_START',
+    payload: { map: game.map, timeLeft: game.timeLeft },
+  });
+
+  // Запуск таймера
+  game.interval = setInterval(() => {
+    game.timeLeft -= 1;
+
+    broadcastToGame(gameId, {
+      type: 'TICK',
+      payload: { timeLeft: game.timeLeft },
+    });
+
+    if (game.timeLeft <= 0) {
+      clearInterval(game.interval);
+      endGame(gameId);
+    }
+  }, 1000);
+}
+
+async function endGame(gameId) {
+  const game = games.get(gameId);
+  if (!game) return;
+
+  console.log(`Game ${gameId} ended`);
+
+  // Генерируем статистику
+  const stats = (game.players || []).map((p) => ({
+    userId: p.id,
+    score: p.score || 0,
+  }));
+
+  broadcastToGame(gameId, { type: 'GAME_END', payload: { stats } });
+
+    // Вызов эндпоинта, чтобы пометить лобби как завершённое
+  try {
+    await axios.post(`http://localhost:8080/api/lobby/lobbies/${gameId}/status`, { 
+      ownerId: game.ownerId || 1,
+      newStatus: 'finished',
+    });
+    console.log(`Lobby ${gameId} marked as finished`);
+  } catch (err) {
+    console.error(`Error marking lobby ${gameId} as finished:`, err.message);
+  }
+
+  // Очистка
+  setTimeout(() => {
+    clearInterval(game.interval);
+    activeGames.delete(gameId);
+    games.delete(gameId);
+    console.log(`Game ${gameId} removed`);
+  }, 5000);
+}
+
+module.exports = {
+  setupGameWebSocket,
+  createGameFromLobby,
+  broadcastToGame,
+  startGame,
+  endGame,
+};

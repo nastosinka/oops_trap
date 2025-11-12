@@ -5,6 +5,7 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
 const { createGameFromLobby } = require('../websockets/game');
+const { startGame } = require('../websockets/game');
 
 const router = express.Router();
 
@@ -290,7 +291,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
       }
       //Создание игры из лобби
       const game = {
-        id: nextGameId++,
+        id: lobby.id, //было nextGameId. он дальше неправильный пост из-за этого отправляет, поэтому лучше делать айдишники одинаковыми - конфликтов не будет, так как айдишники лобби разные между собой
         lobbyId: lobby.id,
         map: lobby.map,
         trapper: lobby.trapper,
@@ -304,6 +305,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
 
       createGameFromLobby(game);
+      startGame(game.id);
     }
 
     if (newStatus === 'finished' && lobby.status !== 'in-progress') {
