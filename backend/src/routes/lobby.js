@@ -10,6 +10,9 @@ const router = express.Router();
 const lobbies = new Map();
 let nextLobbyId = 1;
 
+const games = new Map();
+let nextGameId = 1;
+
 router.post('/newlobby', async (req, res) => {
   try {
     const { ownerId } = req.body;
@@ -278,6 +281,20 @@ router.post('/lobbies/:id/status', async (req, res) => {
           details: errors 
         });
       }
+      //Создание игры из лобби
+      const game = {
+        id: nextGameId++,
+        lobbyId: lobby.id,
+        map: lobby.map,
+        trapper: lobby.trapper,
+        time: lobby.time,
+        players: lobby.players,
+        status: 'in-progress'
+      };
+
+      games.set(game.id, game);
+
+      console.log(`Game ${game.id} started from lobby ${lobby.id}`);
     }
 
     if (newStatus === 'finished' && lobby.status !== 'in-progress') {
@@ -452,6 +469,61 @@ router.post('/lobbies/:id/leave', async (req, res) => {
     }
   } catch (error) {
     console.error('Error leaving lobby:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =====================================
+// GET /api/lobby/lobbies/:id/users - получить список всех игроков из лобби
+router.get('/lobbies/:id/users', async (req, res) => {
+  try {
+    const lobbyId = parseInt(req.params.id);
+
+    if (isNaN(lobbyId) || lobbyId <= 0) {
+      return res.status(400).json({ error: 'Invalid lobby ID' });
+    }
+
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+
+    res.status(200).json({
+      lobbyId: lobby.id,
+      playerCount: lobby.players.length,
+      players: lobby.players
+    });
+  } catch (error) {
+    console.error('Error fetching lobby users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =====================================
+// GET /api/lobby/games - получить список всех активных игр (созданных из лобби)
+router.get('/games', (req, res) => {
+  try {
+    if (games.size === 0) {
+      return res.status(200).json({ message: 'No active games', games: [] });
+    }
+
+    const activeGames = Array.from(games.values()).map(game => ({
+      id: game.id,
+      lobbyId: game.lobbyId,
+      map: game.map,
+      trapper: game.trapper,
+      time: game.time,
+      playerCount: game.players.length,
+      players: game.players,
+      status: game.status
+    }));
+
+    res.status(200).json({
+      total: activeGames.length,
+      games: activeGames
+    });
+  } catch (error) {
+    console.error('Error fetching games:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
