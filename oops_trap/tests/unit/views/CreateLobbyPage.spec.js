@@ -32,17 +32,13 @@ global.fetch = vi.fn((url) => {
     return Promise.resolve({
       ok: true,
       text: () =>
-        Promise.resolve(
-          JSON.stringify({ id: 123 })
-        ),
+        Promise.resolve(JSON.stringify({ id: 123 })),
     });
   } else if (url.includes("/api/lobby/lobbies/")) {
     return Promise.resolve({
       ok: true,
       text: () =>
-        Promise.resolve(
-          JSON.stringify({ success: true })
-        ),
+        Promise.resolve(JSON.stringify({ success: true })),
     });
   }
   return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
@@ -70,8 +66,6 @@ describe("CreateLobbyPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
-
 
   describe("Component Rendering", () => {
     it("renders all main buttons", () => {
