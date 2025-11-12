@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - devops/add-sentry
+      - main
 
 jobs:
   deploy:
@@ -23,7 +23,7 @@ jobs:
             set -e
             cd /srv/oops_trap
             echo "Pulling latest changes..."
-            git pull origin devops/add-sentry
+            git pull origin main
             echo "Rebuilding and restarting containers..."
             docker compose down --rmi all --volumes --remove-orphans
             docker compose -f docker-compose.prod.yml up -d --build
