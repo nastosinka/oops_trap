@@ -17,15 +17,13 @@ Sentry.init({
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
-  integrations: [
-    Sentry.browserTracingIntegration({ router })
-  ],
+  integrations: [Sentry.browserTracingIntegration({ router })],
   // Tracing
   tracesSampleRate: 1.0, // Capture 100% of the transactions
   // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
   tracePropagationTargets: ["localhost", /^\//],
   // Logs
-  enableLogs: true
+  enableLogs: true,
 });
 
 app.use(createPinia());
