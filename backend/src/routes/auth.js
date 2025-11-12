@@ -17,14 +17,14 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { name: username }, // заменили username → name
+      where: { name: username },
     });
 
     if (!user) {
       return res.status(401).json({ error: `Неверное имя пользователя или пароль [username] ${username} and ${password}`, code: 401 });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password); // заменили password_hash → password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: `Неверное имя пользователя или пароль [password] ${password} and ${user.password}`, code: 401 });
     }
@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       {
         id: user.id,
-        username: user.name, // заменили user.username → user.name
+        username: user.name,
         role: user.role || 'user',
       },
       process.env.JWT_SECRET,
