@@ -31,14 +31,12 @@ global.fetch = vi.fn((url) => {
   } else if (url.includes("/api/lobby/newlobby")) {
     return Promise.resolve({
       ok: true,
-      text: () =>
-        Promise.resolve(JSON.stringify({ id: 123 })),
+      text: () => Promise.resolve(JSON.stringify({ id: 123 })),
     });
   } else if (url.includes("/api/lobby/lobbies/")) {
     return Promise.resolve({
       ok: true,
-      text: () =>
-        Promise.resolve(JSON.stringify({ success: true })),
+      text: () => Promise.resolve(JSON.stringify({ success: true })),
     });
   }
   return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
