@@ -1,9 +1,11 @@
 const express = require('express');
+const authRouter = require('./routes/auth');
 const statsRouter = require('./routes/stats');
 const lobbyRouter = require('./routes/lobby');
 const app = express();
 
 app.use(express.json());
+app.use('/api/auth', authRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/lobby', lobbyRouter);
 
