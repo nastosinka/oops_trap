@@ -70,14 +70,15 @@ export default {
     };
   },
 
+  computed: {
+    user() {
+      return JSON.parse(localStorage.getItem("user"));
+    },
+  },
+
   mounted() {
     this.fetchStats();
   },
-  computed: {
-  user() {
-    return JSON.parse(localStorage.getItem("user"));
-  }
-},
 
   methods: {
     async createLobby() {
@@ -85,10 +86,9 @@ export default {
         this.isLoadingStats = true;
 
         const response = await apiFetch("/api/lobby/newlobby", {
-        method: "POST",
-        body: JSON.stringify({ ownerId: 1 }),
+          method: "POST",
+          body: JSON.stringify({ ownerId: 1 }),
         });
-
 
         const responseText = await response.text();
 

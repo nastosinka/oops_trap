@@ -67,31 +67,31 @@ export default {
 
     async handleSignOn(values) {
       try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: values.name,
-          password: values.password,
-        }),
-      });
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: values.name,
+            password: values.password,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Ошибка входа");
+        if (!res.ok) {
+          throw new Error(data.error || "Ошибка входа");
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        this.showSignOnModal = false;
+        showSuccess("Login successful!");
+        this.$router.push("/createLobby");
+      } catch (err) {
+        console.error("Ошибка при входе:", err);
+        this.$toast?.error?.(err.message || "Ошибка входа"); // если есть уведомления
       }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      this.showSignOnModal = false;
-      showSuccess("Login successful!");
-      this.$router.push("/createLobby");
-    } catch (err) {
-      console.error("Ошибка при входе:", err);
-      this.$toast?.error?.(err.message || "Ошибка входа"); // если есть уведомления
-    }
     },
   },
 };

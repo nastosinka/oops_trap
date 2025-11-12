@@ -36,11 +36,10 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   if (requiresAuth && !token) {
-    next({ name: "Home" }); 
+    next({ name: "Home" });
   } else {
     next();
   }
 });
-
 
 export default router;
