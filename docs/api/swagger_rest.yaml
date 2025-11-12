@@ -23,7 +23,7 @@ tags:
     description: Работа со статистикой игроков
   - name: Maps
     description: Получение информации о картах
-  - name: Lobbies
+  - name: Lobby
     description: Управление лобби и игровыми сессиями
 
 
@@ -97,6 +97,7 @@ components:
       required:
         - username 
         - password
+        - password_repeat
       properties:
         username:
           type: string
@@ -159,48 +160,6 @@ components:
           enum: [runner, trapmaker]
           example: runner
           description: Роль игрока на карте
-          
-    Lobby:
-      type: object
-      properties:
-        lobby_id:
-          type: integer
-          example: 1234
-          description: ID лобби
-        invite_code:
-          type: string
-          example: AB12CD
-          description: Код для подключения к лобби
-        map_id:
-          type: integer
-          example: 2
-          description: ID выбранной карты
-        creator_id:
-          type: integer
-          example: 1
-          description: ID создателя лобби
-        status:
-          type: string
-          enum: 
-            - waiting
-            - started
-            - ended
-          example: waiting
-          description: Текущий статус лобби - ожидание, игра идет, игры завершена
-        settings:
-          type: object
-          properties:
-            max_players:
-              type: integer
-              example: 6
-            time_mode:
-              type: string
-              enum: [easy, normal, hard]
-              example: normal
-        players:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
   
   responses:
     400BadRequest:
@@ -242,7 +201,7 @@ components:
           example:
             error: "Not found"
             code: 404
-            details: "Лобби не найдено"
+            details: "Информация не найдена"
     409Conflict:
       description: Конфликт данных
       content:
@@ -338,31 +297,73 @@ paths:
             type: integer
       responses:
         200:
-          description: Статистика игрока
+          description: Статистика игрока по всем картам
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/StatsEntry'
+              example:
+                - map_id: 1
+                  best_time: 36
+                  role: runner
+                - map_id: 2
+                  best_time: 42
+                  role: runner
         401:
           $ref: '#/components/responses/401Unauthorized'
         404:
           $ref: '#/components/responses/404NotFound'
-
-  /api/stats/{id_lobby}:
-    post:
+  
+  /api/stats/map/{id_map}:
+    get:
+      tags:
+      - Stats
       security:
         - cookieAuth: []
-      tags: [Stats]
+      summary: Получить статистику игрока по конкретной карте
+      parameters:
+        - in: path
+          name: id_map
+          required: true
+          schema:
+            type: integer
+          description: ID карты
+      responses:
+        200:
+          description: Статистика игрока по указанной карте
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatsEntry'
+              example:
+                - map_id: 1
+                  best_time: 36
+                  role: runner
+                - map_id: 1
+                  best_time: 42
+                  role: trapmaker
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+  
+  /api/stats/{id_lobby}:
+    post:
+      tags: 
+      - Stats
+      security:
+        - cookieAuth: []
       summary: Отправить статистику по завершении игры
       parameters:
         - in: path
           name: id_lobby
           required: true
           schema:
-            type: string
-            example: AB12CD
+            type: integer
       requestBody:
         required: true
         content:
@@ -396,30 +397,6 @@ paths:
         409:
           $ref: '#/components/responses/409Conflict'
           
-    get:
-      security:
-        - cookieAuth: []
-      tags: [Stats]
-      summary: Получить статистику игрока по конкретной карте
-      parameters:
-        - in: path
-          name: id_lobby
-          required: true
-          schema:
-            type: string
-            example: AB12CD
-      responses:
-        200:
-          description: Статистика по конкретной карте
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatsEntry'
-        401:
-          $ref: '#/components/responses/401Unauthorized'
-        404:
-          $ref: '#/components/responses/404NotFound'
-
   # ================= MAPS =================
   
   /api/maps:
@@ -458,61 +435,10 @@ paths:
 
   # ================= LOBBIES =================
   
-  /api/lobbies/{lobby_id}/join:
+  /api/lobby/newlobby:
     post:
-      security:
-        - cookieAuth: []
-      tags: [Lobbies]
-      summary: Присоединиться к существующему лобби
-      parameters:
-        - in: path
-          name: lobby_id
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Успешное присоединение к лобби
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Lobby'
-        401:
-          $ref: '#/components/responses/401Unauthorized'
-        404:
-          $ref: '#/components/responses/404NotFound'
-        409:
-          $ref: '#/components/responses/409Conflict'
-          
-  /api/lobbies/{lobby_id}/exit:
-    post:
-      security:
-        - cookieAuth: []    
-      tags: [Lobbies]
-      summary: Выйти из лобби
-      description: Позволяет пользователю покинуть лобби, не удаляя его.
-      parameters:
-        - in: path
-          name: lobby_id
-          required: true
-          schema:
-            type: string
-          description: ID лобби, из которого выходит пользователь
-      responses:
-        204:
-          description: Пользователь успешно покинул лобби
-        401:
-          $ref: '#/components/responses/401Unauthorized'
-        404:
-          $ref: '#/components/responses/404NotFound'
-        409:
-          $ref: '#/components/responses/409Conflict'
-  
-  /api/lobbies:
-    post:
-      security:
-        - cookieAuth: []    
-      tags: [Lobbies]
+      tags:
+        - Lobby
       summary: Создать новое лобби
       requestBody:
         required: true
@@ -521,98 +447,440 @@ paths:
             schema:
               type: object
               required:
-                - map_id
-                - max_players
-                - time_mode
+                - ownerId
               properties:
-                map_id:
+                ownerId:
                   type: integer
-                  example: 1
-                max_players:
-                  type: integer
-                  example: 8
-                time_mode:
-                  type: string
-                  enum:
-                    - easy
-                    - normal
-                    - hard
-                  example: normal
+                  example: 123
+                  description: ID пользователя-владельца лобби
       responses:
         201:
           description: Лобби успешно создано
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Lobby'
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
         400:
-          $ref: '#/components/responses/400BadRequest'
-        401:
-          $ref: '#/components/responses/401Unauthorized'
-          
-  /api/lobbies/{lobby_id}:
-      get:
-        security:
-          - cookieAuth: []      
-        tags: [Lobbies]
-        summary: Получить информацию о лобби
-        parameters:
-          - in: path
-            name: lobby_id
-            required: true
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "ownerId is required"
+        404:
+          description: Пользователь не найден
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/all-lobbies:
+    get:
+      tags:
+        - Lobby
+      summary: Получить список всех лобби
+      responses:
+        200:
+          description: Список лобби успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        owner:
+                          type: string
+                          example: "John Doe"
+                        status:
+                          type: string
+                          enum: [waiting, in-progress, finished]
+                          example: "waiting"
+                        playerCount:
+                          type: integer
+                          example: 3
+                  total:
+                    type: integer
+                    example: 5
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/lobbies/{id}/delete:
+    post:
+      tags:
+        - Lobby
+      summary: Удалить лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID лобби
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: string
-        responses:
-          200:
-            description: Информация о лобби
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Lobby'
-          404:
-            $ref: '#/components/responses/404NotFound'
-          401:
-            $ref: '#/components/responses/401Unauthorized'
-  
-      delete:
-        security:
-          - cookieAuth: []      
-        tags: [Lobbies]
-        summary: Удалить лобби (создателем)
-        parameters:
-          - in: path
-            name: lobby_id
-            required: true
+              type: object
+              required:
+                - ownerId
+              properties:
+                ownerId:
+                  type: integer
+                  example: 123
+      responses:
+        200:
+          description: Лобби успешно удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lobby deleted successfully"
+                  deletedLobbyId:
+                    type: integer
+                    example: 1
+        400:
+          description: Неверный запрос
+        403:
+          description: Доступ запрещен
+        404:
+          description: Лобби не найдено
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/lobbies/{id}/settings:
+    post:
+      tags:
+        - Lobby
+      summary: Обновить настройки лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: string
-        responses:
-          204:
-            description: Лобби удалено
-          401:
-            $ref: '#/components/responses/401Unauthorized'
-          403:
-            $ref: '#/components/responses/403Forbidden'
-          404:
-            $ref: '#/components/responses/404NotFound'
-          
-  /api/lobbies/{lobby_id}/start:
-      post:
-        security:
-          - cookieAuth: []      
-        tags: [Lobbies]
-        summary: Начать игру (только для лидера лобби)
-        parameters:
-          - in: path
-            name: lobby_id
-            required: true
+              type: object
+              required:
+                - ownerId
+              properties:
+                ownerId:
+                  type: integer
+                  example: 123
+                map:
+                  type: integer
+                  nullable: true
+                  example: 5
+                time:
+                  type: string
+                  enum: [easy, normal, hard]
+                  example: "normal"
+                trapper:
+                  type: integer
+                  nullable: true
+                  example: 123
+      responses:
+        200:
+          description: Настройки лобби успешно обновлены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  lobby:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      ownerId:
+                        type: integer
+                      status:
+                        type: string
+                      map:
+                        type: integer
+                      time:
+                        type: string
+                      trapper:
+                        type: integer
+                      players:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      playerCount:
+                        type: integer
+        400:
+          description: Неверный запрос
+        403:
+          description: Доступ запрещен
+        404:
+          description: Лобби не найдено
+        500:
+          description: Внутренняя ошибка сервера
+
+    get:
+      tags:
+        - Lobby
+      summary: Получить настройки лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Настройки лобби успешно получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      ownerId:
+                        type: integer
+                      status:
+                        type: string
+                      map:
+                        type: integer
+                      time:
+                        type: string
+                      trapper:
+                        type: integer
+                      players:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      playerCount:
+                        type: integer
+                      createdAt:
+                        type: string
+                        format: date-time
+        400:
+          description: Неверный запрос
+        404:
+          description: Лобби не найдено
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/lobbies/{id}/status:
+    post:
+      tags:
+        - Lobby
+      summary: Изменить статус лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
             schema:
-              type: string
-        responses:
-          200:
-            description: Игра успешно запущена
-          401:
-            $ref: '#/components/responses/401Unauthorized'
-          403:
-            $ref: '#/components/responses/403Forbidden'
-          404:
-            $ref: '#/components/responses/404NotFound'
+              type: object
+              required:
+                - ownerId
+                - newStatus
+              properties:
+                ownerId:
+                  type: integer
+                  example: 123
+                newStatus:
+                  type: string
+                  enum: [waiting, in-progress, finished]
+                  example: "in-progress"
+      responses:
+        200:
+          description: Статус лобби успешно изменен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  lobby:
+                    type: object
+        400:
+          description: Неверный запрос
+        403:
+          description: Доступ запрещен
+        404:
+          description: Лобби не найдено
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/lobbies/{id}/join:
+    post:
+      tags:
+        - Lobby
+      summary: Добавить пользователя в лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: integer
+                  example: 123
+      responses:
+        200:
+          description: Пользователь успешно добавлен в лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User joined lobby successfully"
+                  lobby:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      status:
+                        type: string
+                      players:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      playerCount:
+                        type: integer
+        400:
+          description: Неверный запрос
+        404:
+          description: Лобби или пользователь не найден
+        409:
+          description: Пользователь уже в другом лобби
+        500:
+          description: Внутренняя ошибка сервера
+
+  /api/lobby/lobbies/{id}/leave:
+    post:
+      tags:
+        - Lobby
+      summary: Удалить пользователя из лобби
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: integer
+                  example: 123
+      responses:
+        200:
+          description: Пользователь успешно удален из лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  lobbyDeleted:
+                    type: boolean
+                  deletedLobbyId:
+                    type: integer
+                  lobby:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      ownerId:
+                        type: integer
+                      status:
+                        type: string
+                      players:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      playerCount:
+                        type: integer
+                      trapper:
+                        type: integer
+        400:
+          description: Неверный запрос
+        404:
+          description: Лобби или пользователь не найден
+        500:
+          description: Внутренняя ошибка сервера
+
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Получить имя пользователя по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Имя пользователя успешно получено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+        404:
+          description: Пользователь не найден
+        500:
+          description: Внутренняя ошибка сервера
