@@ -31,7 +31,7 @@
 
   <UniversalModal
     v-if="showJoinLobby"
-    title=""
+    title="Join Lobby"
     :fields="['lobbyCode']"
     submit-text="Join"
     @close="showJoinLobby = false"
@@ -52,7 +52,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
 
 export default {
-  name: "LobbyPage",
+  name: "CreateLobbyPage",
 
   components: {
     BaseButton,
@@ -64,34 +64,50 @@ export default {
       showRulesModal: false,
       showJoinLobby: false,
       showStatsModal: false,
-      statsData: [
-        { map: "Vector", role: "trapmaker", time: "1:08" },
-        { map: "Lucky", role: "runner", time: "2:09" },
-        { map: "Vector", role: "runner", time: "1:15" },
-        { map: "Lucky", role: "trapmaker", time: "2:25" },
-        { map: "Vector", role: "trapmaker", time: "1:08" },
-        { map: "Lucky", role: "runner", time: "2:09" },
-        { map: "Vector", role: "runner", time: "1:15" },
-        { map: "Lucky", role: "trapmaker", time: "2:25" },
-        { map: "Vector", role: "trapmaker", time: "1:08" },
-        { map: "Lucky", role: "runner", time: "2:09" },
-        { map: "Vector", role: "runner", time: "1:15" },
-        { map: "Lucky", role: "trapmaker", time: "2:25" },
-        { map: "Vector", role: "trapmaker", time: "1:08" },
-        { map: "Lucky", role: "runner", time: "2:09" },
-        { map: "Vector", role: "runner", time: "1:15" },
-        { map: "Lucky", role: "trapmaker", time: "2:25" },
-      ],
+      statsData: [],
+      isLoadingStats: false,
     };
   },
 
+  mounted() {
+    this.fetchStats();
+  },
   methods: {
-    createLobby() {
-      this.$router.push("/lobby?mode=create");
-    },
+    async createLobby() {
+      try {
+        this.isLoadingStats = true;
 
-    joinLobby() {
-      this.$router.push("/lobby");
+        const response = await fetch("/api/lobby/newlobby", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ownerId: 1,
+          }),
+        });
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP error! status: ${response.status}, body: ${responseText}`
+          );
+        }
+
+        const data = JSON.parse(responseText);
+        console.log("Lobby created successfully:", data);
+
+        this.$router.push(`/lobby?id=${data.id}&mode=create`);
+      } catch (error) {
+        Modal.error({
+          title: "Failed to Create Lobby",
+          content: error.message || "Unable to create lobby. Please try again.",
+          okText: "OK",
+        });
+      } finally {
+        this.isLoadingStats = false;
+      }
     },
 
     showExitConfirm() {
@@ -117,6 +133,80 @@ export default {
           this.$router.push("/");
         },
       });
+    },
+
+    async fetchStats() {
+      try {
+        const response = await fetch("/api/stats/1");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const processedData = data.map((item) => {
+          const minutes = Math.floor(item.best_time / 60);
+          const seconds = item.best_time % 60;
+          const formattedTime = `${minutes}:${seconds
+            .toString()
+            .padStart(2, "0")}`;
+
+          return {
+            map: item.map_id,
+            role: item.role,
+            time: formattedTime,
+          };
+        });
+
+        this.statsData = processedData;
+
+        return processedData;
+      } catch (error) {
+        this.statsData = [];
+        throw new Error("Fetch error:", error);
+      }
+    },
+    async joinLobby(formData) {
+      const lobbyCode = formData.lobbyCode;
+
+      try {
+        this.isLoadingStats = true;
+
+        const lobbyId = parseInt(lobbyCode);
+        if (isNaN(lobbyId)) {
+          throw new Error("Please enter a valid lobby number");
+        }
+
+        const response = await fetch(`/api/lobby/lobbies/${lobbyId}/join`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: 2,
+          }),
+        });
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(`Failed to join lobby: ${response.status}`);
+        }
+
+        const data = JSON.parse(responseText);
+        console.log("Joined lobby:", data);
+
+        this.$router.push(`/lobby?id=${lobbyId}&mode=join`);
+      } catch (error) {
+        Modal.error({
+          title: "Cannot Join Lobby",
+          content: error.message,
+          okText: "OK",
+        });
+      } finally {
+        this.isLoadingStats = false;
+      }
     },
   },
 };
