@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "@sentry/vue": "^10.25.0",
     "@vkontakte/vk-bridge": "^2.13.0",
     "ant-design-vue": "^4.2.6",
     "pinia": "^2.1.0",
