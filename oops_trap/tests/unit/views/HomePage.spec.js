@@ -26,7 +26,7 @@ describe("HomePage", () => {
           UniversalModal,
         },
         stubs: {
-          'router-view': true, // заглушка для router-view
+          "router-view": true, // заглушка для router-view
         },
       },
     });

@@ -7,7 +7,7 @@ describe("App.vue", () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
-          'router-view': true, // заглушка для router-view
+          "router-view": true, // заглушка для router-view
         },
       },
     });

@@ -21,7 +21,7 @@ global.fetch = vi.fn((url) => {
       ok: true,
       json: () =>
         Promise.resolve(
-          Array.from({ length: 16 }).map((_, i) => ({
+          Array.from({ length: 16 }).map((_) => ({
             map_id: "Vector",
             role: "trapmaker",
             best_time: 68,
