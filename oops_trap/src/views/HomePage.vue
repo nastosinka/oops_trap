@@ -82,7 +82,6 @@ export default {
         throw new Error(data.error || "Ошибка входа");
       }
 
-      // Сохраняем токен
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 

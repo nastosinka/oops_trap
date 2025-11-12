@@ -4,7 +4,7 @@
       <div class="trophy-icon" @click="showStatsModal = true">
         <i class="mdi mdi-trophy"></i>
       </div>
-      <div class="nickname-label">Nickname</div>
+      <div class="nickname-label">{{ user.name }}</div>
     </div>
 
     <div class="create-lobby-container">
@@ -50,6 +50,7 @@
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
+import { apiFetch } from "@/utils/api-auth.js";
 
 export default {
   name: "CreateLobbyPage",
@@ -72,20 +73,22 @@ export default {
   mounted() {
     this.fetchStats();
   },
+  computed: {
+  user() {
+    return JSON.parse(localStorage.getItem("user"));
+  }
+},
+
   methods: {
     async createLobby() {
       try {
         this.isLoadingStats = true;
 
-        const response = await fetch("/api/lobby/newlobby", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ownerId: 1,
-          }),
+        const response = await apiFetch("/api/lobby/newlobby", {
+        method: "POST",
+        body: JSON.stringify({ ownerId: 1 }),
         });
+
 
         const responseText = await response.text();
 
@@ -125,6 +128,9 @@ export default {
     },
 
     exitGame() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
       Modal.success({
         title: "Game Exited",
         content: "Thank you for playing!",
