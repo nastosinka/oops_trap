@@ -9,8 +9,13 @@ export default defineConfig({
     outDir: 'dist'
   },
   server: {
-    port: 5173,
-    host: true
+    proxy: {
+      '/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        rewrite: path => path
+      }
+    }
   },
   resolve: {
     alias: {

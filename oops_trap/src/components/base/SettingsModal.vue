@@ -79,15 +79,13 @@ export default {
       selectedMafia: "",
       selectedTime: "",
       mapTypes: [
-        { value: "city", label: "city" },
-        { value: "village", label: "village" },
-        { value: "forest", label: "forest" },
-        { value: "desert", label: "desert" },
+        { value: 1, label: "city" },
+        { value: 2, label: "village" },
       ],
       timeOptions: [
-        { value: "slow", label: "slow" },
+        { value: "easy", label: "easy" },
         { value: "normal", label: "normal" },
-        { value: "quick", label: "quick" },
+        { value: "hard", label: "hard" },
       ],
     };
   },

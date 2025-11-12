@@ -18,6 +18,12 @@
           <td class="stats-table__cell">{{ row.role }}</td>
           <td class="stats-table__cell">{{ row.time }}</td>
         </tr>
+
+        <tr v-if="tableData.length === 0" class="stats-table__row">
+          <td colspan="3" class="stats-table__cell stats-table__cell--empty">
+            No statistics available
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -36,18 +42,21 @@ export default {
 
   data() {
     return {
-      nickname: "",
-      tableData: [
-        { map: "Vector", role: "trapmaker", time: "1:08" },
-        { map: "Lucky", role: "runner", time: "2:09" },
-        { map: "Vector", role: "runner", time: "1:15" },
-        { map: "Lucky", role: "trapmaker", time: "2:25" },
-      ],
+      tableData: [],
     };
   },
 
-  created() {
-    if (this.data.length > 0) {
+  watch: {
+    data: {
+      immediate: true,
+      handler(newData) {
+        this.tableData = newData || [];
+      },
+    },
+  },
+
+  mounted() {
+    if (this.data && this.data.length > 0) {
       this.tableData = this.data;
     }
   },
