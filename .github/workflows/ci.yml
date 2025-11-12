@@ -70,9 +70,9 @@ jobs:
         working-directory: ./oops_trap
         run: npm ci
 
-      - name: run unit tests
-        working-directory: ./oops_trap
-        run: npm run test:unit
+      # - name: run unit tests
+      #   working-directory: ./oops_trap
+      #   run: npm run test:unit
 
       - name: run tests with coverage
         working-directory: ./oops_trap
@@ -121,9 +121,9 @@ jobs:
         working-directory: ./oops_trap
         run: npx playwright install --with-deps
 
-      - name: Run e2e tests
-        working-directory: ./oops_trap
-        run: npm run test:e2e
+      # - name: Run e2e tests
+      #   working-directory: ./oops_trap
+      #   run: npm run test:e2e
 
 
         

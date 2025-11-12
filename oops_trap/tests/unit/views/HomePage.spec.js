@@ -4,7 +4,6 @@ import HomePage from "@/views/HomePage.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 
-// Моки для уведомлений
 vi.mock("@/utils/notification-wrapper", () => ({
   showSuccess: vi.fn(),
   showError: vi.fn(),
@@ -25,9 +24,6 @@ describe("HomePage", () => {
           BaseButton,
           UniversalModal,
         },
-        stubs: {
-          "router-view": true, // заглушка для router-view
-        },
       },
     });
   };
@@ -41,6 +37,7 @@ describe("HomePage", () => {
       wrapper = createWrapper();
 
       expect(() => wrapper.vm.handleSignUp()).not.toThrow();
+
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/createLobby");
     });
 

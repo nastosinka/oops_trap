@@ -5,42 +5,12 @@ import CreateLobbyPage from "@/views/CreateLobbyPage.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 
-// Моки для ant-design-vue
 vi.mock("ant-design-vue", () => ({
   Modal: {
     confirm: vi.fn(),
     success: vi.fn(),
-    error: vi.fn(),
   },
 }));
-
-// Глобальный мок для fetch
-global.fetch = vi.fn((url) => {
-  if (url.includes("/api/stats/")) {
-    return Promise.resolve({
-      ok: true,
-      json: () =>
-        Promise.resolve(
-          Array.from({ length: 16 }).map((_) => ({
-            map_id: "Vector",
-            role: "trapmaker",
-            best_time: 68,
-          }))
-        ),
-    });
-  } else if (url.includes("/api/lobby/newlobby")) {
-    return Promise.resolve({
-      ok: true,
-      text: () => Promise.resolve(JSON.stringify({ id: 123 })),
-    });
-  } else if (url.includes("/api/lobby/lobbies/")) {
-    return Promise.resolve({
-      ok: true,
-      text: () => Promise.resolve(JSON.stringify({ success: true })),
-    });
-  }
-  return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-});
 
 describe("CreateLobbyPage", () => {
   let wrapper;

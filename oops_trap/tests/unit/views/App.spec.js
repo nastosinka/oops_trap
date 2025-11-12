@@ -4,14 +4,7 @@ import App from "@/App.vue";
 
 describe("App.vue", () => {
   it("renders router view", () => {
-    const wrapper = mount(App, {
-      global: {
-        stubs: {
-          "router-view": true, // заглушка для router-view
-        },
-      },
-    });
-
+    const wrapper = mount(App);
     expect(wrapper.find("#app").exists()).toBe(true);
   });
 });
