@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const { setupPingPong } = require('./pingpong');
-const { addConnection, removeConnection } = require('./wsConnections');
+//const { addConnection, removeConnection } = require('./wsConnections');
 const { verifyJwtAndGetUserId } = require('./auth'); // пример функции проверки JWT
 
 function startWebSocketServer(server) {
@@ -17,7 +17,7 @@ function startWebSocketServer(server) {
       return;
     }
     console.log(`WS connected for userId ${userId}`);
-    addConnection(userId, ws);
+    //addConnection(userId, ws);
     console.log(`WS подключен для пользователя ${userId}`);
 
     setupPingPong(ws);

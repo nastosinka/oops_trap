@@ -2,6 +2,9 @@ const WebSocket = require('ws');
 const axios = require('axios');
 const { getConnection } = require('./wsConnections');
 
+//добавление конкреного клиента - lcient.js
+// start...Socket - там список пользователей из лобби (их бы add), но он не вызы
+//вается нигде
 // Временное хранилище активных соединений для каждой игры
 const activeGames = new Map();
 const games = new Map();
@@ -15,7 +18,8 @@ function setupGameWebSocket(server) {
     ws.on('message', (msg) => {
       try {
         const data = JSON.parse(msg);
-
+        console.log(data)
+        //addConnection(data.userId, '/ws/game');
         if (data.type === 'join') {
           const { gameId, userId } = data;
           console.log(`User ${userId} wants to join game ${gameId}`);
@@ -102,7 +106,9 @@ function createGameFromLobby(gameData) {
   console.log(`Game ${gameId} initialized in WebSocket`);
   // ======== пункт 3: уведомляем игроков ========
   players.forEach(player => {
+    console.log(player.id);
     const ws = getConnection(player.id);
+    console.log(ws);
     if (ws && ws.readyState === ws.OPEN) {
       ws.send(JSON.stringify({
         type: 'GAME_READY',
