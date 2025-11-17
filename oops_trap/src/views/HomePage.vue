@@ -49,6 +49,12 @@ export default {
     UniversalModal,
   },
 
+  mounted() {
+    setTimeout(() => {
+      throw new Error("Global Timeout Error Test");
+    }, 1000);
+  },
+
   data() {
     return {
       showSignUpModal: false,
