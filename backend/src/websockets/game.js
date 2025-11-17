@@ -1,109 +1,101 @@
 const WebSocket = require('ws');
 
-// Временное хранилище активных соединений для каждой игры
-const activeGames = new Map();
-const games = new Map();
+const gameSessions = new Map();
 
+const connectedPlayers = new Map();
+
+// Инициализация игрового веб-сокета
 function setupGameWebSocket(server) {
-  const wss = new WebSocket.Server({ server, path: '/ws/game' });
+    const wss = new WebSocket.Server({ server, path: '/ws/game/' });
 
-  console.log('Game WebSocket server started at /ws/game');
+    console.log('Game WebSocket server started at /ws/game/');
 
-  wss.on('connection', (ws, req) => {
-    ws.on('message', (msg) => {
-      try {
-        const data = JSON.parse(msg);
+    wss.on('connection', (ws, req) => {
+        // Клиент сообщает свой playerId при подключении
+        ws.on('message', (msg) => {
+            try {
+                const data = JSON.parse(msg);
+                if (data.type === 'init' && data.playerId) {
+                    ws.playerId = data.playerId;
+                    connectedPlayers.set(data.playerId, ws);
+                    console.log(`Player ${data.playerId} connected to WS`);
 
-        if (data.type === 'join') {
-          const { gameId, userId } = data;
-
-          if (!gameId || !userId) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Missing gameId or userId' }));
-            return;
-          }
-
-          // Проверяем, существует ли игра
-          if (!activeGames.has(gameId)) {
-            ws.send(JSON.stringify({ type: 'error', message: `Game ${gameId} not found or not started yet` }));
-            return;
-          }
-
-          // Добавляем соединение в список активных для игры
-          activeGames.get(gameId).add(ws);
-          ws.gameId = gameId;
-          ws.userId = userId;
-
-          console.log(`User ${userId} joined WebSocket game ${gameId}`);
-          ws.send(JSON.stringify({ type: 'joined', message: `Connected to game ${gameId}` }));
-
-          // Рассылаем всем игрокам, что кто-то подключился
-          broadcastToGame(gameId, {
-            type: 'player_joined',
-            userId,
-            timestamp: Date.now(),
-          });
-        }
-
-        if (data.type === 'event') {
-          const { gameId } = ws;
-          if (gameId) {
-            broadcastToGame(gameId, {
-              type: 'event',
-              event: data.event,
-              userId: ws.userId,
-              timestamp: Date.now(),
-            });
-          }
-        }
-
-      } catch (err) {
-        console.error('WebSocket error:', err);
-      }
-    });
-
-    ws.on('close', () => {
-      const { gameId, userId } = ws;
-      if (gameId && activeGames.has(gameId)) {
-        activeGames.get(gameId).delete(ws);
-        console.log(`User ${userId} disconnected from game ${gameId}`);
-
-        broadcastToGame(gameId, {
-          type: 'player_left',
-          userId,
-          timestamp: Date.now(),
+                    // Авто-назначение в сессию, если игра уже существует
+                    for (const session of gameSessions.values()) {
+                        if (session.game.players.some(p => p.id === data.playerId)) {
+                            session.players.push(ws);
+                            console.log(`Player ${data.playerId} auto-added to game ${session.gameId}`);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('WS message parse error:', err);
+            }
         });
 
-        if (activeGames.get(gameId).size === 0) {
-          activeGames.delete(gameId);
-          console.log(`Game ${gameId} WebSocket connections cleared`);
-        }
-      }
+        ws.on('close', () => {
+            if (ws.playerId) connectedPlayers.delete(ws.playerId);
+            for (const session of gameSessions.values()) {
+                session.players = session.players.filter(p => p !== ws);
+            }
+        });
     });
-  });
 }
 
-// Создание игры (вызывается из /lobbies/:id/status при смене в in-progress)
-function createGameFromLobby(gameData) {
-  const { id: gameId } = gameData;
-  games.set(gameId, gameData);
+//Создание игровой сессии (вызывается при старте игры)
+function createGameSession(game) {
+    const session = {
+        gameId: game.id,
+        game,
+        players: [],
+        waitTimer: null,
+        gameTimer: null
+    };
 
-  // Инициализация пустого набора активных подключений для этой игры
-  activeGames.set(gameId, new Set());
-
-  console.log(`Game ${gameId} initialized in WebSocket`);
-}
-
-function broadcastToGame(gameId, message) {
-  if (!activeGames.has(gameId)) return;
-
-  const clients = activeGames.get(gameId);
-  const payload = JSON.stringify(message);
-
-  for (const client of clients) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(payload);
+    // Добавляем всех подключённых игроков, которые в этом лобби
+    for (const player of game.players) {
+        const ws = connectedPlayers.get(player.id);
+        if (ws) {
+          session.players.push(ws);
+          console.log(`Player ${player.id} joined game ${session.gameId}`);
+          console.log(`Current players in game ${session.gameId}:`, session.players.map(p => p.playerId).join(', '));
+        }
     }
-  }
+
+    gameSessions.set(game.id, session);
+    console.log(`Game session ${game.id} created for lobby ${game.lobbyId} for game ${game.id}`);
+
+    // Таймер ожидания игроков
+    session.waitTimer = setTimeout(() => {
+        console.log(`Waiting timer for game ${game.id} finished. Game starts now!`);
+
+        broadcast(session.gameId, {
+            type: 'game-start',
+            message: 'The game is starting now!'
+        });
+
+        // Основной игровой таймер
+        session.gameTimer = setTimeout(() => {
+            console.log(`Game ${game.id} ended!`);
+            session.game.status = 'finished';
+            broadcast(session.gameId, { type: 'game-end', message: 'Game finished' });
+
+            // Очищаем сессию
+            clearTimeout(session.waitTimer);
+            clearTimeout(session.gameTimer);
+            gameSessions.delete(game.id);
+        }, 20000); // тест 20с игра
+    }, 10000); // тест 10с ожидание
 }
 
-module.exports = { setupGameWebSocket, createGameFromLobby, broadcastToGame };
+//Отправка сообщения всем игрокам в сессии
+function broadcast(gameId, message) {
+    const session = gameSessions.get(gameId);
+    if (!session) return;
+    const payload = JSON.stringify(message);
+    for (const ws of session.players) {
+        if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+    }
+}
+
+module.exports = { setupGameWebSocket, createGameSession, broadcast, gameSessions };

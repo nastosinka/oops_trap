@@ -4,14 +4,14 @@
 
 const express = require('express');
 const prisma = require('../db/prismaClient');
-const { createGameFromLobby } = require('../websockets/game');
+const { createGameSession} = require('../websockets/game');
 
 const router = express.Router();
-
 const lobbies = new Map();
 let nextLobbyId = 1;
 
 const games = new Map();
+module.exports = { lobbies, games };
 let nextGameId = 1;
 
 router.post('/newlobby', async (req, res) => {
@@ -300,10 +300,10 @@ router.post('/lobbies/:id/status', async (req, res) => {
       };
 
       games.set(game.id, game);
-
+      createGameSession(game);
+      //createGameFromLobby(game);
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
 
-      createGameFromLobby(game);
     }
 
     if (newStatus === 'finished' && lobby.status !== 'in-progress') {
@@ -321,7 +321,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
     const previousStatus = lobby.status;
     
     lobby.status = newStatus;
-
+    //game.status = newStatus;
     console.log(` Статус лобби ${lobbyId} изменен: ${previousStatus} -> ${newStatus}`);
     
     if (newStatus === 'finished') {
