@@ -6,12 +6,28 @@ const connectedPlayers = new Map();
 
 // Инициализация игрового веб-сокета
 function setupGameWebSocket(server) {
-    const wss = new WebSocket.Server({ server, path: '/ws/game/' });
+    //const wss = new WebSocket.Server({ server, path: '/ws/game/' });
+    ///////////////////
+    const wss = new WebSocket.Server({ noServer: true });
+
+    server.on('upgrade', (req, socket, head) => {
+        const url = new URL(req.url, 'http://localhost');
+        const match = url.pathname.match(/^\/ws\/game\/(\d+)$/);
+
+        if (!match) return socket.destroy();
+
+        const gameId = Number(match[1]);
+
+        wss.handleUpgrade(req, socket, head, ws => {
+            ws.gameId = gameId;
+            wss.emit('connection', ws, req);
+        });
+    });
+    ///////////////////
 
     console.log('Game WebSocket server started at /ws/game/');
 
-    wss.on('connection', (ws, req) => {
-        // Клиент сообщает свой playerId при подключении
+    wss.on('connection', (ws) => {
         ws.on('message', (msg) => {
             try {
                 const data = JSON.parse(msg);
@@ -21,12 +37,12 @@ function setupGameWebSocket(server) {
                     console.log(`Player ${data.playerId} connected to WS`);
 
                     // Авто-назначение в сессию, если игра уже существует
-                    for (const session of gameSessions.values()) {
-                        if (session.game.players.some(p => p.id === data.playerId)) {
-                            session.players.push(ws);
-                            console.log(`Player ${data.playerId} auto-added to game ${session.gameId}`);
-                        }
-                    }
+                    //const session = gameSessions.get(ws.gameId); 
+                    //if (session && session.game.players.some(p => p.id === data.playerId)) {
+                        //session.players.push(ws);
+                        //console.log(`Player ${data.playerId} auto-added to game ${session.gameId}`);
+                    //}
+                    
                 }
             } catch (err) {
                 console.error('WS message parse error:', err);
@@ -35,7 +51,8 @@ function setupGameWebSocket(server) {
 
         ws.on('close', () => {
             if (ws.playerId) connectedPlayers.delete(ws.playerId);
-            for (const session of gameSessions.values()) {
+            const session = gameSessions.get(ws.gameId);
+            if (session) {
                 session.players = session.players.filter(p => p !== ws);
             }
         });
