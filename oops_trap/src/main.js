@@ -13,9 +13,11 @@ const app = createApp(App);
 
 Sentry.init({
   app,
-  dsn: "https://eadcbc33a1eade14aa6ae86fb5314d03@o4510349567393797.ingest.de.sentry.io/4510349569425488",
+  dsn: import.meta.env.SENTRY_DSN,
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
+  release: "myapp@1.0.0",
+  environment: import.meta.env.MODE,
   sendDefaultPii: true,
   integrations: [Sentry.browserTracingIntegration({ router })],
   // Tracing
@@ -25,6 +27,12 @@ Sentry.init({
   // Logs
   enableLogs: true,
 });
+
+app.config.errorHandler = (err) => {
+  Sentry.captureException(err);
+  console.error(err);
+};
+
 
 app.use(createPinia());
 app.use(router);
