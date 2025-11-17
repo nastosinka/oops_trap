@@ -49,18 +49,18 @@ export default {
     UniversalModal,
   },
 
-  mounted() {
-    setTimeout(() => {
-      throw new Error("Global Timeout Error Test");
-    }, 1000);
-  },
-
   data() {
     return {
       showSignUpModal: false,
       showSignOnModal: false,
       showRulesModal: false,
     };
+  },
+
+  mounted() {
+    setTimeout(() => {
+      throw new Error("Global Timeout Error Test");
+    }, 1000);
   },
 
   methods: {
