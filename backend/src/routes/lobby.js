@@ -314,7 +314,8 @@ router.post('/lobbies/:id/status', async (req, res) => {
         trapper: lobby.trapper,
         time: lobby.time,
         players: lobby.players,
-        status: 'in-progress'
+        status: 'in-progress',
+        stats: []
       };
 
       games.set(game.id, game);
@@ -326,8 +327,9 @@ router.post('/lobbies/:id/status', async (req, res) => {
       // Обновляем статус игры в лобби
       lobby.currentGameId = game.id;
       // Создаем игровую сессию и получаем статистику
-      const stats = await createGameSession(game);
-      console.log('Game ended with stats:', stats);
+      game.stats = await createGameSession(game);
+      console.log('Game ended with stats:', game.stats);
+      lobby.status = 'finished';
     }
 
     // Проверки для завершения игры
@@ -348,6 +350,8 @@ router.post('/lobbies/:id/status', async (req, res) => {
       }
       
       console.log(`Game in lobby ${lobbyId} completed`);
+      lobby.status = newStatus;
+
     }
 
     // Проверки для возврата в ожидание
@@ -361,6 +365,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
       // Сброс игровых настроек для новой игры
       lobby.currentGameId = null;
       console.log(`Lobby ${lobbyId} reset for new game`);
+      lobby.status = newStatus;
     }
 
     res.status(200).json({ 
