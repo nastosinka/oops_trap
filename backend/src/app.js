@@ -15,6 +15,7 @@ app.use('/api/user', userRouter);
 app.use("/api", websocketRouter);
 app.use('/api/maps', mapListRoutes);
 
+
 app.get('/', (req, res) => {
   res.send('<h1>Server is running!</h1><p>Ping-pong WS доступен на /ws/game</p>');
 });
