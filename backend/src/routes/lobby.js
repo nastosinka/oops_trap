@@ -304,7 +304,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
         });
       }
       const game = {
-        id: nextGameId++,
+        id: lobby.id,
         lobbyId: lobby.id,
         map: lobby.map,
         trapper: lobby.trapper,
@@ -353,7 +353,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
           error: 'Cannot set lobby to waiting that is not finished' 
         });
       }
-      
+      games.delete(lobby.currentGameId);
       lobby.currentGameId = null;
       console.log(`Lobby ${lobbyId} reset for new game`);
       lobby.status = newStatus;
@@ -373,7 +373,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
         playerCount: lobby.players.length,
         currentGameId: lobby.currentGameId || null
       },
-      ...(newStatus === 'in-progress' && lobby.currentGameId && {
+      ...(lobby.currentGameId && {
         game: {
           id: lobby.currentGameId,
           stats: games.get(lobby.currentGameId)?.stats || []
