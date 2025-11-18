@@ -10,7 +10,6 @@ export default defineConfig(({ mode }) => {
     base: './',
     plugins: [
       vue(),
-
       sentryVitePlugin({
         org: 'itmo-university-o4',
         project: 'javascript-vue',

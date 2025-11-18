@@ -5,16 +5,14 @@
 </template>
 
 <script>
-import * as Sentry from "@sentry/vue";
-
 export default {
   name: "App",
   mounted() {
-    // Временный тест Sentry
-    if (Sentry) {
-      Sentry.captureMessage("App.vue mounted - test message");
-      Sentry.captureException(new Error("App.vue mounted - test error"));
-    }
+    // // Временный тест Sentry
+    // if (Sentry) {
+    //   Sentry.captureMessage("App.vue mounted - test message");
+    //   Sentry.captureException(new Error("App.vue mounted - test error"));
+    // }
   },
 };
 </script>

@@ -1,86 +1,89 @@
-import { mount } from "@vue/test-utils";
-import { Modal } from "ant-design-vue";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import { Modal } from "ant-design-vue";
 import LobbyPage from "@/views/LobbyPage.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 
 vi.mock("ant-design-vue", () => ({
   Modal: {
-    confirm: vi.fn(),
     success: vi.fn(),
+    error: vi.fn(),
+    confirm: vi.fn(),
   },
 }));
 
+global.fetch = vi.fn();
+
+const mockRoute = {
+  query: {},
+};
+
+const mockRouter = {
+  push: vi.fn(),
+};
+
 describe("LobbyPage", () => {
   let wrapper;
-  const mockRouter = {
-    push: vi.fn(),
-  };
 
-  const createWrapper = (routeQuery = {}) => {
+  const createComponent = (options = {}) => {
     return mount(LobbyPage, {
       global: {
         mocks: {
-          $route: {
-            query: routeQuery,
-          },
+          $route: mockRoute,
           $router: mockRouter,
         },
-        components: {
-          BaseButton,
-          UniversalModal,
+        stubs: {
+          BaseButton: true,
+          UniversalModal: true,
         },
       },
+      ...options,
     });
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRoute.query = {};
   });
 
-  describe("Component Rendering", () => {
-    it("displays nickname and lobby code", () => {
-      wrapper = createWrapper();
-
+  describe("Рендеринг", () => {
+    it("отображает никнейм", () => {
+      wrapper = createComponent();
       expect(wrapper.find(".nickname").text()).toBe("Nickname");
-      expect(wrapper.find(".lobby-code").text()).toBe("Code: XYZ789");
     });
 
-    it("displays players list", () => {
-      wrapper = createWrapper();
+    it("отображает код лобби когда lobbyId установлен", () => {
+      mockRoute.query.id = "123";
+      wrapper = createComponent();
+      expect(wrapper.find(".lobby-code").text()).toContain("123");
+    });
 
+    it("отображает список игроков", () => {
+      wrapper = createComponent();
       const players = wrapper.findAll(".player");
       expect(players).toHaveLength(10);
       expect(players[0].find(".player-name").text()).toBe("Player 1");
     });
 
-    it("shows player colors", () => {
-      wrapper = createWrapper();
-
-      const firstPlayerColor = wrapper.find(".player-color");
-      expect(firstPlayerColor.attributes("style")).toContain(
-        "rgb(255, 107, 107)"
-      );
-    });
-  });
-
-  describe("Host Logic", () => {
-    it("shows Settings and Start buttons when user is host", () => {
-      wrapper = createWrapper({ mode: "create" });
+    it("отображает кнопки для хоста", () => {
+      mockRoute.query.mode = "create";
+      wrapper = createComponent();
 
       const buttons = wrapper.findAllComponents(BaseButton);
-      const buttonLabels = buttons.map((button) => button.props("label"));
+      const buttonLabels = buttons.map((button) => button.attributes("label"));
 
       expect(buttonLabels).toContain("Settings");
       expect(buttonLabels).toContain("Start");
+      expect(buttonLabels).toContain("Exit");
     });
 
-    it("hides Settings and Start buttons when user is not host", () => {
-      wrapper = createWrapper({ mode: "join" });
+    it("не отображает кнопки Settings и Start для не-хоста", () => {
+      mockRoute.query.mode = "join";
+      wrapper = createComponent();
 
       const buttons = wrapper.findAllComponents(BaseButton);
-      const buttonLabels = buttons.map((button) => button.props("label"));
+      const buttonLabels = buttons.map((button) => button.attributes("label"));
 
       expect(buttonLabels).not.toContain("Settings");
       expect(buttonLabels).not.toContain("Start");
@@ -88,107 +91,211 @@ describe("LobbyPage", () => {
     });
   });
 
-  describe("Modal Windows", () => {
-    it("shows settings modal when Settings button is clicked", async () => {
-      wrapper = createWrapper({ mode: "create" });
-
-      const buttons = wrapper.findAllComponents(BaseButton);
-      const settingsButton = buttons.find(
-        (button) => button.props("label") === "Settings"
-      );
-
-      await settingsButton.trigger("click");
-
-      expect(wrapper.vm.showSettings).toBe(true);
+  describe("Вычисляемые свойства", () => {
+    it("возвращает пустую строку для lobbyCode когда lobbyId не установлен", () => {
+      wrapper = createComponent();
+      expect(wrapper.vm.lobbyCode).toBe("");
     });
 
-    it("shows exit confirmation when Exit button is clicked", async () => {
-      wrapper = createWrapper();
-
-      const buttons = wrapper.findAllComponents(BaseButton);
-      const exitButton = buttons.find(
-        (button) => button.props("label") === "Exit"
-      );
-
-      await exitButton.trigger("click");
-
-      expect(Modal.confirm).toHaveBeenCalled();
+    it("возвращает строковое представление lobbyId для lobbyCode", () => {
+      mockRoute.query.id = "456";
+      wrapper = createComponent();
+      expect(wrapper.vm.lobbyCode).toBe("456");
     });
   });
 
-  describe("Modal Confirmations", () => {
-    it("shows exit confirmation modal with correct options", () => {
-      wrapper = createWrapper();
+  describe("Методы", () => {
+    describe("handleSettingsApply", () => {
+      beforeEach(() => {
+        mockRoute.query.id = "123";
+        wrapper = createComponent();
+        global.fetch.mockResolvedValue({
+          ok: true,
+          json: vi.fn(),
+        });
+      });
 
-      wrapper.vm.showExitConfirm();
+      it("отправляет настройки на сервер при успешном ответе", async () => {
+        const settings = { map: "forest", mafia: 2, time: "fast" };
 
-      expect(Modal.confirm).toHaveBeenCalledWith({
-        title: "Exit Game",
-        content: "Are you sure you want to exit the game?",
-        okText: "Yes, Exit",
-        cancelText: "Cancel",
-        okType: "danger",
-        centered: true,
-        onOk: expect.any(Function),
+        await wrapper.vm.handleSettingsApply(settings);
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/lobby/lobbies/123/settings",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ownerId: 1,
+              map: "forest",
+              time: "fast",
+              trapper: 2,
+            }),
+          }
+        );
+
+        expect(Modal.success).toHaveBeenCalledWith({
+          title: "Success",
+          content: "Settings updated",
+          okText: "OK",
+        });
+
+        expect(wrapper.vm.currentSettings).toEqual({
+          map: "forest",
+          mafia: 2,
+          time: "fast",
+        });
+      });
+
+      it("показывает ошибку при неудачном запросе", async () => {
+        global.fetch.mockResolvedValue({
+          ok: false,
+          status: 500,
+        });
+
+        const settings = { map: "forest" };
+
+        await wrapper.vm.handleSettingsApply(settings);
+
+        expect(Modal.error).toHaveBeenCalledWith({
+          title: "Error",
+          content: "Failed to update settings",
+          okText: "OK",
+        });
       });
     });
 
-    it("redirects to createLobby when exit confirmation is confirmed", () => {
-      wrapper = createWrapper();
+    describe("showExitConfirm", () => {
+      it("показывает модальное окно подтверждения выхода", () => {
+        wrapper = createComponent();
 
-      let savedOnOk;
-      Modal.confirm.mockImplementation((options) => {
-        savedOnOk = options.onOk;
-        return { destroy: vi.fn() };
+        wrapper.vm.showExitConfirm();
+
+        expect(Modal.confirm).toHaveBeenCalledWith({
+          title: "Exit Game",
+          content: "Are you sure you want to exit the game?",
+          okText: "Yes, Exit",
+          cancelText: "Cancel",
+          okType: "danger",
+          centered: true,
+          onOk: expect.any(Function),
+        });
+      });
+    });
+
+    describe("exitLobby", () => {
+      beforeEach(() => {
+        mockRoute.query.id = "123";
+        global.fetch.mockResolvedValue({
+          ok: true,
+          json: vi.fn(),
+        });
       });
 
-      wrapper.vm.showExitConfirm();
+      it("удаляет лобби когда пользователь является хостом", async () => {
+        mockRoute.query.mode = "create";
+        wrapper = createComponent();
 
-      expect(Modal.confirm).toHaveBeenCalled();
+        await wrapper.vm.exitLobby();
 
-      if (savedOnOk) {
-        savedOnOk();
-      }
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/lobby/lobbies/123/delete",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ownerId: 1,
+            }),
+          }
+        );
 
-      expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+        expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+      });
+
+      it("покидает лобби когда пользователь не является хостом", async () => {
+        mockRoute.query.mode = "join";
+        wrapper = createComponent();
+
+        await wrapper.vm.exitLobby();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/lobby/lobbies/123/leave",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: 2,
+            }),
+          }
+        );
+
+        expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+      });
+
+      it("показывает ошибку при неудачном удалении лобби", async () => {
+        mockRoute.query.mode = "create";
+        wrapper = createComponent();
+        global.fetch.mockResolvedValue({
+          ok: false,
+          status: 404,
+        });
+
+        await wrapper.vm.exitLobby();
+
+        expect(Modal.error).toHaveBeenCalledWith({
+          title: "Error",
+          content: "Failed to delete lobby: 404",
+          okText: "OK",
+        });
+        expect(mockRouter.push).not.toHaveBeenCalled();
+      });
+
+      it("показывает ошибку при неудачном выходе из лобби", async () => {
+        mockRoute.query.mode = "join";
+        wrapper = createComponent();
+        global.fetch.mockResolvedValue({
+          ok: false,
+          status: 500,
+        });
+
+        await wrapper.vm.exitLobby();
+
+        expect(Modal.error).toHaveBeenCalledWith({
+          title: "Error",
+          content: "Failed to leave lobby: 500",
+          okText: "OK",
+        });
+        expect(mockRouter.push).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("handleStart", () => {
+      it("определен но не реализован", () => {
+        wrapper = createComponent();
+        expect(typeof wrapper.vm.handleStart).toBe("function");
+
+        expect(() => wrapper.vm.handleStart()).not.toThrow();
+      });
     });
   });
 
-  describe("Settings Modal", () => {
-    it("closes settings modal when close event is emitted", async () => {
-      wrapper = createWrapper({ mode: "create" });
+  describe("Взаимодействие с модальным окном", () => {
+    it("скрывает модальное окно настроек при событии close", async () => {
+      mockRoute.query.mode = "create";
+      wrapper = createComponent();
       wrapper.vm.showSettings = true;
-      await wrapper.vm.$nextTick();
+      await flushPromises();
 
-      const settingsModal = wrapper.findComponent(UniversalModal);
-      expect(settingsModal.exists()).toBe(true);
-
-      settingsModal.vm.$emit("close");
+      const modal = wrapper.findComponent(UniversalModal);
+      modal.vm.$emit("close");
 
       expect(wrapper.vm.showSettings).toBe(false);
-    });
-
-    it("applies settings when settings-apply event is emitted", async () => {
-      wrapper = createWrapper({ mode: "create" });
-
-      const testSettings = { map: "cave", time: "medium" };
-      wrapper.vm.handleSettingsApply(testSettings);
-
-      expect(wrapper.vm.currentSettings).toEqual(testSettings);
-    });
-  });
-
-  describe("Component Lifecycle", () => {
-    it("sets isHost to true when created with create mode", () => {
-      wrapper = createWrapper({ mode: "create" });
-
-      expect(wrapper.vm.isHost).toBe(true);
-    });
-
-    it("sets isHost to false when created with join mode", () => {
-      wrapper = createWrapper({ mode: "join" });
-
-      expect(wrapper.vm.isHost).toBe(false);
     });
   });
 });

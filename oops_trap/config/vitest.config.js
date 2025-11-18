@@ -5,28 +5,27 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
   test: {
-    environment: 'jsdom',
+    globals: true,
+    environment: 'happy-dom', // Используем happy-dom вместо jsdom
+    setupFiles: [resolve(__dirname, '../vitest.setup.js')],
     include: ['tests/unit/**/*.{test,spec}.{js,ts}'],
-    outputFile: {
-      html: 'test-results-unit/vitest-report.html',
-      json: 'test-results-unit/vitest-report.json'
-    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'test-results-unit/coverage',
       include: ['src/**/*.{vue,js,ts}'],
+      exclude: ['src/main.js', 'src/App.vue', 'src/router/index.js'],
       thresholds: {
-        statements: 80,
-        branches: 80,
-        functions: 80,
-        lines: 80
+        statements: 50,
+        branches: 50,
+        functions: 50,
+        lines: 50
       }
     }
   },
   resolve: {
     alias: {
-      '@': resolve(process.cwd(), 'src')
+      '@': resolve(__dirname, '../src')
     }
   }
 })

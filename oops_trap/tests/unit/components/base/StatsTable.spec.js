@@ -1,225 +1,97 @@
 import { mount } from "@vue/test-utils";
-import { describe, it, expect, beforeEach } from "vitest";
 import StatsTable from "@/components/base/StatsTable.vue";
+import { describe, it, expect, afterEach } from "vitest";
 
-describe("StatsTable", () => {
+describe("StatsTable.vue", () => {
   let wrapper;
 
-  const defaultTableData = [
-    { map: "Vector", role: "trapmaker", time: "1:08" },
-    { map: "Lucky", role: "runner", time: "2:09" },
-    { map: "Vector", role: "runner", time: "1:15" },
-    { map: "Lucky", role: "trapmaker", time: "2:25" },
+  const mockData = [
+    { map: 1, role: "mafia", time: "2:05" },
+    { map: 2, role: "civilian", time: "3:15" },
+    { map: 1, role: "civilian", time: "1:45" },
   ];
 
-  const customData = [
-    { map: "Forest", role: "runner", time: "3:15" },
-    { map: "Desert", role: "trapmaker", time: "4:20" },
-  ];
-
-  const createWrapper = (props = {}) => {
+  const createWrapper = (propsData = {}) => {
     return mount(StatsTable, {
-      props: {
-        data: [],
-        ...props,
-      },
+      props: propsData,
     });
   };
 
-  describe("Initial Rendering", () => {
-    it("renders table with correct structure", () => {
+  afterEach(() => {
+    if (wrapper) {
+      wrapper.unmount();
+    }
+  });
+
+  describe("Рендеринг компонента", () => {
+    it("должен отображать заголовки таблицы", () => {
       wrapper = createWrapper();
 
-      const table = wrapper.find(".stats-table");
-      expect(table.exists()).toBe(true);
-
-      const thead = table.find("thead");
-      expect(thead.exists()).toBe(true);
-
-      const tbody = table.find("tbody");
-      expect(tbody.exists()).toBe(true);
-    });
-
-    it("renders correct table headers", () => {
-      wrapper = createWrapper();
-
-      const headers = wrapper.findAll(".stats-table__cell--header");
+      const headers = wrapper.findAll("th");
       expect(headers).toHaveLength(3);
       expect(headers[0].text()).toBe("Map");
       expect(headers[1].text()).toBe("Role");
       expect(headers[2].text()).toBe("Time");
     });
 
-    it("renders default table data when no props provided", () => {
-      wrapper = createWrapper();
+    it("должен отображать строки с данными", () => {
+      wrapper = createWrapper({ data: mockData });
 
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(defaultTableData.length);
+      const dataRows = wrapper.findAll("tbody tr");
+      expect(dataRows).toHaveLength(mockData.length);
 
-      const cells = wrapper.findAll(
-        ".stats-table__cell:not(.stats-table__cell--header)"
-      );
-      expect(cells).toHaveLength(defaultTableData.length * 3);
-
-      expect(cells[0].text()).toBe("Vector");
-      expect(cells[1].text()).toBe("trapmaker");
-      expect(cells[2].text()).toBe("1:08");
-    });
-  });
-
-  describe("Data Handling", () => {
-    it("uses prop data when provided", () => {
-      wrapper = createWrapper({ data: customData });
-
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(customData.length);
-
-      const cells = wrapper.findAll(
-        ".stats-table__cell:not(.stats-table__cell--header)"
-      );
-      expect(cells[0].text()).toBe("Forest");
-      expect(cells[1].text()).toBe("runner");
-      expect(cells[2].text()).toBe("3:15");
+      const firstRowCells = dataRows[0].findAll("td");
+      expect(firstRowCells[0].text()).toBe("1");
+      expect(firstRowCells[1].text()).toBe("mafia");
+      expect(firstRowCells[2].text()).toBe("2:05");
     });
 
-    it("uses default data when empty array prop is provided", () => {
+    it("должен отображать сообщение при отсутствии данных", () => {
       wrapper = createWrapper({ data: [] });
 
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(defaultTableData.length);
-    });
-
-    it("uses default data when no data prop is provided", () => {
-      wrapper = createWrapper();
-
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(defaultTableData.length);
-    });
-
-    it("handles data with different structures", () => {
-      const mixedData = [
-        { map: "Test", role: "test", time: "0:00" },
-        { map: "Another", role: "another", time: "1:11" },
-      ];
-
-      wrapper = createWrapper({ data: mixedData });
-
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(mixedData.length);
-
-      const cells = wrapper.findAll(
-        ".stats-table__cell:not(.stats-table__cell--header)"
-      );
-      expect(cells[0].text()).toBe("Test");
-      expect(cells[1].text()).toBe("test");
-      expect(cells[2].text()).toBe("0:00");
+      const emptyCell = wrapper.find('td[colspan="3"]');
+      expect(emptyCell.exists()).toBe(true);
+      expect(emptyCell.text()).toBe("No statistics available");
     });
   });
 
-  describe("Table Rows and Cells", () => {
-    beforeEach(() => {
-      wrapper = createWrapper();
+  describe("Watcher для props data", () => {
+    it("должен обновлять tableData при изменении props data", async () => {
+      wrapper = createWrapper({ data: [] });
+      expect(wrapper.vm.tableData).toEqual([]);
+
+      await wrapper.setProps({ data: mockData });
+      expect(wrapper.vm.tableData).toEqual(mockData);
     });
 
-    it("renders correct number of table rows", () => {
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(defaultTableData.length);
-    });
-
-    it("renders three cells per row", () => {
-      const rows = wrapper.findAll(".stats-table__row");
-
-      rows.forEach((row) => {
-        const cells = row.findAll(".stats-table__cell");
-        expect(cells).toHaveLength(3);
-      });
-    });
-
-    it("displays correct data in each row", () => {
-      const rows = wrapper.findAll(".stats-table__row");
-
-      defaultTableData.forEach((rowData, index) => {
-        const cells = rows[index].findAll(".stats-table__cell");
-        expect(cells[0].text()).toBe(rowData.map);
-        expect(cells[1].text()).toBe(rowData.role);
-        expect(cells[2].text()).toBe(rowData.time);
-      });
-    });
-  });
-
-  describe("Component Data", () => {
-    it("initializes with correct default tableData", () => {
-      wrapper = createWrapper();
-
-      expect(wrapper.vm.tableData).toEqual(defaultTableData);
-    });
-
-    it("initializes nickname as empty string", () => {
-      wrapper = createWrapper();
-
-      expect(wrapper.vm.nickname).toBe("");
-    });
-
-    it("updates tableData when prop data is provided in created hook", () => {
-      wrapper = createWrapper({ data: customData });
-
-      expect(wrapper.vm.tableData).toEqual(customData);
-    });
-
-    it("keeps default tableData when empty prop data is provided", () => {
+    it("должен обновлять отображение при изменении данных", async () => {
       wrapper = createWrapper({ data: [] });
 
-      expect(wrapper.vm.tableData).toEqual(defaultTableData);
+      let emptyCell = wrapper.find('td[colspan="3"]');
+      expect(emptyCell.exists()).toBe(true);
+
+      await wrapper.setProps({ data: mockData });
+
+      emptyCell = wrapper.find('td[colspan="3"]');
+      expect(emptyCell.exists()).toBe(false);
+
+      const dataRows = wrapper.findAll("tbody tr");
+      expect(dataRows).toHaveLength(mockData.length);
     });
   });
 
-  describe("Edge Cases", () => {
-    it("handles empty data array", () => {
-      wrapper = createWrapper({ data: [] });
+  describe("Обработка граничных случаев", () => {
+    it("должен работать с одним элементом в массиве", () => {
+      const singleItem = [{ map: 1, role: "mafia", time: "1:00" }];
+      wrapper = createWrapper({ data: singleItem });
 
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(defaultTableData.length);
-    });
+      const dataRows = wrapper.findAll("tbody tr");
+      expect(dataRows).toHaveLength(1);
 
-    it("handles single row of data", () => {
-      const singleRowData = [{ map: "Single", role: "test", time: "0:00" }];
-      wrapper = createWrapper({ data: singleRowData });
-
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(1);
-
-      const cells = rows[0].findAll(".stats-table__cell");
-      expect(cells[0].text()).toBe("Single");
-      expect(cells[1].text()).toBe("test");
-      expect(cells[2].text()).toBe("0:00");
-    });
-
-    it("handles large dataset", () => {
-      const largeData = Array.from({ length: 50 }, (_, i) => ({
-        map: `Map${i}`,
-        role: i % 2 === 0 ? "runner" : "trapmaker",
-        time: `${i}:${i.toString().padStart(2, "0")}`,
-      }));
-
-      wrapper = createWrapper({ data: largeData });
-
-      const rows = wrapper.findAll(".stats-table__row");
-      expect(rows).toHaveLength(50);
-    });
-
-    it("handles data with special characters", () => {
-      const specialData = [
-        { map: "Map & More", role: "runner/trapmaker", time: "1:30" },
-      ];
-
-      wrapper = createWrapper({ data: specialData });
-
-      const cells = wrapper.findAll(
-        ".stats-table__cell:not(.stats-table__cell--header)"
-      );
-      expect(cells[0].text()).toBe("Map & More");
-      expect(cells[1].text()).toBe("runner/trapmaker");
-      expect(cells[2].text()).toBe("1:30");
+      const cells = dataRows[0].findAll("td");
+      expect(cells[0].text()).toBe("1");
+      expect(cells[1].text()).toBe("mafia");
+      expect(cells[2].text()).toBe("1:00");
     });
   });
 });

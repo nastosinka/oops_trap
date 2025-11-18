@@ -1,246 +1,246 @@
-import { mount } from "@vue/test-utils";
-import { Modal } from "ant-design-vue";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount } from "@vue/test-utils";
 import CreateLobbyPage from "@/views/CreateLobbyPage.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
-import UniversalModal from "@/components/base/UniversalModal.vue";
 
-vi.mock("ant-design-vue", () => ({
-  Modal: {
-    confirm: vi.fn(),
-    success: vi.fn(),
+vi.mock("@/components/base/BaseButton.vue", () => ({
+  default: {
+    template: "<button><slot></slot></button>",
+    props: ["label", "size"],
   },
 }));
 
+vi.mock("@/components/base/UniversalModal.vue", () => ({
+  default: {
+    template: "<div><slot></slot></div>",
+    props: ["title", "type", "fields", "submitText", "statsData"],
+    emits: ["close", "submit"],
+  },
+}));
+
+vi.mock("ant-design-vue", () => ({
+  Modal: {
+    success: vi.fn(),
+    error: vi.fn(),
+    confirm: vi.fn(),
+  },
+}));
+
+vi.mock("@/utils/api-auth.js", () => ({
+  apiFetch: vi.fn(),
+}));
+
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
+
+global.localStorage = localStorageMock;
+
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([]),
+    text: () => Promise.resolve("[]"),
+  })
+);
+
 describe("CreateLobbyPage", () => {
   let wrapper;
-
-  const createWrapper = () => {
-    return mount(CreateLobbyPage, {
-      global: {
-        mocks: {
-          $router: {
-            push: vi.fn(),
-          },
-        },
-        components: {
-          BaseButton,
-          UniversalModal,
-        },
-      },
-    });
-  };
+  let mockRouter;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockRouter = {
+      push: vi.fn(),
+    };
+
+    localStorageMock.getItem.mockReturnValue(
+      JSON.stringify({
+        name: "TestUser",
+      })
+    );
+
+    global.fetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+        text: () => Promise.resolve("[]"),
+      })
+    );
+
+    wrapper = mount(CreateLobbyPage, {
+      global: {
+        mocks: {
+          $router: mockRouter,
+        },
+      },
+    });
   });
 
-  describe("Component Rendering", () => {
-    it("renders all main buttons", () => {
-      wrapper = createWrapper();
-
-      const buttons = wrapper.findAllComponents(BaseButton);
-      const buttonLabels = buttons.map((button) => button.props("label"));
-
-      expect(buttonLabels).toEqual([
-        "Rules",
-        "Create a lobby",
-        "Join the lobby",
-        "Exit",
-      ]);
+  describe("Базовый рендеринг", () => {
+    it("отображает страницу создания лобби", () => {
+      expect(wrapper.find(".create-lobby-page").exists()).toBe(true);
     });
 
-    it("displays nickname label and trophy icon", () => {
-      wrapper = createWrapper();
-
-      expect(wrapper.find(".nickname-label").text()).toBe("Nickname");
-      expect(wrapper.find(".trophy-icon").exists()).toBe(true);
+    it("показывает никнейм пользователя из localStorage", () => {
+      expect(wrapper.find(".nickname-label").text()).toBe("TestUser");
     });
 
-    it("shows stats data in component data", () => {
-      wrapper = createWrapper();
+    it('показывает "Guest" если пользователь не найден', async () => {
+      localStorageMock.getItem.mockReturnValue(null);
 
-      expect(wrapper.vm.statsData).toHaveLength(16);
-      expect(wrapper.vm.statsData[0]).toEqual({
-        map: "Vector",
-        role: "trapmaker",
-        time: "1:08",
+      const localWrapper = mount(CreateLobbyPage, {
+        global: {
+          mocks: {
+            $router: mockRouter,
+          },
+        },
       });
+
+      expect(localWrapper.find(".nickname-label").text()).toBe("Guest");
     });
   });
 
-  describe("Modal Windows", () => {
-    it("opens rules modal when Rules button is clicked", async () => {
-      wrapper = createWrapper();
-
-      const rulesButton = wrapper
-        .findAllComponents(BaseButton)
-        .find((button) => button.props("label") === "Rules");
-
-      await rulesButton.trigger("click");
-
-      expect(wrapper.vm.showRulesModal).toBe(true);
-    });
-
-    it("opens join lobby modal when Join the lobby button is clicked", async () => {
-      wrapper = createWrapper();
-
-      const joinButton = wrapper
-        .findAllComponents(BaseButton)
-        .find((button) => button.props("label") === "Join the lobby");
-
-      await joinButton.trigger("click");
-
-      expect(wrapper.vm.showJoinLobby).toBe(true);
-    });
-
-    it("opens stats modal when trophy icon is clicked", async () => {
-      wrapper = createWrapper();
-
+  describe("Управление состоянием модальных окон", () => {
+    it("открывает модалку статистики при клике на трофей", async () => {
+      expect(wrapper.vm.showStatsModal).toBe(false);
       await wrapper.find(".trophy-icon").trigger("click");
-
       expect(wrapper.vm.showStatsModal).toBe(true);
     });
 
-    it("closes modals when close event is emitted", async () => {
-      wrapper = createWrapper();
-
+    it("открывает модалку правил", async () => {
       await wrapper.setData({ showRulesModal: true });
-      const rulesModal = wrapper.findComponent(UniversalModal);
-      rulesModal.vm.$emit("close");
-      expect(wrapper.vm.showRulesModal).toBe(false);
+      expect(wrapper.vm.showRulesModal).toBe(true);
+    });
 
+    it("открывает модалку присоединения к лобби", async () => {
       await wrapper.setData({ showJoinLobby: true });
-      const joinModal = wrapper.findComponent(UniversalModal);
-      joinModal.vm.$emit("close");
-      expect(wrapper.vm.showJoinLobby).toBe(false);
-
-      await wrapper.setData({ showStatsModal: true });
-      const statsModal = wrapper.findComponent(UniversalModal);
-      statsModal.vm.$emit("close");
-      expect(wrapper.vm.showStatsModal).toBe(false);
+      expect(wrapper.vm.showJoinLobby).toBe(true);
     });
   });
 
-  describe("Navigation Methods", () => {
-    it("navigates to lobby with create mode when createLobby is called", () => {
-      wrapper = createWrapper();
-
-      wrapper.vm.createLobby();
-
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith(
-        "/lobby?mode=create"
-      );
-    });
-
-    it("navigates to lobby without mode when joinLobby is called", () => {
-      wrapper = createWrapper();
-
-      wrapper.vm.joinLobby();
-
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/lobby");
-    });
-
-    it("handles join lobby form submission", async () => {
-      wrapper = createWrapper();
-
-      await wrapper.setData({ showJoinLobby: true });
-
-      const joinModal = wrapper.findComponent(UniversalModal);
-      joinModal.vm.$emit("submit", { lobbyCode: "ABC123" });
-
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/lobby");
-    });
-  });
-
-  describe("Exit Confirmation", () => {
-    it("shows exit confirmation when Exit button is clicked", async () => {
-      wrapper = createWrapper();
-
-      const exitButton = wrapper
-        .findAllComponents(BaseButton)
-        .find((button) => button.props("label") === "Exit");
-
-      await exitButton.trigger("click");
-
-      expect(Modal.confirm).toHaveBeenCalledWith({
-        title: "Exit Game",
-        content: "Are you sure you want to exit the game?",
-        okText: "Yes, Exit",
-        cancelText: "Cancel",
-        okType: "danger",
-        centered: true,
-        onOk: expect.any(Function),
+  describe("Создание лобби", () => {
+    it("успешно создает лобби и перенаправляет", async () => {
+      const { apiFetch } = await import("@/utils/api-auth.js");
+      apiFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ id: 123 })),
       });
+
+      await wrapper.vm.createLobby();
+
+      expect(apiFetch).toHaveBeenCalledWith("/api/lobby/newlobby", {
+        method: "POST",
+        body: JSON.stringify({ ownerId: 1 }),
+      });
+      expect(mockRouter.push).toHaveBeenCalledWith("/lobby?id=123&mode=create");
     });
 
-    it("calls exitGame when exit confirmation is confirmed", () => {
-      wrapper = createWrapper();
+    it("обрабатывает ошибку при создании лобби", async () => {
+      const { apiFetch } = await import("@/utils/api-auth.js");
+      const { Modal } = await import("ant-design-vue");
 
-      wrapper.vm.showExitConfirm();
-      const onOkCallback = Modal.confirm.mock.calls[0][0].onOk;
-      onOkCallback();
+      apiFetch.mockResolvedValue({
+        ok: false,
+        text: () => Promise.resolve("Error message"),
+      });
 
+      await wrapper.vm.createLobby();
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("Выход из игры", () => {
+    it("показывает подтверждение выхода", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.showExitConfirm();
+
+      expect(Modal.confirm).toHaveBeenCalled();
+    });
+
+    it("выходит из игры и очищает localStorage", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.exitGame();
+
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith("token");
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith("user");
       expect(Modal.success).toHaveBeenCalled();
     });
+  });
 
-    it("shows success modal and navigates to home when exitGame is called", () => {
-      wrapper = createWrapper();
-
-      wrapper.vm.exitGame();
-
-      expect(Modal.success).toHaveBeenCalledWith({
-        title: "Game Exited",
-        content: "Thank you for playing!",
-        okText: "OK",
-        onOk: expect.any(Function),
+  describe("Присоединение к лобби", () => {
+    it("успешно присоединяется к лобби", async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({})),
       });
+
+      await wrapper.vm.joinLobby({ lobbyCode: "123" });
+
+      expect(global.fetch).toHaveBeenCalledWith("/api/lobby/lobbies/123/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: 2,
+        }),
+      });
+      expect(mockRouter.push).toHaveBeenCalledWith("/lobby?id=123&mode=join");
+    });
+
+    it("обрабатывает невалидный код лобби", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.joinLobby({ lobbyCode: "invalid" });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+
+    it("обрабатывает ошибку при присоединении", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      global.fetch.mockResolvedValue({
+        ok: false,
+        text: () => Promise.resolve("Error"),
+      });
+
+      await wrapper.vm.joinLobby({ lobbyCode: "123" });
+
+      expect(Modal.error).toHaveBeenCalled();
     });
   });
 
-  describe("Modal Props", () => {
-    it("passes correct props to stats modal", async () => {
-      wrapper = createWrapper();
-      await wrapper.setData({ showStatsModal: true });
-
-      const statsModal = wrapper
-        .findAllComponents(UniversalModal)
-        .find((modal) => modal.props("type") === "stats");
-
-      expect(statsModal.props()).toMatchObject({
-        title: "",
-        type: "stats",
-        statsData: wrapper.vm.statsData,
-      });
+  describe("Дополнительные тесты", () => {
+    it("инициализируется с правильными начальными значениями", () => {
+      expect(wrapper.vm.showRulesModal).toBe(false);
+      expect(wrapper.vm.showJoinLobby).toBe(false);
+      expect(wrapper.vm.showStatsModal).toBe(false);
+      expect(wrapper.vm.isLoadingStats).toBe(false);
     });
 
-    it("passes correct props to join lobby modal", async () => {
-      wrapper = createWrapper();
-      await wrapper.setData({ showJoinLobby: true });
-
-      const joinModal = wrapper
-        .findAllComponents(UniversalModal)
-        .find((modal) => modal.props("fields")?.includes("lobbyCode"));
-
-      expect(joinModal.props()).toMatchObject({
-        title: "",
-        fields: ["lobbyCode"],
-        submitText: "Join",
-      });
+    it("имеет computed user из localStorage", () => {
+      expect(wrapper.vm.user).toEqual({ name: "TestUser" });
     });
 
-    it("passes correct props to rules modal", async () => {
-      wrapper = createWrapper();
-      await wrapper.setData({ showRulesModal: true });
+    it("обрабатывает JSON parse ошибку в createLobby", async () => {
+      const { apiFetch } = await import("@/utils/api-auth.js");
+      const { Modal } = await import("ant-design-vue");
 
-      const rulesModal = wrapper
-        .findAllComponents(UniversalModal)
-        .find((modal) => modal.props("type") === "rules");
-
-      expect(rulesModal.props()).toMatchObject({
-        title: "",
-        type: "rules",
+      apiFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve("invalid json"),
       });
+
+      await wrapper.vm.createLobby();
+
+      expect(Modal.error).toHaveBeenCalled();
     });
   });
 });
