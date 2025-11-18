@@ -2,6 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const prisma = require('../db/prismaClient');
+const fs = require('fs').promises;
+const path = require('path');
 
 const router = express.Router();
 
@@ -116,7 +118,10 @@ router.post('/login', async (req, res) => {
 
   try {
     if (!username || !password) {
-      return res.status(400).json({ error: 'Введите имя пользователя и пароль', code: 400 });
+      return res.status(400).json({ 
+        error: 'Введите имя пользователя и пароль', 
+        code: 400 
+      });
     }
 
     const user = await prisma.user.findUnique({
@@ -124,12 +129,18 @@ router.post('/login', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: `Неверное имя пользователя или пароль [username] ${username} and ${password}`, code: 401 });
+      return res.status(401).json({ 
+        error: 'Неверное имя пользователя или пароль', 
+        code: 401 
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: `Неверное имя пользователя или пароль [password] ${password} and ${user.password}`, code: 401 });
+      return res.status(401).json({ 
+        error: 'Неверное имя пользователя или пароль', 
+        code: 401 
+      });
     }
 
     const token = jwt.sign(
@@ -152,7 +163,10 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Ошибка при авторизации:', err);
-    res.status(500).json({ error: 'Ошибка сервера при авторизации', code: 500 });
+    res.status(500).json({ 
+      error: 'Ошибка сервера при авторизации', 
+      code: 500 
+    });
   }
 });
 
