@@ -124,8 +124,8 @@ function broadcast(gameId, message) {
 function activeGame(game) {
     game.stats = game.players.map((player) => ({
       userId: player.id,
-      role: 'runner',
-      time: null, 
+      role: true,
+      time: 4, 
       result: 0,
       map: game.map
     }));
