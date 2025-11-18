@@ -275,10 +275,8 @@ router.post('/lobbies/:id/status', async (req, res) => {
       });
     }
 
-    // Сохраняем предыдущий статус ДО изменений
     const previousStatus = lobby.status;
 
-    // Проверки для начала игры
     if (newStatus === 'in-progress' && previousStatus === "waiting") {
       const errors = [];
 
@@ -286,7 +284,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
         errors.push('Cannot start game: at least 2 players required');
       }
 
-      // Дополнительные проверки - ИСПРАВЛЕНЫ УСЛОВИЯ
       if (!lobby.trapper) {
         errors.push('Trapper is not assigned');
       }
@@ -306,7 +303,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
           details: errors 
         });
       }
-      // Создание игры из лобби
       const game = {
         id: nextGameId++,
         lobbyId: lobby.id,
@@ -324,15 +320,13 @@ router.post('/lobbies/:id/status', async (req, res) => {
       lobby.status = newStatus;
       console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
       
-      // Обновляем статус игры в лобби
+
       lobby.currentGameId = game.id;
-      // Создаем игровую сессию и получаем статистику
       game.stats = await createGameSession(game);
       console.log('Game ended with stats:', game.stats);
       lobby.status = 'finished';
     }
 
-    // Проверки для завершения игры
     if (newStatus === 'finished') {
       if (lobby.status !== 'in-progress') {
         return res.status(400).json({ 
@@ -340,7 +334,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
         });
       }
       
-      // Если есть активная игра, завершаем ее
       if (lobby.currentGameId) {
         const game = games.get(lobby.currentGameId);
         if (game) {
@@ -354,7 +347,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
 
     }
 
-    // Проверки для возврата в ожидание
     if (newStatus === 'waiting') {
       if (lobby.status !== 'finished') {
         return res.status(400).json({ 
@@ -362,7 +354,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
         });
       }
       
-      // Сброс игровых настроек для новой игры
       lobby.currentGameId = null;
       console.log(`Lobby ${lobbyId} reset for new game`);
       lobby.status = newStatus;
@@ -382,7 +373,6 @@ router.post('/lobbies/:id/status', async (req, res) => {
         playerCount: lobby.players.length,
         currentGameId: lobby.currentGameId || null
       },
-      // Если начали игру, возвращаем информацию о ней
       ...(newStatus === 'in-progress' && lobby.currentGameId && {
         game: {
           id: lobby.currentGameId,

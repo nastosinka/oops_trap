@@ -16,7 +16,6 @@ router.get('/users', async (req, res) => {
       select: {
         id: true,
         name: true,
-        // Исключаем пароль из ответа!
       },
     });
 
@@ -40,7 +39,6 @@ router.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Валидация входных данных
     if (!username || !password) {
       return res.status(400).json({ 
         error: 'Введите имя пользователя и пароль', 
@@ -48,7 +46,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Проверка минимальной длины пароля
     if (password.length < 6) {
       return res.status(400).json({ 
         error: 'Пароль должен содержать минимум 6 символов', 
@@ -56,7 +53,6 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Проверка, что пользователь уже существует
     const existingUser = await prisma.user.findUnique({
       where: { name: username },
     });
@@ -68,11 +64,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Хеширование пароля
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Создание пользователя
     const newUser = await prisma.user.create({
       data: {
         name: username,
@@ -81,7 +75,6 @@ router.post('/register', async (req, res) => {
     });
 
 
-    // Генерация JWT токена
     const token = jwt.sign(
       {
         id: newUser.id,
@@ -91,7 +84,6 @@ router.post('/register', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Успешный ответ
     res.status(201).json({
       message: 'Пользователь успешно зарегистрирован',
       token,
@@ -104,7 +96,6 @@ router.post('/register', async (req, res) => {
   } catch (err) {
     console.error('Ошибка при регистрации:', err);
     
-    // Обработка ошибок Prisma
     if (err.code === 'P2002') {
       return res.status(409).json({ 
         error: 'Пользователь с таким именем уже существует', 
