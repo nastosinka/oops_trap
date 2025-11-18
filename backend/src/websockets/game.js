@@ -61,12 +61,14 @@ function setupGameWebSocket(server) {
 
 //Создание игровой сессии (вызывается при старте игры)
 function createGameSession(game) {
+  return new Promise((resolve) => {
     const session = {
         gameId: game.id,
         game,
         players: [],
         waitTimer: null,
-        gameTimer: null
+        gameTimer: null,
+        stats: []
     };
 
     // Добавляем всех подключённых игроков, которые в этом лобби
@@ -96,13 +98,17 @@ function createGameSession(game) {
             console.log(`Game ${game.id} ended!`);
             session.game.status = 'finished';
             broadcast(session.gameId, { type: 'game-end', message: 'Game finished' });
-
+            // Мейби тут логика игры будет???
+            const stats = activeGame(game);
+            console.log(session.stats); // 1
             // Очищаем сессию
             clearTimeout(session.waitTimer);
             clearTimeout(session.gameTimer);
             gameSessions.delete(game.id);
+            resolve(stats);
         }, 20000); // тест 20с игра
     }, 10000); // тест 10с ожидание
+    });
 }
 
 //Отправка сообщения всем игрокам в сессии
@@ -113,6 +119,17 @@ function broadcast(gameId, message) {
     for (const ws of session.players) {
         if (ws.readyState === WebSocket.OPEN) ws.send(payload);
     }
+}
+
+function activeGame(game) {
+    game.stats = game.players.map((player) => ({
+      userId: player.id,
+      role: 'runner',
+      time: null, 
+      result: 0,
+      map: game.map
+    }));
+    return game.stats;
 }
 
 module.exports = { setupGameWebSocket, createGameSession, broadcast, gameSessions };

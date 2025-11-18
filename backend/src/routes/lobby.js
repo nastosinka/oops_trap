@@ -240,6 +240,7 @@ router.get('/lobbies/:id/settings', async (req, res) => {
 });
 
 
+
 router.post('/lobbies/:id/status', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -274,13 +275,30 @@ router.post('/lobbies/:id/status', async (req, res) => {
       });
     }
 
-    if (newStatus === 'in-progress') {
+    // Сохраняем предыдущий статус ДО изменений
+    const previousStatus = lobby.status;
+
+    // Проверки для начала игры
+    if (newStatus === 'in-progress' && previousStatus === "waiting") {
       const errors = [];
 
       if (lobby.players.length < 2) {
         errors.push('Cannot start game: at least 2 players required');
       }
-      //дописать проверки
+
+      // Дополнительные проверки - ИСПРАВЛЕНЫ УСЛОВИЯ
+      if (!lobby.trapper) {
+        errors.push('Trapper is not assigned');
+      }
+      if (!lobby.map) {
+        errors.push('Map is not selected');
+      }
+      if (!lobby.time) {
+        errors.push('Time setting is not selected');
+      }
+      if (lobby.players.length > 5) {
+        errors.push('Too many players (max 5 allowed)');
+      }
 
       if (errors.length > 0) {
         return res.status(400).json({ 
@@ -288,7 +306,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
           details: errors 
         });
       }
-      //Создание игры из лобби
+      // Создание игры из лобби
       const game = {
         id: nextGameId++,
         lobbyId: lobby.id,
@@ -300,33 +318,49 @@ router.post('/lobbies/:id/status', async (req, res) => {
       };
 
       games.set(game.id, game);
-      createGameSession(game);
-      //createGameFromLobby(game);
+      
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
-
+      lobby.status = newStatus;
+      console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
+      
+      // Обновляем статус игры в лобби
+      lobby.currentGameId = game.id;
+      // Создаем игровую сессию и получаем статистику
+      const stats = await createGameSession(game);
+      console.log('Game ended with stats:', stats);
     }
 
-    if (newStatus === 'finished' && lobby.status !== 'in-progress') {
-      return res.status(400).json({ 
-        error: 'Cannot finish lobby that is not in progress' 
-      });
-    }
-
-    if (newStatus === 'waiting' && lobby.status !== 'finished') {
-      return res.status(400).json({ 
-        error: 'Cannot waiting lobby that is not finished' 
-      });
-    }
-
-    const previousStatus = lobby.status;
-    
-    lobby.status = newStatus;
-    //game.status = newStatus;
-    console.log(` Статус лобби ${lobbyId} изменен: ${previousStatus} -> ${newStatus}`);
-    
+    // Проверки для завершения игры
     if (newStatus === 'finished') {
-      console.log(` Игра в лобби ${lobbyId} завершена`);
-      // дописать статы
+      if (lobby.status !== 'in-progress') {
+        return res.status(400).json({ 
+          error: 'Cannot finish lobby that is not in progress' 
+        });
+      }
+      
+      // Если есть активная игра, завершаем ее
+      if (lobby.currentGameId) {
+        const game = games.get(lobby.currentGameId);
+        if (game) {
+          game.status = 'finished';
+          console.log(`Game ${game.id} finished with lobby ${lobby.id}`);
+        }
+      }
+      
+      console.log(`Game in lobby ${lobbyId} completed`);
+    }
+
+    // Проверки для возврата в ожидание
+    if (newStatus === 'waiting') {
+      if (lobby.status !== 'finished') {
+        return res.status(400).json({ 
+          error: 'Cannot set lobby to waiting that is not finished' 
+        });
+      }
+      
+      // Сброс игровых настроек для новой игры
+      lobby.currentGameId = null;
+      console.log(`Lobby ${lobbyId} reset for new game`);
     }
 
     res.status(200).json({ 
@@ -340,8 +374,16 @@ router.post('/lobbies/:id/status', async (req, res) => {
         time: lobby.time,
         trapper: lobby.trapper,
         players: lobby.players,
-        playerCount: lobby.players.length
-      }
+        playerCount: lobby.players.length,
+        currentGameId: lobby.currentGameId || null
+      },
+      // Если начали игру, возвращаем информацию о ней
+      ...(newStatus === 'in-progress' && lobby.currentGameId && {
+        game: {
+          id: lobby.currentGameId,
+          stats: games.get(lobby.currentGameId)?.stats || []
+        }
+      })
     });
   } catch (error) {
     console.error('Error updating lobby status:', error);
