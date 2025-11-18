@@ -4,7 +4,7 @@
       <div class="trophy-icon" @click="showStatsModal = true">
         <i class="mdi mdi-trophy"></i>
       </div>
-      <div class="nickname-label">{{ user.name }}</div>
+      <div class="nickname-label">{{ user?.name || "Guest" }}</div>
     </div>
 
     <div class="create-lobby-container">
@@ -170,7 +170,7 @@ export default {
         return processedData;
       } catch (error) {
         this.statsData = [];
-        throw new Error("Fetch error:", error);
+        throw new Error(`Fetch error: ${error.message}`);
       }
     },
     async joinLobby(formData) {

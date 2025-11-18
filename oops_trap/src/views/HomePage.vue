@@ -57,6 +57,12 @@ export default {
     };
   },
 
+  mounted() {
+    setTimeout(() => {
+      throw new Error("Global Timeout Error Test");
+    }, 1000);
+  },
+
   methods: {
     handleSignUp() {
       // Логика регистрации

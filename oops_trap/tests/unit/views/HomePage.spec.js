@@ -1,71 +1,275 @@
-import { mount } from "@vue/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
 import HomePage from "@/views/HomePage.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 
-vi.mock("@/utils/notification-wrapper", () => ({
-  showSuccess: vi.fn(),
-  showError: vi.fn(),
-}));
+vi.mock("@/utils/notification-wrapper", () => {
+  return {
+    showSuccess: vi.fn(),
+  };
+});
 
 describe("HomePage", () => {
   let wrapper;
+  let showSuccessMock;
+  let fetchMock;
+  let localStorageMock;
+  let mockRouter;
+  let mockToast;
 
-  const createWrapper = () => {
+  const createComponent = (options = {}) => {
     return mount(HomePage, {
       global: {
         mocks: {
-          $router: {
-            push: vi.fn(),
-          },
+          $router: mockRouter,
+          $toast: mockToast,
         },
-        components: {
-          BaseButton,
-          UniversalModal,
+        stubs: {
+          BaseButton: true,
+          UniversalModal: true,
         },
       },
+      ...options,
     });
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    showSuccessMock = vi.mocked(
+      (await import("@/utils/notification-wrapper")).showSuccess
+    );
+
+    fetchMock = vi.fn();
+    global.fetch = fetchMock;
+
+    localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    };
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+      writable: true,
+    });
+
+    mockRouter = {
+      push: vi.fn(),
+    };
+
+    mockToast = {
+      error: vi.fn(),
+    };
+
     vi.clearAllMocks();
   });
 
-  describe("Form Submission", () => {
-    it("handles sign up form submission", async () => {
-      wrapper = createWrapper();
+  describe("Рендеринг", () => {
+    it("отображает все кнопки", () => {
+      wrapper = createComponent();
 
-      expect(() => wrapper.vm.handleSignUp()).not.toThrow();
+      const buttons = wrapper.findAllComponents(BaseButton);
+      const buttonLabels = buttons.map((button) => button.attributes("label"));
 
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/createLobby");
+      expect(buttonLabels).toContain("Sign Up");
+      expect(buttonLabels).toContain("Sign On");
+      expect(buttonLabels).toContain("Rules");
     });
 
-    it("handles sign on form submission", async () => {
-      wrapper = createWrapper();
+    it("изначально не показывает модальные окна", () => {
+      wrapper = createComponent();
 
-      expect(() => wrapper.vm.handleSignOn()).not.toThrow();
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/createLobby");
+      const modals = wrapper.findAllComponents(UniversalModal);
+      expect(modals).toHaveLength(0);
+    });
+  });
+
+  describe("Открытие модальных окон", () => {
+    it("показывает модальное окно Sign Up при клике на кнопку", async () => {
+      wrapper = createComponent();
+
+      const signUpButton = wrapper
+        .findAllComponents(BaseButton)
+        .find((button) => button.attributes("label") === "Sign Up");
+      await signUpButton.trigger("click");
+
+      expect(wrapper.vm.showSignUpModal).toBe(true);
     });
 
-    it("emits submit event from sign up modal", async () => {
-      wrapper = createWrapper();
+    it("показывает модальное окно Sign On при клике на кнопку", async () => {
+      wrapper = createComponent();
+
+      const signOnButton = wrapper
+        .findAllComponents(BaseButton)
+        .find((button) => button.attributes("label") === "Sign On");
+      await signOnButton.trigger("click");
+
+      expect(wrapper.vm.showSignOnModal).toBe(true);
+    });
+
+    it("показывает модальное окно Rules при клике на кнопку", async () => {
+      wrapper = createComponent();
+
+      const rulesButton = wrapper
+        .findAllComponents(BaseButton)
+        .find((button) => button.attributes("label") === "Rules");
+      await rulesButton.trigger("click");
+
+      expect(wrapper.vm.showRulesModal).toBe(true);
+    });
+  });
+
+  describe("Закрытие модальных окон", () => {
+    it("закрывает модальное окно Sign Up при событии close", async () => {
+      wrapper = createComponent();
       await wrapper.setData({ showSignUpModal: true });
+      await flushPromises();
 
-      const modal = wrapper.findComponent(UniversalModal);
-      modal.vm.$emit("submit", {});
+      const modal = wrapper.findAllComponents(UniversalModal)[0];
+      modal.vm.$emit("close");
 
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/createLobby");
+      expect(wrapper.vm.showSignUpModal).toBe(false);
     });
 
-    it("emits submit event from sign on modal", async () => {
-      wrapper = createWrapper();
+    it("закрывает модальное окно Sign On при событии close", async () => {
+      wrapper = createComponent();
       await wrapper.setData({ showSignOnModal: true });
+      await flushPromises();
 
-      const modal = wrapper.findComponent(UniversalModal);
-      modal.vm.$emit("submit", {});
+      const modal = wrapper.findAllComponents(UniversalModal)[0];
+      modal.vm.$emit("close");
 
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith("/createLobby");
+      expect(wrapper.vm.showSignOnModal).toBe(false);
+    });
+
+    it("закрывает модальное окно Rules при событии close", async () => {
+      wrapper = createComponent();
+      await wrapper.setData({ showRulesModal: true });
+      await flushPromises();
+
+      const modal = wrapper.findAllComponents(UniversalModal)[0];
+      modal.vm.$emit("close");
+
+      expect(wrapper.vm.showRulesModal).toBe(false);
+    });
+  });
+
+  describe("Методы", () => {
+    describe("handleSignOn", () => {
+      beforeEach(() => {
+        fetchMock.mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              token: "test-token",
+              user: { id: 1, username: "testuser" },
+            }),
+        });
+      });
+
+      it("успешно выполняет вход и перенаправляет", async () => {
+        wrapper = createComponent();
+        await wrapper.setData({ showSignOnModal: true });
+
+        const values = { name: "testuser", password: "password123" };
+        await wrapper.vm.handleSignOn(values);
+
+        expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "testuser",
+            password: "password123",
+          }),
+        });
+
+        expect(localStorageMock.setItem).toHaveBeenCalledWith(
+          "token",
+          "test-token"
+        );
+        expect(localStorageMock.setItem).toHaveBeenCalledWith(
+          "user",
+          JSON.stringify({ id: 1, username: "testuser" })
+        );
+
+        expect(wrapper.vm.showSignOnModal).toBe(false);
+        expect(showSuccessMock).toHaveBeenCalledWith("Login successful!");
+        expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+      });
+
+      it("обрабатывает ошибку при неудачном входе", async () => {
+        fetchMock.mockResolvedValue({
+          ok: false,
+          json: () =>
+            Promise.resolve({
+              error: "Invalid credentials",
+            }),
+        });
+
+        wrapper = createComponent();
+        await wrapper.setData({ showSignOnModal: true });
+
+        const values = { name: "testuser", password: "wrongpassword" };
+        await wrapper.vm.handleSignOn(values);
+
+        expect(mockToast.error).toHaveBeenCalledWith("Invalid credentials");
+        expect(wrapper.vm.showSignOnModal).toBe(true);
+      });
+
+      it("обрабатывает сетевые ошибки", async () => {
+        fetchMock.mockRejectedValue(new Error("Network error"));
+
+        wrapper = createComponent();
+        await wrapper.setData({ showSignOnModal: true });
+
+        const values = { name: "testuser", password: "password123" };
+        await wrapper.vm.handleSignOn(values);
+
+        expect(mockToast.error).toHaveBeenCalledWith("Network error");
+        expect(wrapper.vm.showSignOnModal).toBe(true);
+      });
+
+      it("обрабатывает ошибку когда response.json() выбрасывает исключение", async () => {
+        fetchMock.mockResolvedValue({
+          ok: false,
+          json: () => Promise.reject(new Error("JSON parse error")),
+        });
+
+        wrapper = createComponent();
+        await wrapper.setData({ showSignOnModal: true });
+
+        const values = { name: "testuser", password: "password123" };
+        await wrapper.vm.handleSignOn(values);
+
+        expect(mockToast.error).toHaveBeenCalledWith("JSON parse error");
+      });
+    });
+  });
+
+  describe("Локальное хранилище", () => {
+    it("сохраняет токен и пользователя в localStorage при успешном входе", async () => {
+      const mockUser = { id: 1, username: "testuser", email: "test@test.com" };
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            token: "auth-token-123",
+            user: mockUser,
+          }),
+      });
+
+      wrapper = createComponent();
+      const values = { name: "testuser", password: "password123" };
+      await wrapper.vm.handleSignOn(values);
+
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "token",
+        "auth-token-123"
+      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "user",
+        JSON.stringify(mockUser)
+      );
     });
   });
 });

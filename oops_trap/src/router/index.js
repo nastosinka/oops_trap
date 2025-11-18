@@ -18,11 +18,6 @@ const routes = [
     component: () => import("@/views/LobbyPage.vue"),
     meta: { requiresAuth: true },
   },
-  // {
-  //   path: '/results',
-  //   name: 'Results',
-  //   component: () => import('@/views/ResultsView.vue')
-  // }
 ];
 
 const router = createRouter({

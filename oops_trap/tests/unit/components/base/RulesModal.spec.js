@@ -116,7 +116,7 @@ describe("RulesModal", () => {
 
       const commonContent = wrapper.find(".accordion-content");
       expect(commonContent.text()).toContain("Basic Game Rules");
-      expect(commonContent.text()).toContain("2d стилистике"); // исправлено на строчную d
+      expect(commonContent.text()).toContain("2d стилистике");
       expect(commonContent.text()).toContain("личный кабинет");
 
       const trapmakerHeader = wrapper.findAll(".accordion-header")[1];
