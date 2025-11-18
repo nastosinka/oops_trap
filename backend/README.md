@@ -16,3 +16,7 @@
 Выбранные технологии:
 
 prisma orm, jwt, axios, dotenv, express.js, jest-test framework
+
+Запись глупи фронта: 
+
+- запуск докера на мак: sudo docker-compose -f docker-compose.prod.yml up --build -d
