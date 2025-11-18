@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from "vue";
 
 const gameId = 1; // получить из маршрута
 const userId = 2; // получить из auth
@@ -30,23 +30,23 @@ const stats = ref([]);
 const gameEnded = ref(false);
 
 onMounted(() => {
-  ws.value = new WebSocket('ws://localhost/ws/game');
+  ws.value = new WebSocket("ws://localhost/ws/game");
 
   ws.value.onopen = () => {
-    ws.value.send(JSON.stringify({ type: 'join', gameId, userId }));
+    ws.value.send(JSON.stringify({ type: "join", gameId, userId }));
   };
 
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
     switch (data.type) {
-      case 'GAME_START':
+      case "GAME_START":
         timeLeft.value = data.payload.timeLeft;
         break;
-      case 'TICK':
+      case "TICK":
         timeLeft.value = data.payload.timeLeft;
         break;
-      case 'GAME_END':
+      case "GAME_END":
         stats.value = data.payload.stats;
         gameEnded.value = true;
         break;
@@ -60,6 +60,6 @@ onUnmounted(() => {
 
 function exitToMenu() {
   ws.value?.close();
-  window.location.href = '/lobbies';
+  window.location.href = "/lobbies";
 }
 </script>
