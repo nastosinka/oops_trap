@@ -13,8 +13,10 @@ export default defineConfig(({ mode }) => {
       sentryVitePlugin({
         org: 'itmo-university-o4',
         project: 'javascript-vue',
+
         authToken: env.SENTRY_AUTH_TOKEN,
         release: 'myapp@1.0.0',
+
         sourceMaps: {
           include: ['dist'],
           ignore: ['node_modules'],

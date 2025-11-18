@@ -4,11 +4,15 @@
 
 const express = require('express');
 const prisma = require('../db/prismaClient');
+const { createGameSession} = require('../websockets/game');
 
 const router = express.Router();
-
 const lobbies = new Map();
 let nextLobbyId = 1;
+
+const games = new Map();
+module.exports = { lobbies, games };
+let nextGameId = 1;
 
 router.post('/newlobby', async (req, res) => {
   try {
@@ -81,6 +85,12 @@ router.post('/lobbies/:id/delete', async (req, res) => {
 
     if (lobby.ownerId !== ownerId) {
       return res.status(403).json({ error: 'Only lobby owner can delete the lobby' });
+    }
+
+    const relatedGame = Array.from(games.values()).find(g => g.lobbyId === lobbyId);
+    if (relatedGame) {
+      games.delete(relatedGame.id);
+      console.log(`Игра ${relatedGame.id} (из лобби ${lobbyId}) удалена`);
     }
 
     lobbies.delete(lobbyId);
@@ -230,6 +240,7 @@ router.get('/lobbies/:id/settings', async (req, res) => {
 });
 
 
+
 router.post('/lobbies/:id/status', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -264,13 +275,27 @@ router.post('/lobbies/:id/status', async (req, res) => {
       });
     }
 
-    if (newStatus === 'in-progress') {
+    const previousStatus = lobby.status;
+
+    if (newStatus === 'in-progress' && previousStatus === "waiting") {
       const errors = [];
 
       if (lobby.players.length < 2) {
         errors.push('Cannot start game: at least 2 players required');
       }
-      //дописать проверки
+
+      if (!lobby.trapper) {
+        errors.push('Trapper is not assigned');
+      }
+      if (!lobby.map) {
+        errors.push('Map is not selected');
+      }
+      if (!lobby.time) {
+        errors.push('Time setting is not selected');
+      }
+      if (lobby.players.length > 5) {
+        errors.push('Too many players (max 5 allowed)');
+      }
 
       if (errors.length > 0) {
         return res.status(400).json({ 
@@ -278,29 +303,60 @@ router.post('/lobbies/:id/status', async (req, res) => {
           details: errors 
         });
       }
+      const game = {
+        id: lobby.id,
+        lobbyId: lobby.id,
+        map: lobby.map,
+        trapper: lobby.trapper,
+        time: lobby.time,
+        players: lobby.players,
+        status: 'in-progress',
+        stats: []
+      };
+
+      games.set(game.id, game);
+      
+      console.log(`Game ${game.id} started from lobby ${lobby.id}`);
+      lobby.status = newStatus;
+      console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
+      
+
+      lobby.currentGameId = game.id;
+      game.stats = await createGameSession(game);
+      console.log('Game ended with stats:', game.stats);
+      lobby.status = 'finished';
     }
 
-    if (newStatus === 'finished' && lobby.status !== 'in-progress') {
-      return res.status(400).json({ 
-        error: 'Cannot finish lobby that is not in progress' 
-      });
-    }
-
-    if (newStatus === 'waiting' && lobby.status !== 'finished') {
-      return res.status(400).json({ 
-        error: 'Cannot waiting lobby that is not finished' 
-      });
-    }
-
-    const previousStatus = lobby.status;
-    
-    lobby.status = newStatus;
-
-    console.log(` Статус лобби ${lobbyId} изменен: ${previousStatus} -> ${newStatus}`);
-    
     if (newStatus === 'finished') {
-      console.log(` Игра в лобби ${lobbyId} завершена`);
-      // дописать статы
+      if (lobby.status !== 'in-progress') {
+        return res.status(400).json({ 
+          error: 'Cannot finish lobby that is not in progress' 
+        });
+      }
+      
+      if (lobby.currentGameId) {
+        const game = games.get(lobby.currentGameId);
+        if (game) {
+          game.status = 'finished';
+          console.log(`Game ${game.id} finished with lobby ${lobby.id}`);
+        }
+      }
+      
+      console.log(`Game in lobby ${lobbyId} completed`);
+      lobby.status = newStatus;
+
+    }
+
+    if (newStatus === 'waiting') {
+      if (lobby.status !== 'finished') {
+        return res.status(400).json({ 
+          error: 'Cannot set lobby to waiting that is not finished' 
+        });
+      }
+      games.delete(lobby.currentGameId);
+      lobby.currentGameId = null;
+      console.log(`Lobby ${lobbyId} reset for new game`);
+      lobby.status = newStatus;
     }
 
     res.status(200).json({ 
@@ -314,8 +370,15 @@ router.post('/lobbies/:id/status', async (req, res) => {
         time: lobby.time,
         trapper: lobby.trapper,
         players: lobby.players,
-        playerCount: lobby.players.length
-      }
+        playerCount: lobby.players.length,
+        currentGameId: lobby.currentGameId || null
+      },
+      ...(lobby.currentGameId && {
+        game: {
+          id: lobby.currentGameId,
+          stats: games.get(lobby.currentGameId)?.stats || []
+        }
+      })
     });
   } catch (error) {
     console.error('Error updating lobby status:', error);
@@ -452,6 +515,61 @@ router.post('/lobbies/:id/leave', async (req, res) => {
     }
   } catch (error) {
     console.error('Error leaving lobby:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =====================================
+// GET /api/lobby/lobbies/:id/users - получить список всех игроков из лобби
+router.get('/lobbies/:id/users', async (req, res) => {
+  try {
+    const lobbyId = parseInt(req.params.id);
+
+    if (isNaN(lobbyId) || lobbyId <= 0) {
+      return res.status(400).json({ error: 'Invalid lobby ID' });
+    }
+
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+
+    res.status(200).json({
+      lobbyId: lobby.id,
+      playerCount: lobby.players.length,
+      players: lobby.players
+    });
+  } catch (error) {
+    console.error('Error fetching lobby users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =====================================
+// GET /api/lobby/games - получить список всех активных игр (созданных из лобби)
+router.get('/games', (req, res) => {
+  try {
+    if (games.size === 0) {
+      return res.status(200).json({ message: 'No active games', games: [] });
+    }
+
+    const activeGames = Array.from(games.values()).map(game => ({
+      id: game.id,
+      lobbyId: game.lobbyId,
+      map: game.map,
+      trapper: game.trapper,
+      time: game.time,
+      playerCount: game.players.length,
+      players: game.players,
+      status: game.status
+    }));
+
+    res.status(200).json({
+      total: activeGames.length,
+      games: activeGames
+    });
+  } catch (error) {
+    console.error('Error fetching games:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
