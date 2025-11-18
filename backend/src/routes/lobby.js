@@ -324,6 +324,44 @@ router.post('/lobbies/:id/status', async (req, res) => {
       lobby.currentGameId = game.id;
       game.stats = await createGameSession(game);
       console.log('Game ended with stats:', game.stats);
+      
+try {
+  const updatePromises = game.stats.map(async (stat) => {
+    const statsData = {
+      id_user: stat.userId,
+      id_map: stat.map,
+      time: stat.time,
+      role: stat.role
+    };
+
+    console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
+    const response = await fetch('http://localhost:8080/api/stats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(statsData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log(`Статистика обновлена для пользователя ${stat.userId}:`, result);
+    return result;
+  });
+
+  const results = await Promise.all(updatePromises);
+  console.log('Все статистики обработаны:', results.filter(result => result !== null));
+
+  lobby.status = 'finished';
+  console.log('Статус лобби изменен на "finished"');
+
+} catch (error) {
+  console.error('Ошибка при обновлении статистик:', error);
+}
+
+
       lobby.status = 'finished';
     }
 
