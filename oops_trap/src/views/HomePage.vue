@@ -3,9 +3,7 @@
     <div class="home-container">
       <div class="buttons-container">
         <BaseButton label="Sign Up" @click="showSignUpModal = true" />
-
         <BaseButton label="Sign On" @click="showSignOnModal = true" />
-
         <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
     </div>
@@ -40,7 +38,9 @@
 <script>
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
+import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
+import { useUserStore } from "@/stores/user";
 
 export default {
   name: "HomePage",
@@ -57,22 +57,36 @@ export default {
     };
   },
 
-  mounted() {
-    setTimeout(() => {
-      throw new Error("Global Timeout Error Test");
-    }, 1000);
-  },
-
   methods: {
-    handleSignUp() {
-      // Логика регистрации
-      this.showSignInModal = false;
-      showSuccess("Login successful!");
-      this.$router.push("/createLobby");
+    handleSignUp(formData) {
+      try {
+        const userStore = useUserStore();
+        
+        // Сохраняем данные пользователя
+        const userData = {
+          name: formData.name,
+          id: Date.now(), // временный ID, в реальном приложении должен приходить с сервера
+        };
+        
+        userStore.setUser(userData);
+        
+        this.showSignUpModal = false;
+        showSuccess("Registration successful!");
+        this.$router.push("/createLobby");
+      } catch (error) {
+        console.error("Ошибка при регистрации:", error);
+        Modal.error({
+          title: "Error",
+          content: "Registration failed",
+          okText: "OK",
+        });
+      }
     },
 
     async handleSignOn(values) {
       try {
+        const userStore = useUserStore();
+        
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -88,15 +102,24 @@ export default {
           throw new Error(data.error || "Ошибка входа");
         }
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const userData = {
+          name: data.user?.name || values.name,
+          id: data.user?.id,
+        };
+
+        // Используем метод login из store
+        userStore.login(userData, data.token);
 
         this.showSignOnModal = false;
         showSuccess("Login successful!");
         this.$router.push("/createLobby");
       } catch (err) {
         console.error("Ошибка при входе:", err);
-        this.$toast?.error?.(err.message || "Ошибка входа"); // если есть уведомления
+        Modal.error({
+          title: "Error",
+          content: err.message || "Ошибка входа",
+          okText: "OK",
+        });
       }
     },
   },

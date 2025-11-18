@@ -4,7 +4,7 @@
       <div class="trophy-icon" @click="showStatsModal = true">
         <i class="mdi mdi-trophy"></i>
       </div>
-      <div class="nickname-label">{{ user?.name || "Guest" }}</div>
+      <div class="nickname-label">{{ userName }}</div>
     </div>
 
     <div class="create-lobby-container">
@@ -51,6 +51,8 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
 import { apiFetch } from "@/utils/api-auth.js";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
 
 export default {
   name: "CreateLobbyPage",
@@ -58,6 +60,18 @@ export default {
   components: {
     BaseButton,
     UniversalModal,
+  },
+
+  setup() {
+    const userStore = useUserStore();
+    const { user, userId, userName } = storeToRefs(userStore);
+
+    return {
+      userStore,
+      user,
+      userId,
+      userName
+    };
   },
 
   data() {
@@ -70,13 +84,8 @@ export default {
     };
   },
 
-  computed: {
-    user() {
-      return JSON.parse(localStorage.getItem("user"));
-    },
-  },
-
   mounted() {
+    this.userStore.initializeUser();
     this.fetchStats();
   },
 
@@ -87,7 +96,7 @@ export default {
 
         const response = await apiFetch("/api/lobby/newlobby", {
           method: "POST",
-          body: JSON.stringify({ ownerId: 1 }),
+          body: JSON.stringify({ ownerId: this.userId }),
         });
 
         const responseText = await response.text();
@@ -128,8 +137,7 @@ export default {
     },
 
     exitGame() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      this.userStore.logout();
 
       Modal.success({
         title: "Game Exited",
@@ -143,7 +151,7 @@ export default {
 
     async fetchStats() {
       try {
-        const response = await fetch("/api/stats/1");
+        const response = await fetch(`/api/stats/${this.userId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -173,6 +181,7 @@ export default {
         throw new Error(`Fetch error: ${error.message}`);
       }
     },
+
     async joinLobby(formData) {
       const lobbyCode = formData.lobbyCode;
 
@@ -190,7 +199,7 @@ export default {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            userId: 2,
+            userId: this.userId,
           }),
         });
 
