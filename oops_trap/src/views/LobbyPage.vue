@@ -57,7 +57,6 @@ export default {
   data() {
     return {
       nickname: "Nickname",
-      lobbyCode: "XYZ789",
       players: [
         { id: 1, name: "Player 1", color: "#FF6B6B" },
         { id: 2, name: "Player 2", color: "#4ECDC4" },
@@ -70,25 +69,63 @@ export default {
         { id: 9, name: "Player 9", color: "#118AB2" },
         { id: 10, name: "Player 10", color: "#06D6A0" },
       ],
-      isHost: false,
+      isHost: true,
       showSettings: false,
-      currentSettings: {
-        // текущие настройки
-      },
+      currentSettings: {},
+      lobbyId: null,
     };
+  },
+  computed: {
+    lobbyCode() {
+      return this.lobbyId ? this.lobbyId.toString() : "";
+    },
   },
   created() {
     this.isHost = this.$route.query.mode === "create";
+    this.lobbyId = this.$route.query.id;
   },
   methods: {
-    handleSettings() {
-      // настройки
+    async handleSettingsApply(settings) {
+      const apiSettings = {
+        ownerId: 1,
+        map: settings.map || 1,
+        time: settings.time || "normal",
+        trapper: settings.mafia || 1,
+      };
+
+      const response = await fetch(
+        `/api/lobby/lobbies/${this.lobbyId}/settings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiSettings),
+        }
+      );
+
+      if (response.ok) {
+        this.currentSettings = {
+          map: settings.map || "city",
+          mafia: settings.mafia || 1,
+          time: settings.time || "normal",
+        };
+
+        Modal.success({
+          title: "Success",
+          content: "Settings updated",
+          okText: "OK",
+        });
+      } else {
+        Modal.error({
+          title: "Error",
+          content: "Failed to update settings",
+          okText: "OK",
+        });
+      }
     },
     handleStart() {
       // начать игру
-    },
-    handleSettingsApply(settings) {
-      this.currentSettings = settings;
     },
     showExitConfirm() {
       Modal.confirm({
@@ -99,9 +136,58 @@ export default {
         okType: "danger",
         centered: true,
         onOk: () => {
-          this.$router.push("/createLobby");
+          this.exitLobby();
         },
       });
+    },
+    async exitLobby() {
+      if (this.isHost) {
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/delete`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ownerId: 1,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          Modal.error({
+            title: "Error",
+            content: `Failed to delete lobby: ${response.status}`,
+            okText: "OK",
+          });
+          return;
+        }
+      } else {
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/leave`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: 2,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          Modal.error({
+            title: "Error",
+            content: `Failed to leave lobby: ${response.status}`,
+            okText: "OK",
+          });
+          return;
+        }
+      }
+
+      this.$router.push("/createLobby");
     },
   },
 };

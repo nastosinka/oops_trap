@@ -57,6 +57,12 @@ export default {
     };
   },
 
+  mounted() {
+    setTimeout(() => {
+      throw new Error("Global Timeout Error Test");
+    }, 1000);
+  },
+
   methods: {
     handleSignUp() {
       // Логика регистрации
@@ -65,11 +71,33 @@ export default {
       this.$router.push("/createLobby");
     },
 
-    handleSignOn() {
-      // Логика входа
-      this.showSignOnModal = false;
-      showSuccess("Login successful!");
-      this.$router.push("/createLobby");
+    async handleSignOn(values) {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: values.name,
+            password: values.password,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Ошибка входа");
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        this.showSignOnModal = false;
+        showSuccess("Login successful!");
+        this.$router.push("/createLobby");
+      } catch (err) {
+        console.error("Ошибка при входе:", err);
+        this.$toast?.error?.(err.message || "Ошибка входа"); // если есть уведомления
+      }
     },
   },
 };

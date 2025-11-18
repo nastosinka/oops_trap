@@ -61,11 +61,25 @@
 
 # **Запуск проекта**
 Запуск всего проекта:
-- docker-compose up --build
+- docker-compose -f docker-compose.prod.yml up --build -d
+
 Завершение работы контейнера/ов:
-- docker-compose down
+- docker-compose -f docker-compose.prod.yml down
+
 Запуск отдельного сервиса:
-- docker-compose up --build backend
-- docker-compose up --build frontend
-- docker-compose up --build liquibase
-- docker-compose up --build postgres
+- docker-compose -f docker-compose.prod.yml up --build -d backend
+- docker-compose -f docker-compose.prod.yml up --build -d frontend
+- docker-compose -f docker-compose.prod.yml up --build -d liquibase
+- docker-compose -f docker-compose.prod.yml up --build -d postgres
+
+# **Необходимые переменные в .env**
+**В корне проекта (.env):**
+- POSTGRES_USER
+- POSTGRES_PASSWORD
+- POSTGRES_DB
+- LIQUIBASE_COMMAND_URL
+- LIQUIBASE_COMMAND_USERNAME
+- LIQUIBASE_COMMAND_PASSWORD
+
+**Для бэкенда (backend/.env):**
+- DATABASE_URL
