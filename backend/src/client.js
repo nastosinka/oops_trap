@@ -1,34 +1,32 @@
-const WebSocket = require('ws');
+// Подключение к конкретной игре
+const gameId = 1;
+const socket = new WebSocket(`ws://localhost/ws/game/${gameId}`);
 
-const gameId = 1;  
-const userId = 2;  
-
-const WS_URL = `ws://localhost/ws/game/${gameId}`;
-
-const ws = new WebSocket(WS_URL);
-
-ws.on('open', () => {
-    console.log(`Player ${userId} connected to WS for game ${gameId}`);
-
-    ws.send(JSON.stringify({
+socket.onopen = () => {
+    // Инициализация игрока
+    socket.send(JSON.stringify({
         type: 'init',
-        playerId: userId
+        playerId: 1 // ID игрока
     }));
-});
+    console.log('Game messa');
+};
 
-ws.on('message', (msg) => {
-    try {
-        const data = JSON.parse(msg);
-        console.log(`Player ${userId} received:`, data);
-    } catch (err) {
-        console.error('Message parse error:', err);
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Game message:', data);
+    
+    switch(data.type) {
+        case 'waiting-start':
+            console.log('Waiting for game to start...');
+            break;
+        case 'game-start':
+            console.log('Game started!');
+            break;
+        case 'game-end':
+            console.log('Game finished:', data.stats);
+            break;
+        case 'player-disconnected':
+            console.log('Player disconnected:', data.playerId);
+            break;
     }
-});
-
-ws.on('close', () => {
-    console.log(`Player ${userId} disconnected`);
-});
-
-ws.on('error', (err) => {
-    console.error(`WS error for player ${userId}:`, err.message);
-});
+};

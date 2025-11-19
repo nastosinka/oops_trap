@@ -12,7 +12,6 @@ let nextLobbyId = 1;
 
 const games = new Map();
 module.exports = { lobbies, games };
-let nextGameId = 1;
 
 router.post('/newlobby', async (req, res) => {
   try {
@@ -68,7 +67,6 @@ router.get('/all-lobbies', (req, res) => {
   res.json({ lobbies: lobbyList, total: lobbies.size });
 });
 
-// подумать над хранилищем
 router.post('/lobbies/:id/delete', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
