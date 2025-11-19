@@ -3,7 +3,7 @@
     <div class="home-container">
       <div class="buttons-container">
         <BaseButton label="Sign Up" @click="showSignUpModal = true" />
-        <BaseButton label="Sign On" @click="showSignOnModal = true" />
+        <BaseButton label="Sign In" @click="showSignInModal = true" />
         <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
     </div>
@@ -18,12 +18,12 @@
     />
 
     <UniversalModal
-      v-if="showSignOnModal"
-      title="Sign On"
+      v-if="showSignInModal"
+      title="Sign In"
       :fields="['name', 'password']"
-      submit-text="Sign On"
-      @close="showSignOnModal = false"
-      @submit="handleSignOn"
+      submit-text="Sign In"
+      @close="showSignInModal = false"
+      @submit="handleSignIn"
     />
 
     <UniversalModal
@@ -52,72 +52,103 @@ export default {
   data() {
     return {
       showSignUpModal: false,
-      showSignOnModal: false,
+      showSignInModal: false,
       showRulesModal: false,
     };
   },
 
   methods: {
-    handleSignUp(formData) {
+    async handleSignUp(formData) {
       try {
         const userStore = useUserStore();
-        
-        // Сохраняем данные пользователя
-        const userData = {
-          name: formData.name,
-          id: Date.now(), // временный ID, в реальном приложении должен приходить с сервера
-        };
-        
-        userStore.setUser(userData);
-        
-        this.showSignUpModal = false;
-        showSuccess("Registration successful!");
-        this.$router.push("/createLobby");
-      } catch (error) {
-        console.error("Ошибка при регистрации:", error);
-        Modal.error({
-          title: "Error",
-          content: "Registration failed",
-          okText: "OK",
-        });
-      }
-    },
 
-    async handleSignOn(values) {
-      try {
-        const userStore = useUserStore();
-        
-        const res = await fetch("/api/auth/login", {
+        if (formData.password.length < 6) {
+          throw new Error("Password must be at least 6 characters long");
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+
+        const res = await fetch("/api/auth/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json" 
+          },
           body: JSON.stringify({
-            username: values.name,
-            password: values.password,
+            username: formData.name,
+            password: formData.password,
           }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Ошибка входа");
+          throw new Error(data.error || "Registration failed");
         }
 
         const userData = {
-          name: data.user?.name || values.name,
+          name: data.user?.username || formData.name,
           id: data.user?.id,
         };
 
-        // Используем метод login из store
         userStore.login(userData, data.token);
 
-        this.showSignOnModal = false;
-        showSuccess("Login successful!");
+        this.showSignUpModal = false;
+        showSuccess("Registration successful!");
+        console.log("✅ User registered:", userData);
+        
         this.$router.push("/createLobby");
-      } catch (err) {
-        console.error("Ошибка при входе:", err);
+        
+      } catch (error) {
+        console.error("❌ Registration error:", error);
         Modal.error({
-          title: "Error",
-          content: err.message || "Ошибка входа",
+          title: "Registration Error",
+          content: error.message || "Registration failed. Please try again.",
+          okText: "OK",
+        });
+      }
+    },
+
+    async handleSignIn(formData) {
+      try {
+        const userStore = useUserStore();
+
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json" 
+          },
+          body: JSON.stringify({
+            username: formData.name,
+            password: formData.password,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Login failed");
+        }
+
+        const userData = {
+          name: data.user?.username || formData.name,
+          id: data.user?.id,
+        };
+
+        userStore.login(userData, data.token);
+
+        this.showSignInModal = false;
+        showSuccess("Login successful!");
+        console.log("✅ User signed in:", userData);
+        
+        this.$router.push("/createLobby");
+        
+      } catch (error) {
+        console.error("❌ Login error:", error);
+        Modal.error({
+          title: "Login Error",
+          content: error.message || "Login failed. Please check your credentials.",
           okText: "OK",
         });
       }
