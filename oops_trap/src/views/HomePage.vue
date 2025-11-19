@@ -3,9 +3,7 @@
     <div class="home-container">
       <div class="buttons-container">
         <BaseButton label="Sign Up" @click="showSignUpModal = true" />
-
-        <BaseButton label="Sign On" @click="showSignOnModal = true" />
-
+        <BaseButton label="Sign In" @click="showSignInModal = true" />
         <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
     </div>
@@ -20,12 +18,12 @@
     />
 
     <UniversalModal
-      v-if="showSignOnModal"
-      title="Sign On"
+      v-if="showSignInModal"
+      title="Sign In"
       :fields="['name', 'password']"
-      submit-text="Sign On"
-      @close="showSignOnModal = false"
-      @submit="handleSignOn"
+      submit-text="Sign In"
+      @close="showSignInModal = false"
+      @submit="handleSignIn"
     />
 
     <UniversalModal
@@ -40,7 +38,9 @@
 <script>
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
+import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
+import { useUserStore } from "@/stores/user";
 
 export default {
   name: "HomePage",
@@ -52,51 +52,104 @@ export default {
   data() {
     return {
       showSignUpModal: false,
-      showSignOnModal: false,
+      showSignInModal: false,
       showRulesModal: false,
     };
   },
 
-  mounted() {
-    setTimeout(() => {
-      throw new Error("Global Timeout Error Test");
-    }, 1000);
-  },
-
   methods: {
-    handleSignUp() {
-      // Логика регистрации
-      this.showSignInModal = false;
-      showSuccess("Login successful!");
-      this.$router.push("/createLobby");
-    },
-
-    async handleSignOn(values) {
+    async handleSignUp(formData) {
       try {
-        const res = await fetch("/api/auth/login", {
+        const userStore = useUserStore();
+
+        if (formData.password.length < 6) {
+          throw new Error("Password must be at least 6 characters long");
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+
+        const res = await fetch("/api/auth/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            username: values.name,
-            password: values.password,
+            username: formData.name,
+            password: formData.password,
           }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Ошибка входа");
+          throw new Error(data.error || "Registration failed");
         }
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const userData = {
+          name: data.user?.username || formData.name,
+          id: data.user?.id,
+        };
 
-        this.showSignOnModal = false;
-        showSuccess("Login successful!");
+        userStore.login(userData, data.token);
+
+        this.showSignUpModal = false;
+        showSuccess("Registration successful!");
+        console.log("✅ User registered:", userData);
+
         this.$router.push("/createLobby");
-      } catch (err) {
-        console.error("Ошибка при входе:", err);
-        this.$toast?.error?.(err.message || "Ошибка входа"); // если есть уведомления
+      } catch (error) {
+        console.error("❌ Registration error:", error);
+        Modal.error({
+          title: "Registration Error",
+          content: error.message || "Registration failed. Please try again.",
+          okText: "OK",
+        });
+      }
+    },
+
+    async handleSignIn(formData) {
+      try {
+        const userStore = useUserStore();
+
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: formData.name,
+            password: formData.password,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Login failed");
+        }
+
+        const userData = {
+          name: data.user?.username || formData.name,
+          id: data.user?.id,
+        };
+
+        userStore.login(userData, data.token);
+
+        this.showSignInModal = false;
+        showSuccess("Login successful!");
+        console.log("✅ User signed in:", userData);
+
+        this.$router.push("/createLobby");
+      } catch (error) {
+        console.error("❌ Login error:", error);
+        Modal.error({
+          title: "Login Error",
+          content:
+            error.message || "Login failed. Please check your credentials.",
+          okText: "OK",
+        });
       }
     },
   },

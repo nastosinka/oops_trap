@@ -610,4 +610,35 @@ router.get('/games', (req, res) => {
   }
 });
 
+router.get('/lobbies/:id/status', async (req, res) => {
+  try {
+    const lobbyId = parseInt(req.params.id);
+
+    if (isNaN(lobbyId) || lobbyId <= 0) {
+      return res.status(400).json({ error: 'Invalid lobby ID' });
+    }
+
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+
+    const response = {
+      id: lobby.id,
+      status: lobby.status
+    };
+
+    res.status(200).json({
+      success: true,
+      data: response
+    });
+  } catch (error) {
+    console.error('Error fetching lobby status:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
+  }
+});
+
 module.exports = router;
