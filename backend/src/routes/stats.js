@@ -41,7 +41,7 @@ router.get('/:id_user', async (req, res) => {
 
     res.status(200).json(formattedUserStats);
   } catch (err) {
-    console.error('Ошибка при получении статистики:', err);
+    console.error('Ошибка при получении статистики:');
     res.status(500).json({
       error: 'Ошибка сервера при получении статистики',
       code: 500,
