@@ -8,11 +8,14 @@
         <p>Game ID: {{ gameId }}</p>
         <p>User ID: {{ userId }}</p>
         <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-        <p>Role: {{ isHost ? 'Host' : 'Player' }}</p>
-        <p>Connection: <span :class="connectionStatusClass">{{ connectionStatus }}</span></p>
+        <p>Role: {{ isHost ? "Host" : "Player" }}</p>
+        <p>
+          Connection:
+          <span :class="connectionStatusClass">{{ connectionStatus }}</span>
+        </p>
       </div>
       <div class="hud-buttons">
-        <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">
+        <button v-if="lobbyId" class="lobby-btn" @click="returnToLobby">
           Return to Lobby
         </button>
       </div>
@@ -23,15 +26,19 @@
         <h2>Game Over</h2>
         <div class="results-list">
           <div v-for="stat in stats" :key="stat.userId" class="result-item">
-            <span class="player-name">{{ stat.userName || `Player ${stat.userId}` }}</span>
+            <span class="player-name">{{
+              stat.userName || `Player ${stat.userId}`
+            }}</span>
             <span class="player-score">{{ stat.score }} points</span>
-            <span class="player-result" :class="{'winner': stat.result === 1}">
-              {{ stat.result === 1 ? 'Winner' : 'Loser' }}
+            <span class="player-result" :class="{ winner: stat.result === 1 }">
+              {{ stat.result === 1 ? "Winner" : "Loser" }}
             </span>
           </div>
         </div>
         <div class="overlay-buttons">
-          <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">Return to Lobby</button>
+          <button v-if="lobbyId" class="lobby-btn" @click="returnToLobby">
+            Return to Lobby
+          </button>
         </div>
       </div>
     </div>
@@ -48,7 +55,12 @@ import { Modal } from "ant-design-vue";
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const { userId: storeUserId, getGameSocket, isInGame, currentGameId } = storeToRefs(userStore);
+const {
+  userId: storeUserId,
+  getGameSocket,
+  isInGame,
+  currentGameId,
+} = storeToRefs(userStore);
 
 // Game data
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
@@ -69,25 +81,25 @@ const totalPlayersCount = ref(0);
 
 // Connection status
 const connectionStatus = computed(() => {
-  if (connectionError.value) return 'Disconnected';
-  if (waitingForPlayers.value) return 'Waiting';
-  return isConnected.value ? 'Connected' : 'Connecting...';
+  if (connectionError.value) return "Disconnected";
+  if (waitingForPlayers.value) return "Waiting";
+  return isConnected.value ? "Connected" : "Connecting...";
 });
 
 const connectionStatusClass = computed(() => {
   return {
-    'status-connected': isConnected.value,
-    'status-disconnected': connectionError.value,
-    'status-waiting': waitingForPlayers.value
+    "status-connected": isConnected.value,
+    "status-disconnected": connectionError.value,
+    "status-waiting": waitingForPlayers.value,
   };
 });
 
 onMounted(async () => {
   userStore.initializeUser();
-  
+
   // Проверяем, является ли пользователь хостом
   await checkIfUserIsHost();
-  
+
   connectGameWebSocket();
   initializeGame();
 });
@@ -111,17 +123,23 @@ const checkIfUserIsHost = async () => {
   }
 
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`);
-    
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/settings`
+    );
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (data.success && data.data) {
       isHost.value = data.data.ownerId === userId.value;
-      console.log(`🎮 User is ${isHost.value ? 'HOST' : 'PLAYER'} of lobby ${lobbyId.value}`);
+      console.log(
+        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
+          lobbyId.value
+        }`
+      );
     } else {
       isHost.value = false;
     }
@@ -138,35 +156,33 @@ const connectGameWebSocket = async () => {
     waitingForPlayers.value = false;
 
     const existingSocket = getGameSocket.value;
-    
+
     if (existingSocket && existingSocket.readyState === WebSocket.OPEN) {
       console.log("✅ Reusing existing game WebSocket connection");
       setupWebSocketHandlers(existingSocket);
       isConnected.value = true;
-      
+
       userStore.sendGameMessage({
         type: "PLAYER_JOINED_GAME_PAGE",
         gameId: gameId.value,
         userId: userId.value,
         lobbyId: lobbyId.value,
-        isHost: isHost.value
+        isHost: isHost.value,
       });
-      
     } else {
       console.log("🔄 Creating new game WebSocket connection");
-      
+
       await userStore.createGameSocketConnection(gameId.value, lobbyId.value);
-      
+
       const newSocket = getGameSocket.value;
       if (newSocket) {
         setupWebSocketHandlers(newSocket);
-        
+
         if (newSocket.readyState === WebSocket.OPEN) {
           isConnected.value = true;
         }
       }
     }
-
   } catch (error) {
     console.error("❌ Failed to connect game WebSocket:", error);
     connectionError.value = error.message;
@@ -194,14 +210,14 @@ const setupWebSocketHandlers = (socket) => {
     console.log("✅ Game WebSocket connected");
     isConnected.value = true;
     connectionError.value = null;
-    
+
     // Send initial join message
     userStore.sendGameMessage({
       type: "PLAYER_JOINED_GAME_PAGE",
       gameId: gameId.value,
       userId: userId.value,
       lobbyId: lobbyId.value,
-      isHost: isHost.value
+      isHost: isHost.value,
     });
   };
 
@@ -214,9 +230,11 @@ const setupWebSocketHandlers = (socket) => {
   socket.onclose = (event) => {
     console.log("🔌 Game WebSocket disconnected:", event.code, event.reason);
     isConnected.value = false;
-    
+
     if (event.code !== 1000 && !gameEnded.value) {
-      connectionError.value = `Connection lost: ${event.reason || 'Unknown reason'}`;
+      connectionError.value = `Connection lost: ${
+        event.reason || "Unknown reason"
+      }`;
     }
   };
 };
@@ -309,10 +327,10 @@ const handleWebSocketMessage = (data) => {
 
 const initializeGame = () => {
   if (canvas.value) {
-    const ctx = canvas.value.getContext('2d');
-    ctx.fillStyle = '#2c3e50';
+    const ctx = canvas.value.getContext("2d");
+    ctx.fillStyle = "#2c3e50";
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
-    
+
     // Add game controls and logic here
     setupGameControls();
   }
@@ -323,85 +341,89 @@ const setupGameControls = () => {
   const handleKeyDown = (event) => {
     if (!isConnected.value || gameEnded.value) return;
 
-    switch(event.key) {
-      case 'ArrowUp':
-      case 'w':
+    switch (event.key) {
+      case "ArrowUp":
+      case "w":
         userStore.sendGameMessage({
           type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'up'
+          direction: "up",
         });
         break;
-      case 'ArrowDown':
-      case 's':
+      case "ArrowDown":
+      case "s":
         userStore.sendGameMessage({
           type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'down'
+          direction: "down",
         });
         break;
-      case 'ArrowLeft':
-      case 'a':
+      case "ArrowLeft":
+      case "a":
         userStore.sendGameMessage({
           type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'left'
+          direction: "left",
         });
         break;
-      case 'ArrowRight':
-      case 'd':
+      case "ArrowRight":
+      case "d":
         userStore.sendGameMessage({
           type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'right'
+          direction: "right",
         });
         break;
-      case ' ':
+      case " ":
         userStore.sendGameMessage({
           type: "GAME_ACTION",
           userId: userId.value,
-          action: 'use'
+          action: "use",
         });
         break;
     }
   };
 
-  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener("keydown", handleKeyDown);
 
   // Cleanup
   onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener("keydown", handleKeyDown);
   });
 };
 
 const updateGameState = (gameState) => {
   if (canvas.value && gameState) {
-    const ctx = canvas.value.getContext('2d');
-    
+    const ctx = canvas.value.getContext("2d");
+
     // Clear canvas
-    ctx.fillStyle = '#2c3e50';
+    ctx.fillStyle = "#2c3e50";
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
-    
+
     // Draw game objects
     if (gameState.players) {
-      gameState.players.forEach(player => {
-        ctx.fillStyle = player.color || '#ffffff';
+      gameState.players.forEach((player) => {
+        ctx.fillStyle = player.color || "#ffffff";
         ctx.fillRect(player.x || 50, player.y || 50, 30, 30);
-        
+
         // Draw player name
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        ctx.fillText(player.name || `Player ${player.id}`, (player.x || 50) - 10, (player.y || 50) - 5);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px Arial";
+        ctx.fillText(
+          player.name || `Player ${player.id}`,
+          (player.x || 50) - 10,
+          (player.y || 50) - 5
+        );
       });
     }
   }
 };
 
-const reconnect = async () => {
-  console.log("🔄 Attempting to reconnect...");
-  connectionError.value = null;
-  await connectGameWebSocket();
-};
+// const reconnect = async () => {
+//   console.log("🔄 Attempting to reconnect...");
+//   connectionError.value = null;
+//   await connectGameWebSocket();
+// };
 
 const returnToLobby = async () => {
   if (!lobbyId.value) {
@@ -416,7 +438,7 @@ const returnToLobby = async () => {
   try {
     if (isHost.value) {
       // Если хост - обновляем статус лобби на 'waiting'
-      await updateLobbyStatus('waiting');
+      await updateLobbyStatus("waiting");
       console.log("🎮 Host returned to lobby, status set to waiting");
     } else {
       console.log("🎮 Player returned to lobby");
@@ -439,7 +461,7 @@ const updateLobbyStatus = async (newStatus) => {
       },
       body: JSON.stringify({
         ownerId: userId.value,
-        newStatus: newStatus
+        newStatus,
       }),
     });
 
@@ -455,32 +477,32 @@ const updateLobbyStatus = async (newStatus) => {
 };
 
 // Обработка событий страницы
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
   if (isInGame.value) {
     userStore.sendGameMessage({
       type: "PLAYER_LEFT",
       gameId: gameId.value,
       userId: userId.value,
       lobbyId: lobbyId.value,
-      reason: "page_unload"
+      reason: "page_unload",
     });
   }
 });
 
-document.addEventListener('visibilitychange', () => {
+document.addEventListener("visibilitychange", () => {
   if (document.hidden && isInGame.value) {
     userStore.sendGameMessage({
       type: "PLAYER_AFK",
       gameId: gameId.value,
       userId: userId.value,
-      afk: true
+      afk: true,
     });
   } else if (!document.hidden && isInGame.value) {
     userStore.sendGameMessage({
       type: "PLAYER_AFK",
       gameId: gameId.value,
       userId: userId.value,
-      afk: false
+      afk: false,
     });
   }
 });
@@ -503,7 +525,7 @@ document.addEventListener('visibilitychange', () => {
   color: white;
   padding: 15px;
   border-radius: 8px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   min-width: 200px;
   border: 1px solid #333;
 }
@@ -539,7 +561,7 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .lobby-btn {
-  background: #2196F3;
+  background: #2196f3;
   color: white;
 }
 
@@ -548,7 +570,7 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .reconnect-btn {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
 }
 
@@ -557,7 +579,7 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .status-connected {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .status-disconnected {
@@ -565,7 +587,7 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .status-waiting {
-  color: #FF9800;
+  color: #ff9800;
 }
 
 .overlay {
@@ -612,7 +634,7 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .result-item .winner {
-  border-left-color: #4CAF50;
+  border-left-color: #4caf50;
   background: #2d4a2d;
 }
 
@@ -621,11 +643,11 @@ document.addEventListener('visibilitychange', () => {
 }
 
 .player-score {
-  color: #FFD166;
+  color: #ffd166;
 }
 
 .player-result.winner {
-  color: #4CAF50;
+  color: #4caf50;
   font-weight: bold;
 }
 
@@ -687,12 +709,12 @@ document.addEventListener('visibilitychange', () => {
   background: #2a2a2a;
   padding: 30px;
   border-radius: 10px;
-  border: 2px solid #FF9800;
+  border: 2px solid #ff9800;
   text-align: center;
 }
 
 .waiting-content h3 {
-  color: #FF9800;
+  color: #ff9800;
   margin-bottom: 15px;
 }
 
@@ -700,15 +722,19 @@ document.addEventListener('visibilitychange', () => {
   width: 40px;
   height: 40px;
   border: 4px solid #333;
-  border-top: 4px solid #FF9800;
+  border-top: 4px solid #ff9800;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 20px auto;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 canvas {

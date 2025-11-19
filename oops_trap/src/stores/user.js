@@ -1,8 +1,7 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
 
-export const useUserStore = defineStore('user', () => {
-  
+export const useUserStore = defineStore("user", () => {
   const user = ref(null);
   const token = ref(null);
   const sessionId = ref(null);
@@ -11,19 +10,22 @@ export const useUserStore = defineStore('user', () => {
   const currentLobbyId = ref(null); // Текущее лобби
 
   const userId = computed(() => user.value?.id || null);
-  const userName = computed(() => user.value?.name || 'Guest');
+  const userName = computed(() => user.value?.name || "Guest");
   const isAuthenticated = computed(() => !!token.value);
-  const isInGame = computed(() => !!gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN);
+  const isInGame = computed(
+    () => !!gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN
+  );
   const getGameSocket = computed(() => gameSocket.value);
 
   const initializeUser = () => {
     if (!sessionId.value) {
-      sessionId.value = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      sessionId.value =
+        "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
     }
-    
+
     const userData = sessionStorage.getItem(`user_${sessionId.value}`);
     const tokenData = sessionStorage.getItem(`token_${sessionId.value}`);
-    
+
     if (userData) user.value = JSON.parse(userData);
     if (tokenData) token.value = tokenData;
   };
@@ -46,12 +48,12 @@ export const useUserStore = defineStore('user', () => {
   const logout = () => {
     // Закрываем игровой сокет при выходе
     closeGameSocket();
-    
+
     user.value = null;
     token.value = null;
     currentGameId.value = null;
     currentLobbyId.value = null;
-    
+
     sessionStorage.removeItem(`user_${sessionId.value}`);
     sessionStorage.removeItem(`token_${sessionId.value}`);
     sessionId.value = null;
@@ -63,11 +65,11 @@ export const useUserStore = defineStore('user', () => {
     if (gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN) {
       gameSocket.value.close(1000, "Reconnecting to new game");
     }
-    
+
     gameSocket.value = socket;
     if (gameId) currentGameId.value = gameId;
     if (lobbyId) currentLobbyId.value = lobbyId;
-    
+
     console.log("🎮 Game socket set for game:", gameId, "lobby:", lobbyId);
   };
 
@@ -76,24 +78,26 @@ export const useUserStore = defineStore('user', () => {
       if (gameSocket.value.readyState === WebSocket.OPEN) {
         // Отправляем сообщение о выходе из игры перед закрытием
         try {
-          gameSocket.value.send(JSON.stringify({
-            type: "PLAYER_LEFT",
-            gameId: currentGameId.value,
-            userId: userId.value,
-            lobbyId: currentLobbyId.value
-          }));
+          gameSocket.value.send(
+            JSON.stringify({
+              type: "PLAYER_LEFT",
+              gameId: currentGameId.value,
+              userId: userId.value,
+              lobbyId: currentLobbyId.value,
+            })
+          );
         } catch (error) {
           console.warn("Could not send leave message:", error);
         }
-        
+
         gameSocket.value.close(code, reason);
       }
       gameSocket.value = null;
     }
-    
+
     currentGameId.value = null;
     currentLobbyId.value = null;
-    
+
     console.log("🔌 Game socket closed");
   };
 
@@ -102,25 +106,30 @@ export const useUserStore = defineStore('user', () => {
       try {
         // Закрываем существующее соединение
         closeGameSocket();
-        
+
         // Создаем новое WebSocket соединение
         const socket = new WebSocket(`ws://localhost/ws/game/${gameId}`);
-        
+
         socket.onopen = () => {
-          console.log("✅ Game WebSocket connected successfully for game:", gameId);
-          
+          console.log(
+            "✅ Game WebSocket connected successfully for game:",
+            gameId
+          );
+
           // Сохраняем сокет в store
           setGameSocket(socket, gameId, lobbyId);
-          
+
           // Отправляем инициализационное сообщение
-          socket.send(JSON.stringify({
-            type: "init",
-            playerId: userId.value,
-            gameId: gameId,
-            lobbyId: lobbyId,
-            action: "player_ready"
-          }));
-          
+          socket.send(
+            JSON.stringify({
+              type: "init",
+              playerId: userId.value,
+              gameId,
+              lobbyId,
+              action: "player_ready",
+            })
+          );
+
           resolve(socket);
         };
 
@@ -145,7 +154,6 @@ export const useUserStore = defineStore('user', () => {
             reject(new Error("WebSocket connection timeout"));
           }
         }, 10000);
-
       } catch (error) {
         reject(error);
       }
@@ -158,18 +166,20 @@ export const useUserStore = defineStore('user', () => {
       console.warn("Cannot reconnect: no gameId provided");
       return null;
     }
-    
+
     try {
       const socket = await createGameSocketConnection(gameId, lobbyId);
-      
+
       // Отправляем сообщение о переподключении
-      socket.send(JSON.stringify({
-        type: "PLAYER_RECONNECTED",
-        gameId: gameId,
-        userId: userId.value,
-        lobbyId: lobbyId
-      }));
-      
+      socket.send(
+        JSON.stringify({
+          type: "PLAYER_RECONNECTED",
+          gameId,
+          userId: userId.value,
+          lobbyId,
+        })
+      );
+
       return socket;
     } catch (error) {
       console.error("Failed to reconnect game socket:", error);
@@ -183,9 +193,10 @@ export const useUserStore = defineStore('user', () => {
       console.error("Cannot send message: game socket not connected");
       return false;
     }
-    
+
     try {
-      const payload = typeof message === 'string' ? message : JSON.stringify(message);
+      const payload =
+        typeof message === "string" ? message : JSON.stringify(message);
       gameSocket.value.send(payload);
       return true;
     } catch (error) {
@@ -209,27 +220,27 @@ export const useUserStore = defineStore('user', () => {
     gameSocket,
     currentGameId,
     currentLobbyId,
-    
+
     // Computed свойства
     userId,
     userName,
     isAuthenticated,
     isInGame,
     getGameSocket,
-    
+
     // Методы аутентификации
     initializeUser,
     setUser,
     setToken,
     login,
     logout,
-    
+
     // Методы управления игровым сокетом
     setGameSocket,
     closeGameSocket,
     createGameSocketConnection,
     reconnectGameSocket,
     sendGameMessage,
-    clearGameState
+    clearGameState,
   };
 });

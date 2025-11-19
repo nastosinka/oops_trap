@@ -1,19 +1,28 @@
 <template>
   <div class="lobby-container">
-    <div class="nickname">{{ userName }} (ID: {{ userId }}) {{ isHost ? '👑' : '' }}</div>
+    <div class="nickname">
+      {{ userName }} (ID: {{ userId }}) {{ isHost ? "👑" : "" }}
+    </div>
     <div class="content">
       <div class="lobby-code">Code: {{ lobbyCode }}</div>
-      <div class="lobby-status" :class="statusClass">Status: {{ lobbyStatus }}</div>
+      <div class="lobby-status" :class="statusClass">
+        Status: {{ lobbyStatus }}
+      </div>
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="player"
+            :class="{ 'player-host': player.isHost }"
+          >
             <div
               class="player-color"
               :style="{ backgroundColor: player.color }"
             ></div>
             <span class="player-name">{{ player.name }}</span>
-            <span v-if="player.id === userId" class="player-you">(You)  </span>
+            <span v-if="player.id === userId" class="player-you">(You) </span>
             <span v-if="player.isHost" class="player-host-badge">👑</span>
           </div>
         </div>
@@ -29,8 +38,8 @@
           v-if="isHost && lobbyStatus === 'waiting'"
           label="Start"
           size="large"
-          @click="handleStart"
           :disabled="players.length < 2"
+          @click="handleStart"
         />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
@@ -69,7 +78,7 @@ export default {
       userStore,
       user,
       userId,
-      userName
+      userName,
     };
   },
 
@@ -80,7 +89,7 @@ export default {
       showSettings: false,
       currentSettings: {},
       lobbyId: null,
-      lobbyStatus: "waiting", 
+      lobbyStatus: "waiting",
       pollInterval: null,
       currentGameId: null,
       lobbyOwnerId: null, // ID владельца лобби
@@ -93,27 +102,27 @@ export default {
     },
     statusClass() {
       return {
-        'status-waiting': this.lobbyStatus === 'waiting',
-        'status-in-progress': this.lobbyStatus === 'in-progress',
-        'status-finished': this.lobbyStatus === 'finished'
+        "status-waiting": this.lobbyStatus === "waiting",
+        "status-in-progress": this.lobbyStatus === "in-progress",
+        "status-finished": this.lobbyStatus === "finished",
       };
-    }
+    },
   },
 
   async created() {
     console.log("🟡 LobbyPage created - initializing...");
     this.userStore.initializeUser();
     this.lobbyId = this.$route.query.id;
-    
+
     console.log("🔵 Lobby data:", {
       lobbyId: this.lobbyId,
       userId: this.userId,
-      routeQuery: this.$route.query
+      routeQuery: this.$route.query,
     });
-    
+
     // Сначала проверяем, является ли пользователь хостом
     await this.checkIfUserIsHost();
-    
+
     this.startPolling();
     this.fetchLobbyData();
   },
@@ -131,19 +140,27 @@ export default {
       }
 
       try {
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/settings`);
-        
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/settings`
+        );
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.data) {
           this.lobbyOwnerId = data.data.ownerId;
           this.isHost = data.data.ownerId === this.userId;
-          console.log(`🎮 User is ${this.isHost ? 'HOST' : 'PLAYER'} of lobby ${this.lobbyId}`);
-          console.log(`👑 Lobby owner ID: ${this.lobbyOwnerId}, User ID: ${this.userId}`);
+          console.log(
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
+              this.lobbyId
+            }`
+          );
+          console.log(
+            `👑 Lobby owner ID: ${this.lobbyOwnerId}, User ID: ${this.userId}`
+          );
         } else {
           this.isHost = false;
         }
@@ -171,13 +188,15 @@ export default {
         // Получаем статус лобби
         const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`;
         const statusResponse = await fetch(statusUrl);
-        
+
         if (!statusResponse.ok) {
-          throw new Error(`HTTP ${statusResponse.status} - ${statusResponse.statusText}`);
+          throw new Error(
+            `HTTP ${statusResponse.status} - ${statusResponse.statusText}`
+          );
         }
 
         const statusData = await statusResponse.json();
-        
+
         if (statusData.success && statusData.data) {
           const newStatus = statusData.data.status;
           this.lobbyStatus = newStatus;
@@ -187,13 +206,13 @@ export default {
         // Получаем настройки лобби для актуальной информации о владельце
         const settingsUrl = `/api/lobby/lobbies/${this.lobbyId}/settings`;
         const settingsResponse = await fetch(settingsUrl);
-        
+
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
           if (settingsData.success && settingsData.data) {
             this.lobbyOwnerId = settingsData.data.ownerId;
             this.isHost = settingsData.data.ownerId === this.userId;
-            
+
             // Обновляем текущие настройки
             this.currentSettings = {
               map: settingsData.data.map || "city",
@@ -206,21 +225,26 @@ export default {
         // Получаем список игроков
         const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`;
         const playersResponse = await fetch(playersUrl);
-        
+
         if (!playersResponse.ok) {
-          throw new Error(`HTTP ${playersResponse.status} - ${statusResponse.statusText}`);
+          throw new Error(
+            `HTTP ${playersResponse.status} - ${statusResponse.statusText}`
+          );
         }
 
         const playersData = await playersResponse.json();
-        
+
         // Обновляем список игроков, если он изменился
-        const currentPlayersStr = JSON.stringify(this.players.map(p => ({ id: p.id, name: p.name })));
-        const newPlayersStr = JSON.stringify(playersData.players.map(p => ({ id: p.id, name: p.name })));
-        
+        const currentPlayersStr = JSON.stringify(
+          this.players.map((p) => ({ id: p.id, name: p.name }))
+        );
+        const newPlayersStr = JSON.stringify(
+          playersData.players.map((p) => ({ id: p.id, name: p.name }))
+        );
+
         if (currentPlayersStr !== newPlayersStr) {
           this.updatePlayersList(playersData.players);
         }
-
       } catch (error) {
         console.error("❌ Error fetching lobby data:", error);
         // Не выбрасываем ошибку, чтобы поллинг продолжался
@@ -228,24 +252,24 @@ export default {
     },
 
     checkLobbyStatus() {
-      if (this.lobbyStatus === 'in-progress') {
+      if (this.lobbyStatus === "in-progress") {
         this.redirectToGame();
       }
     },
 
     redirectToGame() {
       this.stopPolling();
-      
+
       const gameId = this.lobbyId;
       console.log("🔄 Redirecting to game:", gameId);
-      
+
       // Переходим на страницу игры, передавая информацию о хосте
       this.$router.push({
         path: `/game/${gameId}`,
-        query: { 
+        query: {
           lobbyId: this.lobbyId,
-          isHost: this.isHost
-        }
+          isHost: this.isHost,
+        },
       });
     },
 
@@ -265,24 +289,32 @@ export default {
       const updatedPlayers = players.map((player, index) => ({
         ...player,
         color: this.getPlayerColor(index),
-        isHost: player.id === this.lobbyOwnerId // Помечаем хоста
+        isHost: player.id === this.lobbyOwnerId, // Помечаем хоста
       }));
-      
+
       this.players = updatedPlayers;
       console.log("👥 Updated players list:", this.players);
     },
 
     getPlayerColor(index) {
       const colors = [
-        "#FF6B6B", "#4ECDC4", "#FFD166", "#6A0572", "#118AB2",
-        "#06D6A0", "#EF476F", "#FFD166", "#118AB2", "#06D6A0"
+        "#FF6B6B",
+        "#4ECDC4",
+        "#FFD166",
+        "#6A0572",
+        "#118AB2",
+        "#06D6A0",
+        "#EF476F",
+        "#FFD166",
+        "#118AB2",
+        "#06D6A0",
       ];
       return colors[index % colors.length];
     },
 
     async handleSettingsApply(settings) {
       const currentUserId = this.userStore.userId;
-      
+
       if (!currentUserId) {
         Modal.error({
           title: "Error",
@@ -348,7 +380,7 @@ export default {
     async handleStart() {
       console.log("🎮 Start button clicked");
       console.log("📊 Current players count:", this.players.length);
-      
+
       // Проверяем, что пользователь хост
       if (!this.isHost) {
         Modal.error({
@@ -369,7 +401,7 @@ export default {
       }
 
       const currentUserId = this.userStore.userId;
-      
+
       if (!currentUserId) {
         Modal.error({
           title: "Error",
@@ -381,21 +413,24 @@ export default {
 
       try {
         console.log("🚀 Starting game...");
-        
+
         // 1. Сначала создаем WebSocket соединение
         await this.createGameSocketConnection();
-        
+
         // 2. Затем отправляем запрос на старт игры
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ownerId: currentUserId,
-            newStatus: "in-progress"
-          }),
-        });
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/status`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ownerId: currentUserId,
+              newStatus: "in-progress",
+            }),
+          }
+        );
 
         if (response.ok) {
           const result = await response.json();
@@ -406,13 +441,15 @@ export default {
             content: "Game started successfully! Redirecting to game...",
             okText: "OK",
           });
-
         } else {
           const error = await response.json();
           console.error("❌ Start game failed:", error);
           Modal.error({
             title: "Error",
-            content: error.message || error.details?.join(', ') || "Failed to start game",
+            content:
+              error.message ||
+              error.details?.join(", ") ||
+              "Failed to start game",
             okText: "OK",
           });
         }
@@ -430,23 +467,27 @@ export default {
       return new Promise((resolve, reject) => {
         try {
           // Создаем локальный WebSocket
-          const gameSocket = new WebSocket(`ws://localhost/ws/game/${this.lobbyId}`);
-          
+          const gameSocket = new WebSocket(
+            `ws://localhost/ws/game/${this.lobbyId}`
+          );
+
           // Сохраняем сокет в store
           this.userStore.setGameSocket(gameSocket);
-          
+
           gameSocket.onopen = () => {
             console.log("✅ Game WebSocket connected successfully");
-            
+
             // Отправляем инициализационное сообщение
-            gameSocket.send(JSON.stringify({
-              type: "init",
-              playerId: this.userId,
-              gameId: this.lobbyId,
-              action: "player_ready",
-              isHost: this.isHost
-            }));
-            
+            gameSocket.send(
+              JSON.stringify({
+                type: "init",
+                playerId: this.userId,
+                gameId: this.lobbyId,
+                action: "player_ready",
+                isHost: this.isHost,
+              })
+            );
+
             resolve(gameSocket);
           };
 
@@ -475,7 +516,6 @@ export default {
               reject(new Error("WebSocket connection timeout"));
             }
           }, 5000);
-
         } catch (error) {
           reject(error);
         }
@@ -484,7 +524,7 @@ export default {
 
     handleGameSocketMessage(data) {
       console.log("🎮 Game socket message received:", data);
-      
+
       switch (data.type) {
         case "game-joined":
           console.log("✅ Successfully joined game via WebSocket");
@@ -506,8 +546,8 @@ export default {
     showExitConfirm() {
       Modal.confirm({
         title: "Exit Lobby",
-        content: this.isHost 
-          ? "Are you sure you want to exit and delete the lobby?" 
+        content: this.isHost
+          ? "Are you sure you want to exit and delete the lobby?"
           : "Are you sure you want to leave the lobby?",
         okText: "Yes, Exit",
         cancelText: "Cancel",
@@ -564,12 +604,11 @@ export default {
 
         this.stopPolling();
         this.$router.push("/createLobby");
-
       } catch (error) {
         console.error("❌ Exit lobby error:", error);
         Modal.error({
           title: "Error",
-          content: this.isHost 
+          content: this.isHost
             ? `Failed to delete lobby: ${error.message}`
             : `Failed to leave lobby: ${error.message}`,
           okText: "OK",
@@ -622,7 +661,6 @@ export default {
   border: 1px solid #c3e6cb;
 }
 </style>
-
 
 <style scoped>
 .player-you {

@@ -72,8 +72,8 @@ export default {
 
         const res = await fetch("/api/auth/register", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json" 
+          headers: {
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             username: formData.name,
@@ -97,9 +97,8 @@ export default {
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
         console.log("✅ User registered:", userData);
-        
+
         this.$router.push("/createLobby");
-        
       } catch (error) {
         console.error("❌ Registration error:", error);
         Modal.error({
@@ -116,8 +115,8 @@ export default {
 
         const res = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json" 
+          headers: {
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             username: formData.name,
@@ -141,14 +140,14 @@ export default {
         this.showSignInModal = false;
         showSuccess("Login successful!");
         console.log("✅ User signed in:", userData);
-        
+
         this.$router.push("/createLobby");
-        
       } catch (error) {
         console.error("❌ Login error:", error);
         Modal.error({
           title: "Login Error",
-          content: error.message || "Login failed. Please check your credentials.",
+          content:
+            error.message || "Login failed. Please check your credentials.",
           okText: "OK",
         });
       }
