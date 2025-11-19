@@ -3,7 +3,7 @@
     <div class="home-container">
       <div class="buttons-container">
         <BaseButton label="Sign Up" @click="showSignUpModal = true" />
-        <BaseButton label="Sign In" @click="showSignInModal = true" />
+        <BaseButton label="Sign On" @click="showSignOnModal = true" />
         <BaseButton label="Rules" @click="showRulesModal = true" />
       </div>
     </div>
@@ -18,12 +18,12 @@
     />
 
     <UniversalModal
-      v-if="showSignInModal"
-      title="Sign In"
+      v-if="showSignOnModal"
+      title="Sign On"
       :fields="['name', 'password']"
-      submit-text="Sign In"
-      @close="showSignInModal = false"
-      @submit="handleSignIn"
+      submit-text="Sign On"
+      @close="showSignOnModal = false"
+      @submit="handleSignOn"
     />
 
     <UniversalModal
@@ -52,103 +52,72 @@ export default {
   data() {
     return {
       showSignUpModal: false,
-      showSignInModal: false,
+      showSignOnModal: false,
       showRulesModal: false,
     };
   },
 
   methods: {
-    async handleSignUp(formData) {
+    handleSignUp(formData) {
       try {
         const userStore = useUserStore();
-
-        if (formData.password.length < 6) {
-          throw new Error("Password must be at least 6 characters long");
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json" 
-          },
-          body: JSON.stringify({
-            username: formData.name,
-            password: formData.password,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Registration failed");
-        }
-
+        
+        // Сохраняем данные пользователя
         const userData = {
-          name: data.user?.username || formData.name,
-          id: data.user?.id,
+          name: formData.name,
+          id: Date.now(), // временный ID, в реальном приложении должен приходить с сервера
         };
-
-        userStore.login(userData, data.token);
-
+        
+        userStore.setUser(userData);
+        
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
-        console.log("✅ User registered:", userData);
-        
         this.$router.push("/createLobby");
-        
       } catch (error) {
-        console.error("❌ Registration error:", error);
+        console.error("Ошибка при регистрации:", error);
         Modal.error({
-          title: "Registration Error",
-          content: error.message || "Registration failed. Please try again.",
+          title: "Error",
+          content: "Registration failed",
           okText: "OK",
         });
       }
     },
 
-    async handleSignIn(formData) {
+    async handleSignOn(values) {
       try {
         const userStore = useUserStore();
-
+        
         const res = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json" 
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: formData.name,
-            password: formData.password,
+            username: values.name,
+            password: values.password,
           }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Login failed");
+          throw new Error(data.error || "Ошибка входа");
         }
 
         const userData = {
-          name: data.user?.username || formData.name,
+          name: data.user?.name || values.name,
           id: data.user?.id,
         };
 
+        // Используем метод login из store
         userStore.login(userData, data.token);
 
-        this.showSignInModal = false;
+        this.showSignOnModal = false;
         showSuccess("Login successful!");
-        console.log("✅ User signed in:", userData);
-        
         this.$router.push("/createLobby");
-        
-      } catch (error) {
-        console.error("❌ Login error:", error);
+      } catch (err) {
+        console.error("Ошибка при входе:", err);
         Modal.error({
-          title: "Login Error",
-          content: error.message || "Login failed. Please check your credentials.",
+          title: "Error",
+          content: err.message || "Ошибка входа",
           okText: "OK",
         });
       }

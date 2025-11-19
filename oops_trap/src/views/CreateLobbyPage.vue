@@ -70,7 +70,7 @@ export default {
       userStore,
       user,
       userId,
-      userName,
+      userName
     };
   },
 
