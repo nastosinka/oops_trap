@@ -85,7 +85,6 @@ export default {
   },
 
   mounted() {
-    this.userStore.initializeUser();
     this.fetchStats();
   },
 
