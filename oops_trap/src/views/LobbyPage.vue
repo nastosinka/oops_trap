@@ -230,8 +230,6 @@ export default {
     checkLobbyStatus() {
       if (this.lobbyStatus === 'in-progress') {
         this.redirectToGame();
-      } else if (this.lobbyStatus === 'finished') {
-        this.handleLobbyFinished();
       }
     },
 
@@ -251,17 +249,17 @@ export default {
       });
     },
 
-    handleLobbyFinished() {
-      Modal.info({
-        title: "Game Finished",
-        content: "The game has finished. You will be redirected to the lobby creation page.",
-        okText: "OK",
-        onOk: () => {
-          this.stopPolling();
-          this.$router.push("/createLobby");
-        }
-      });
-    },
+    // handleLobbyFinished() {
+    //   Modal.info({
+    //     title: "Game Finished",
+    //     content: "The game has finished. You will be redirected to the lobby creation page.",
+    //     okText: "OK",
+    //     onOk: () => {
+    //       this.stopPolling();
+    //       this.$router.push("/createLobby");
+    //     }
+    //   });
+    // },
 
     updatePlayersList(players) {
       const updatedPlayers = players.map((player, index) => ({
