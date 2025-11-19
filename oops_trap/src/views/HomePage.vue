@@ -57,6 +57,10 @@ export default {
     };
   },
 
+  mounted() {
+    this.userStore.initializeUser();
+  },
+
   methods: {
     async handleSignUp(formData) {
       try {
