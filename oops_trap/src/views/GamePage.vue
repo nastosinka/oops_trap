@@ -3,11 +3,14 @@
     <canvas ref="canvas" width="800" height="600"></canvas>
 
     <div class="hud">
-      <p>Time left: {{ timeLeft }}</p>
-      <p>Game ID: {{ gameId }}</p>
-      <p>User ID: {{ userId }}</p>
-      <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-      <p>Connection: {{ connectionStatus }}</p>
+      <div class="hud-info">
+        <p>Time left: {{ timeLeft }}s</p>
+        <p>Game ID: {{ gameId }}</p>
+        <p>User ID: {{ userId }}</p>
+        <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
+        <p>Role: {{ isHost ? 'Host' : 'Player' }}</p>
+        <p>Connection: <span :class="connectionStatusClass">{{ connectionStatus }}</span></p>
+      </div>
       <div class="hud-buttons">
         <button @click="showExitConfirm" class="exit-btn">Exit Game</button>
         <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">
@@ -20,15 +23,21 @@
     </div>
 
     <div v-if="gameEnded" class="overlay">
-      <h2>Game Over</h2>
-      <ul>
-        <li v-for="stat in stats" :key="stat.userId">
-          Player {{ stat.userId }} — {{ stat.score }} points
-        </li>
-      </ul>
-      <div class="overlay-buttons">
-        <button @click="exitToMenu">Exit to Menu</button>
-        <button @click="returnToLobby" v-if="lobbyId">Return to Lobby</button>
+      <div class="game-results">
+        <h2>Game Over</h2>
+        <div class="results-list">
+          <div v-for="stat in stats" :key="stat.userId" class="result-item">
+            <span class="player-name">{{ stat.userName || `Player ${stat.userId}` }}</span>
+            <span class="player-score">{{ stat.score }} points</span>
+            <span class="player-result" :class="{'winner': stat.result === 1}">
+              {{ stat.result === 1 ? 'Winner' : 'Loser' }}
+            </span>
+          </div>
+        </div>
+        <div class="overlay-buttons">
+          <button @click="exitToMenu" class="exit-btn">Exit to Menu</button>
+          <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">Return to Lobby</button>
+        </div>
       </div>
     </div>
 
@@ -36,8 +45,19 @@
       <div class="error-content">
         <h3>Connection Error</h3>
         <p>{{ connectionError }}</p>
-        <button @click="reconnect" class="reconnect-btn">Try to Reconnect</button>
-        <button @click="exitToMenu" class="exit-btn">Exit to Menu</button>
+        <div class="error-buttons">
+          <button @click="reconnect" class="reconnect-btn">Try to Reconnect</button>
+          <button @click="exitToMenu" class="exit-btn">Exit to Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="waitingForPlayers" class="waiting-overlay">
+      <div class="waiting-content">
+        <h3>Waiting for Players...</h3>
+        <p>Game will start automatically when all players are ready</p>
+        <div class="loading-spinner"></div>
+        <p>Connected: {{ connectedPlayersCount }}/{{ totalPlayersCount }}</p>
       </div>
     </div>
   </div>
@@ -55,47 +75,93 @@ const router = useRouter();
 const userStore = useUserStore();
 const { userId: storeUserId, getGameSocket, isInGame, currentGameId } = storeToRefs(userStore);
 
+// Game data
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
 const userId = computed(() => storeUserId.value);
 const lobbyId = computed(() => route.query.lobbyId);
+const isHost = ref(false); // Будет установлено после проверки
 
+// Game state
 const timeLeft = ref(0);
 const stats = ref([]);
 const gameEnded = ref(false);
 const canvas = ref(null);
 const connectionError = ref(null);
 const isConnected = ref(false);
+const waitingForPlayers = ref(false);
+const connectedPlayersCount = ref(0);
+const totalPlayersCount = ref(0);
 
+// Connection status
 const connectionStatus = computed(() => {
   if (connectionError.value) return 'Disconnected';
+  if (waitingForPlayers.value) return 'Waiting';
   return isConnected.value ? 'Connected' : 'Connecting...';
 });
 
-onMounted(() => {
+const connectionStatusClass = computed(() => {
+  return {
+    'status-connected': isConnected.value,
+    'status-disconnected': connectionError.value,
+    'status-waiting': waitingForPlayers.value
+  };
+});
+
+onMounted(async () => {
   userStore.initializeUser();
+  
+  // Проверяем, является ли пользователь хостом
+  await checkIfUserIsHost();
+  
   connectGameWebSocket();
   initializeGame();
 });
 
 onUnmounted(() => {
-  // Не закрываем сокет полностью, только удаляем обработчики
-  // чтобы соединение можно было переиспользовать
   cleanupWebSocketHandlers();
 });
 
-// Отслеживаем изменения состояния подключения
+// Watch for socket changes
 watch(getGameSocket, (newSocket, oldSocket) => {
   if (newSocket !== oldSocket) {
     setupWebSocketHandlers(newSocket);
   }
 });
 
+// Проверяем, является ли пользователь хостом лобби
+const checkIfUserIsHost = async () => {
+  if (!lobbyId.value) {
+    isHost.value = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      isHost.value = data.data.ownerId === userId.value;
+      console.log(`🎮 User is ${isHost.value ? 'HOST' : 'PLAYER'} of lobby ${lobbyId.value}`);
+    } else {
+      isHost.value = false;
+    }
+  } catch (error) {
+    console.error("❌ Error checking host status:", error);
+    isHost.value = false;
+  }
+};
+
 const connectGameWebSocket = async () => {
   try {
     connectionError.value = null;
     isConnected.value = false;
+    waitingForPlayers.value = false;
 
-    // Проверяем, есть ли уже активное соединение
     const existingSocket = getGameSocket.value;
     
     if (existingSocket && existingSocket.readyState === WebSocket.OPEN) {
@@ -103,25 +169,23 @@ const connectGameWebSocket = async () => {
       setupWebSocketHandlers(existingSocket);
       isConnected.value = true;
       
-      // Уведомляем сервер о том, что мы перешли на страницу игры
       userStore.sendGameMessage({
         type: "PLAYER_JOINED_GAME_PAGE",
         gameId: gameId.value,
         userId: userId.value,
-        lobbyId: lobbyId.value
+        lobbyId: lobbyId.value,
+        isHost: isHost.value
       });
       
     } else {
       console.log("🔄 Creating new game WebSocket connection");
       
-      // Создаем новое соединение через userStore
       await userStore.createGameSocketConnection(gameId.value, lobbyId.value);
       
       const newSocket = getGameSocket.value;
       if (newSocket) {
         setupWebSocketHandlers(newSocket);
         
-        // Ждем открытия соединения
         if (newSocket.readyState === WebSocket.OPEN) {
           isConnected.value = true;
         }
@@ -155,6 +219,15 @@ const setupWebSocketHandlers = (socket) => {
     console.log("✅ Game WebSocket connected");
     isConnected.value = true;
     connectionError.value = null;
+    
+    // Send initial join message
+    userStore.sendGameMessage({
+      type: "PLAYER_JOINED_GAME_PAGE",
+      gameId: gameId.value,
+      userId: userId.value,
+      lobbyId: lobbyId.value,
+      isHost: isHost.value
+    });
   };
 
   socket.onerror = (error) => {
@@ -176,7 +249,6 @@ const setupWebSocketHandlers = (socket) => {
 const cleanupWebSocketHandlers = () => {
   const socket = getGameSocket.value;
   if (socket) {
-    // Удаляем только наши обработчики, не закрывая соединение
     socket.onmessage = null;
     socket.onerror = null;
     socket.onclose = null;
@@ -191,6 +263,7 @@ const handleWebSocketMessage = (data) => {
       timeLeft.value = data.payload?.timeLeft || data.timeLeft || 0;
       gameEnded.value = false;
       connectionError.value = null;
+      waitingForPlayers.value = false;
       break;
 
     case "TICK":
@@ -222,6 +295,9 @@ const handleWebSocketMessage = (data) => {
 
     case "waiting-start":
       console.log("⏳ Waiting for players:", data.message);
+      waitingForPlayers.value = true;
+      connectedPlayersCount.value = data.connectedPlayers?.length || 0;
+      totalPlayersCount.value = data.totalPlayers || 0;
       break;
 
     case "player-connected":
@@ -230,6 +306,16 @@ const handleWebSocketMessage = (data) => {
 
     case "player-disconnected":
       console.log(`🚪 Player ${data.playerId} disconnected`);
+      break;
+
+    case "player-ready":
+      console.log(`✅ Player ${data.playerId} is ready`);
+      break;
+
+    case "reconnect-success":
+      console.log("✅ Reconnected successfully");
+      timeLeft.value = data.timeLeft || 0;
+      updateGameState(data.gameState);
       break;
 
     case "error":
@@ -247,35 +333,90 @@ const handleWebSocketMessage = (data) => {
 };
 
 const initializeGame = () => {
-  // Инициализация игровой логики и canvas
   if (canvas.value) {
     const ctx = canvas.value.getContext('2d');
-    // Начальная отрисовка игрового поля
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
     
-    // Добавьте здесь вашу игровую логику
-    // Например: обработку ввода, игровую механику и т.д.
+    // Add game controls and logic here
+    setupGameControls();
   }
 };
 
+const setupGameControls = () => {
+  // Example: Keyboard controls
+  const handleKeyDown = (event) => {
+    if (!isConnected.value || gameEnded.value) return;
+
+    switch(event.key) {
+      case 'ArrowUp':
+      case 'w':
+        userStore.sendGameMessage({
+          type: "PLAYER_MOVE",
+          userId: userId.value,
+          direction: 'up'
+        });
+        break;
+      case 'ArrowDown':
+      case 's':
+        userStore.sendGameMessage({
+          type: "PLAYER_MOVE",
+          userId: userId.value,
+          direction: 'down'
+        });
+        break;
+      case 'ArrowLeft':
+      case 'a':
+        userStore.sendGameMessage({
+          type: "PLAYER_MOVE",
+          userId: userId.value,
+          direction: 'left'
+        });
+        break;
+      case 'ArrowRight':
+      case 'd':
+        userStore.sendGameMessage({
+          type: "PLAYER_MOVE",
+          userId: userId.value,
+          direction: 'right'
+        });
+        break;
+      case ' ':
+        userStore.sendGameMessage({
+          type: "GAME_ACTION",
+          userId: userId.value,
+          action: 'use'
+        });
+        break;
+    }
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+
+  // Cleanup
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown);
+  });
+};
+
 const updateGameState = (gameState) => {
-  // Обновление игрового состояния на основе данных от сервера
   if (canvas.value && gameState) {
     const ctx = canvas.value.getContext('2d');
     
-    // Очистка canvas
+    // Clear canvas
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
     
-    // Отрисовка обновленного состояния игры
-    // Здесь должна быть ваша игровая логика отрисовки
-    // Например: игроки, объекты, карта и т.д.
-    
+    // Draw game objects
     if (gameState.players) {
       gameState.players.forEach(player => {
         ctx.fillStyle = player.color || '#ffffff';
         ctx.fillRect(player.x || 50, player.y || 50, 30, 30);
+        
+        // Draw player name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.fillText(player.name || `Player ${player.id}`, (player.x || 50) - 10, (player.y || 50) - 5);
       });
     }
   }
@@ -287,7 +428,7 @@ const reconnect = async () => {
   await connectGameWebSocket();
 };
 
-const returnToLobby = () => {
+const returnToLobby = async () => {
   if (!lobbyId.value) {
     Modal.error({
       title: "Cannot Return to Lobby",
@@ -297,15 +438,50 @@ const returnToLobby = () => {
     return;
   }
 
-  // Не закрываем сокет - он может пригодиться при возврате в игру
+  try {
+    if (isHost.value) {
+      // Если хост - обновляем статус лобби на 'waiting'
+      await updateLobbyStatus('waiting');
+      console.log("🎮 Host returned to lobby, status set to waiting");
+    } else {
+      console.log("🎮 Player returned to lobby");
+    }
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    // Продолжаем в любом случае
+  }
+
   cleanupWebSocketHandlers();
-  
   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+};
+
+const updateLobbyStatus = async (newStatus) => {
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ownerId: userId.value,
+        newStatus: newStatus
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    throw error;
+  }
 };
 
 const showExitConfirm = () => {
   const content = lobbyId.value 
-    ? "Exit to menu or return to lobby?" 
+    ? `Exit to menu or return to lobby? ${isHost.value ? '(As host, returning to lobby will reset the game)' : ''}` 
     : "Are you sure you want to exit the game? Your progress will be lost.";
 
   Modal.confirm({
@@ -326,13 +502,22 @@ const showExitConfirm = () => {
   });
 };
 
-const exitToMenu = () => {
-  // Полностью закрываем игровое соединение при выходе в меню
+const exitToMenu = async () => {
+  // Если хост и есть лобби, обновляем статус
+  if (lobbyId.value && isHost.value) {
+    try {
+      await updateLobbyStatus('waiting');
+      console.log("🎮 Host exited to menu, lobby status set to waiting");
+    } catch (error) {
+      console.error("❌ Error updating lobby status on exit:", error);
+    }
+  }
+
   userStore.closeGameSocket();
   router.push("/createLobby");
 };
 
-// Обработка закрытия страницы
+// Обработка событий страницы
 window.addEventListener('beforeunload', () => {
   if (isInGame.value) {
     userStore.sendGameMessage({
@@ -345,7 +530,6 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
-// Обработка видимости страницы (для паузы при переключении вкладок)
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && isInGame.value) {
     userStore.sendGameMessage({
@@ -371,85 +555,46 @@ document.addEventListener('visibilitychange', () => {
   width: 100%;
   height: 100vh;
   background: #1a1a1a;
+  overflow: hidden;
 }
 
 .hud {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 10px;
-  border-radius: 5px;
-  font-family: monospace;
+  padding: 15px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  min-width: 200px;
+  border: 1px solid #333;
+}
+
+.hud-info p {
+  margin: 5px 0;
+  font-size: 14px;
 }
 
 .hud-buttons {
   margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .hud-buttons button {
-  margin-right: 5px;
-  padding: 5px 10px;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.error-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.error-content {
-  text-align: center;
-  background: #2a2a2a;
-  padding: 20px;
-  border-radius: 10px;
-  border: 1px solid #ff4444;
-}
-
-.reconnect-btn {
-  background: #4CAF50;
-  color: white;
+  padding: 8px 12px;
   border: none;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-}
-
-.reconnect-btn:hover {
-  background: #45a049;
+  font-size: 12px;
+  transition: all 0.3s ease;
 }
 
 .exit-btn {
   background: #ff4444;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 .exit-btn:hover {
@@ -459,94 +604,31 @@ document.addEventListener('visibilitychange', () => {
 .lobby-btn {
   background: #2196F3;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 .lobby-btn:hover {
   background: #0b7dda;
 }
-</style>
 
-<style scoped>
-.game-container {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  background-color: #1a1a1a;
-  overflow: hidden;
-}
-
-canvas {
-  display: block;
-  margin: 0 auto;
-  background-color: #2c3e50;
-}
-
-.hud {
-  position: absolute;
-  top: 20px;
-  left: 20px;
+.reconnect-btn {
+  background: #4CAF50;
   color: white;
-  font-family: 'Arial', sans-serif;
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 15px;
-  border-radius: 10px;
-  min-width: 220px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.hud p {
-  margin: 8px 0;
-  font-size: 14px;
-  font-weight: 500;
+.reconnect-btn:hover {
+  background: #45a049;
 }
 
-.hud-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 15px;
+.status-connected {
+  color: #4CAF50;
 }
 
-.exit-btn {
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.status-disconnected {
+  color: #ff4444;
 }
 
-.lobby-btn {
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.exit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
-.lobby-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+.status-waiting {
+  color: #FF9800;
 }
 
 .overlay {
@@ -555,73 +637,145 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.95));
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
-  font-family: 'Arial', sans-serif;
-  z-index: 1000;
+  z-index: 10;
 }
 
-.overlay h2 {
-  font-size: 42px;
-  margin-bottom: 30px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(135deg, #3498db, #2ecc71);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.overlay ul {
-  list-style: none;
-  padding: 0;
-  margin-bottom: 30px;
-  background-color: rgba(255, 255, 255, 0.1);
+.game-results {
+  background: #2a2a2a;
+  padding: 30px;
   border-radius: 10px;
-  padding: 20px;
+  border: 2px solid #444;
+  text-align: center;
   min-width: 300px;
 }
 
-.overlay li {
-  font-size: 18px;
-  margin: 12px 0;
-  padding: 10px 20px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  border-left: 4px solid #3498db;
+.game-results h2 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.results-list {
+  margin: 20px 0;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+  background: #333;
+  border-radius: 5px;
+  border-left: 4px solid #666;
+}
+
+.result-item .winner {
+  border-left-color: #4CAF50;
+  background: #2d4a2d;
+}
+
+.player-name {
+  font-weight: bold;
+}
+
+.player-score {
+  color: #FFD166;
+}
+
+.player-result.winner {
+  color: #4CAF50;
+  font-weight: bold;
 }
 
 .overlay-buttons {
   display: flex;
-  gap: 20px;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
 }
 
-.overlay button {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
 }
 
-.overlay button:first-child {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+.error-content {
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #ff4444;
+  text-align: center;
+  max-width: 400px;
 }
 
-.overlay button:last-child {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-  color: white;
+.error-content h3 {
+  color: #ff4444;
+  margin-bottom: 15px;
 }
 
-.overlay button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+.error-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.waiting-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 15;
+}
+
+.waiting-content {
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #FF9800;
+  text-align: center;
+}
+
+.waiting-content h3 {
+  color: #FF9800;
+  margin-bottom: 15px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #333;
+  border-top: 4px solid #FF9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+canvas {
+  display: block;
+  background: #1a1a1a;
 }
 </style>
