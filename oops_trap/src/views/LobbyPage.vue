@@ -3,6 +3,7 @@
     <div class="nickname">{{ userName }} (ID: {{ userId }})</div>
     <div class="content">
       <div class="lobby-code">Code: {{ lobbyCode }}</div>
+      <div class="lobby-status" :class="statusClass">Status: {{ lobbyStatus }}</div>
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
@@ -24,7 +25,7 @@
           @click="showSettings = true"
         />
         <BaseButton
-          v-if="isHost"
+          v-if="isHost && lobbyStatus === 'waiting'"
           label="Start"
           size="large"
           @click="handleStart"
@@ -78,114 +79,138 @@ export default {
       showSettings: false,
       currentSettings: {},
       lobbyId: null,
+      lobbyStatus: "waiting", 
       pollInterval: null,
+      currentGameId: null,
     };
   },
 
   computed: {
     lobbyCode() {
       return this.lobbyId ? this.lobbyId.toString() : "";
+    },
+    statusClass() {
+      return {
+        'status-waiting': this.lobbyStatus === 'waiting',
+        'status-in-progress': this.lobbyStatus === 'in-progress',
+        'status-finished': this.lobbyStatus === 'finished'
+      };
     }
   },
 
   created() {
-    console.log("🟡 LobbyPage created - initializing...");
+    // console.log("🟡 LobbyPage created - initializing...");
     this.userStore.initializeUser();
     this.isHost = this.$route.query.mode === "create";
     this.lobbyId = this.$route.query.id;
     
-    console.log("🔵 Lobby data:", {
-      isHost: this.isHost,
-      lobbyId: this.lobbyId,
-      userId: this.userId,
-      routeQuery: this.$route.query
-    });
+    // console.log("🔵 Lobby data:", {
+    //   isHost: this.isHost,
+    //   lobbyId: this.lobbyId,
+    //   userId: this.userId,
+    //   routeQuery: this.$route.query
+    // });
     
     this.startPolling();
-    this.fetchPlayers(); // Первоначальная загрузка
+    this.fetchLobbyData();
   },
 
   beforeUnmount() {
-    console.log("🟡 LobbyPage unmounting - stopping polling");
     this.stopPolling();
   },
 
   methods: {
     startPolling() {
-      console.log("🟢 Starting polling every 2 seconds");
       this.pollInterval = setInterval(() => {
-        console.log("🔄 Polling players list...");
-        this.fetchPlayers();
+        this.fetchLobbyData();
       }, 2000);
     },
 
     stopPolling() {
       if (this.pollInterval) {
-        console.log("🔴 Stopping polling");
         clearInterval(this.pollInterval);
         this.pollInterval = null;
       }
     },
 
-    async fetchPlayers() {
-      console.log("📡 Fetching players from API...");
-      
+    async fetchLobbyData() {
       try {
-        const url = `/api/lobby/lobbies/${this.lobbyId}/users`;
-        console.log("🌐 API URL:", url);
+        const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`;
         
-        const response = await fetch(url);
+        const statusResponse = await fetch(statusUrl);
         
-        console.log("📊 Response status:", response.status, response.statusText);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        if (!statusResponse.ok) {
+          throw new Error(`HTTP ${statusResponse.status} - ${statusResponse.statusText}`);
         }
 
-        const data = await response.json();
-        console.log("✅ API response data:", data);
+        const statusData = await statusResponse.json();
         
-        // Проверяем структуру ответа
-        if (!data.players) {
-          console.warn("⚠️ No players array in response:", data);
-          return;
+        if (statusData.success && statusData.data) {
+          const newStatus = statusData.data.status;
+
+          this.lobbyStatus = newStatus;
+          
+          this.checkLobbyStatus();
         }
+
+        const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`;
         
-        console.log("👥 Players from API:", data.players);
-        console.log("👥 Current players in state:", this.players);
+        const playersResponse = await fetch(playersUrl);
         
-        // Сравниваем массивы по содержимому
+        if (!playersResponse.ok) {
+          throw new Error(`HTTP ${playersResponse.status} - ${playersResponse.statusText}`);
+        }
+
+        const playersData = await playersResponse.json();
+        
         const currentPlayersStr = JSON.stringify(this.players.map(p => ({ id: p.id, name: p.name })));
-        const newPlayersStr = JSON.stringify(data.players.map(p => ({ id: p.id, name: p.name })));
-        
-        console.log("🔍 Comparing players:");
-        console.log("Current:", currentPlayersStr);
-        console.log("New:", newPlayersStr);
+        const newPlayersStr = JSON.stringify(playersData.players.map(p => ({ id: p.id, name: p.name })));
         
         if (currentPlayersStr !== newPlayersStr) {
-          console.log("🔄 Players list changed - updating state");
-          this.updatePlayersList(data.players);
-        } else {
-          console.log("⚡ Players list unchanged - skipping update");
+          this.updatePlayersList(playersData.players);
         }
 
       } catch (error) {
-        console.error("❌ Failed to fetch players:", error);
-        console.error("Error details:", {
+        throw new Error("Error details:", {
           message: error.message,
           stack: error.stack
         });
       }
     },
 
+    checkLobbyStatus() {
+      if (this.lobbyStatus === 'in-progress') {
+        this.redirectToGame();
+      } else if (this.lobbyStatus === 'finished') {
+        this.handleLobbyFinished();
+      }
+    },
+
+    redirectToGame() {
+      this.stopPolling();
+      
+      const gameId = this.lobbyId;
+      this.$router.push(`/game/${gameId}`);
+    },
+
+    handleLobbyFinished() {
+      Modal.info({
+        title: "Game Finished",
+        content: "The game has finished. You will be redirected to the lobby creation page.",
+        okText: "OK",
+        onOk: () => {
+          this.stopPolling();
+          this.$router.push("/createLobby");
+        }
+      });
+    },
+
     updatePlayersList(players) {
-      console.log("🎨 Updating players list with colors");
       const updatedPlayers = players.map((player, index) => ({
         ...player,
         color: this.getPlayerColor(index)
       }));
       
-      console.log("🖌️ Final players list:", updatedPlayers);
       this.players = updatedPlayers;
     },
 
@@ -252,71 +277,169 @@ export default {
       }
     },
 
-    async handleStart() {
-      console.log("🎮 Start button clicked");
-      console.log("📊 Current players count:", this.players.length);
+    // В methods LobbyPage
+async handleStart() {
+  console.log("🎮 Start button clicked");
+  console.log("📊 Current players count:", this.players.length);
+  
+  if (this.players.length < 2) {
+    Modal.warning({
+      title: "Not enough players",
+      content: "Need at least 2 players to start the game",
+      okText: "OK",
+    });
+    return;
+  }
+
+  const currentUserId = this.userStore.userId;
+  
+  if (!currentUserId) {
+    Modal.error({
+      title: "Error",
+      content: "User not authenticated. Please log in again.",
+      okText: "OK",
+    });
+    return;
+  }
+
+  try {
+    console.log("🚀 Starting game...");
+    
+    // 1. Сначала создаем WebSocket соединение
+    await this.createGameSocketConnection();
+    
+    // 2. Затем отправляем запрос на старт игры
+    const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ownerId: currentUserId,
+        newStatus: "in-progress"
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("✅ Start game response:", result);
+
+      Modal.success({
+        title: "Success",
+        content: "Game started successfully! Redirecting to game...",
+        okText: "OK",
+      });
+
+    } else {
+      const error = await response.json();
+      console.error("❌ Start game failed:", error);
+      Modal.error({
+        title: "Error",
+        content: error.message || error.details?.join(', ') || "Failed to start game",
+        okText: "OK",
+      });
+    }
+  } catch (error) {
+    console.error("❌ Start game error:", error);
+    Modal.error({
+      title: "Error",
+      content: "Failed to start game: " + error.message,
+      okText: "OK",
+    });
+  }
+},
+
+async createGameSocketConnection() {
+  return new Promise((resolve, reject) => {
+    try {
+      // Создаем локальный WebSocket
+      const gameSocket = new WebSocket(`ws://localhost/ws/game/${this.lobbyId}`);
       
-      if (this.players.length < 2) {
-        Modal.warning({
-          title: "Not enough players",
-          content: "Need at least 2 players to start the game",
-          okText: "OK",
-        });
-        return;
-      }
-
-      const currentUserId = this.userStore.userId;
+      // Сохраняем сокет в store или локально
+      this.userStore.setGameSocket(gameSocket);
       
-      if (!currentUserId) {
-        Modal.error({
-          title: "Error",
-          content: "User not authenticated. Please log in again.",
-          okText: "OK",
-        });
-        return;
-      }
+      gameSocket.onopen = () => {
+        console.log("✅ Game WebSocket connected successfully");
+        
+        // Отправляем инициализационное сообщение
+        gameSocket.send(JSON.stringify({
+          type: "init",
+          playerId: this.userId,
+          gameId: this.lobbyId,
+          action: "player_ready"
+        }));
+        
+        resolve(gameSocket);
+      };
 
-      try {
-        console.log("🚀 Starting game...");
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ownerId: currentUserId,
-            newStatus: "in-progress"
-          }),
-        });
+      gameSocket.onerror = (error) => {
+        console.error("❌ Game WebSocket connection error:", error);
+        reject(new Error("Failed to connect to game server"));
+      };
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log("✅ Start game response:", result);
+      gameSocket.onclose = (event) => {
+        console.log("🔌 Game WebSocket closed:", event.code, event.reason);
+      };
 
-          const gameId = result.gameId || this.lobbyId;
-          console.log("🎯 Redirecting to game:", gameId);
-          
-          this.stopPolling();
-          this.$router.push(`/game/${gameId}?lobbyId=${this.lobbyId}`);
-
-        } else {
-          const error = await response.json();
-          console.error("❌ Start game failed:", error);
-          Modal.error({
-            title: "Error",
-            content: error.message || "Failed to start game",
-            okText: "OK",
-          });
+      // Обработчик входящих сообщений (можно вынести в отдельный метод)
+      gameSocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleGameSocketMessage(data);
+        } catch (error) {
+          console.error("Error parsing game socket message:", error);
         }
-      } catch (error) {
-        console.error("❌ Start game error:", error);
-        Modal.error({
-          title: "Error",
-          content: "Failed to start game: " + error.message,
-          okText: "OK",
-        });
-      }
-    },
+      };
+
+      // Таймаут для соединения
+      setTimeout(() => {
+        if (gameSocket.readyState !== WebSocket.OPEN) {
+          reject(new Error("WebSocket connection timeout"));
+        }
+      }, 5000);
+
+    } catch (error) {
+      reject(error);
+    }
+  });
+},
+
+handleGameSocketMessage(data) {
+  console.log("🎮 Game socket message received:", data);
+  
+  switch (data.type) {
+    case "game-joined":
+      console.log("✅ Successfully joined game via WebSocket");
+      break;
+    case "waiting-start":
+      console.log("⏳ Waiting for other players...", data.message);
+      break;
+    case "player-connected":
+      console.log(`👤 Player ${data.playerId} connected`);
+      break;
+    case "player-disconnected":
+      console.log(`🚪 Player ${data.playerId} disconnected`);
+      break;
+    default:
+      console.log("📨 Unknown game message type:", data.type);
+  }
+},
+
+redirectToGame() {
+  this.stopPolling();
+  
+  const gameId = this.lobbyId;
+  console.log("🔄 Redirecting to game:", gameId);
+  
+  // Переходим на страницу игры, передавая lobbyId как query параметр
+  this.$router.push({
+    path: `/game/${gameId}`,
+    query: { 
+      lobbyId: this.lobbyId,
+      fromLobby: 'true' // Флаг что переходим из лобби
+    }
+  });
+},
 
     showExitConfirm() {
       Modal.confirm({
@@ -396,330 +519,42 @@ export default {
 </script>
 
 <style scoped>
+.lobby-status {
+  font-weight: bold;
+  margin: 10px 0;
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.status-waiting {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-in-progress {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.status-finished {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+</style>
+
+
+<style scoped>
 .player-you {
   font-size: 12px;
   color: #888;
   margin-left: 8px;
   font-style: italic;
 }
-</style>
 
-<!-- <template>
-  <div class="lobby-container">
-    <div class="nickname">{{ userName }} (ID: {{ userId }})</div>
-    <div class="content">
-      <div class="lobby-code">Code: {{ lobbyCode }}</div>
-      <div class="players-scrollable-layer">
-        <h2>Players</h2>
-        <div class="players-list">
-          <div v-for="player in players" :key="player.id" class="player">
-            <div
-              class="player-color"
-              :style="{ backgroundColor: player.color }"
-            ></div>
-            <span class="player-name">{{ player.name }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="actions">
-        <BaseButton
-          v-if="isHost"
-          label="Settings"
-          size="large"
-          @click="showSettings = true"
-        />
-        <BaseButton
-          v-if="isHost"
-          label="Start"
-          size="large"
-          @click="handleStart"
-        />
-        <BaseButton label="Exit" size="large" @click="showExitConfirm" />
-      </div>
-    </div>
-  </div>
-  <UniversalModal
-    v-if="showSettings"
-    title="Game Settings"
-    type="settings"
-    :players="players"
-    :initial-settings="currentSettings"
-    @close="showSettings = false"
-    @settings-apply="handleSettingsApply"
-  />
-</template>
-
-<script>
-import BaseButton from "@/components/base/BaseButton.vue";
-import { Modal } from "ant-design-vue";
-import UniversalModal from "@/components/base/UniversalModal.vue";
-import { useUserStore } from "@/stores/user";
-import { storeToRefs } from "pinia";
-
-export default {
-  name: "LobbyPage",
-  components: {
-    BaseButton,
-    UniversalModal,
-  },
-
-  setup() {
-    const userStore = useUserStore();
-    const { user, userId, userName } = storeToRefs(userStore);
-
-    return {
-      userStore,
-      user,
-      userId,
-      userName
-    };
-  },
-
-  data() {
-    return {
-      players: [
-        { id: 1, name: "Player 1", color: "#FF6B6B" },
-        { id: 2, name: "Player 2", color: "#4ECDC4" },
-        { id: 3, name: "Player 3", color: "#FFD166" },
-        { id: 4, name: "Player 4", color: "#6A0572" },
-        { id: 5, name: "Player 5", color: "#118AB2" },
-        { id: 6, name: "Player 6", color: "#06D6A0" },
-        { id: 7, name: "Player 7", color: "#EF476F" },
-        { id: 8, name: "Player 8", color: "#FFD166" },
-        { id: 9, name: "Player 9", color: "#118AB2" },
-        { id: 10, name: "Player 10", color: "#06D6A0" },
-      ],
-      isHost: true,
-      showSettings: false,
-      currentSettings: {},
-      lobbyId: null,
-    };
-  },
-
-  computed: {
-    lobbyCode() {
-      return this.lobbyId ? this.lobbyId.toString() : "";
-    }
-  },
-
-  created() {
-    console.log("Before initializeUser:", {
-      userId: this.userId,
-      user: this.user,
-      sessionStorage: {
-        user: sessionStorage.getItem('user_session_id') ? sessionStorage.getItem(`user_${sessionStorage.getItem('user_session_id')}`) : 'no session'
-      }
-    });
-
-    this.userStore.initializeUser();
-    
-    console.log("After initializeUser:", {
-      userId: this.userId,
-      user: this.user,
-      sessionId: this.userStore.sessionId
-    });
-
-    this.isHost = this.$route.query.mode === "create";
-    this.lobbyId = this.$route.query.id;
-
-    console.log("Lobby created:", {
-      isHost: this.isHost,
-      lobbyId: this.lobbyId,
-      routeQuery: this.$route.query
-    });
-  },
-
-  methods: {
-    async handleSettingsApply(settings) {
-      const currentUserId = this.userStore.userId;
-      
-      if (!currentUserId) {
-        Modal.error({
-          title: "Error",
-          content: "User ID not available. Please refresh the page.",
-          okText: "OK",
-        });
-        return;
-      }
-
-      const apiSettings = {
-        ownerId: currentUserId,
-        map: settings.map || 1,
-        time: settings.time || "normal",
-        trapper: settings.mafia || 1,
-      };
-
-      console.log("Applying settings with ownerId:", currentUserId);
-
-      const response = await fetch(
-        `/api/lobby/lobbies/${this.lobbyId}/settings`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiSettings),
-        }
-      );
-
-      if (response.ok) {
-        this.currentSettings = {
-          map: settings.map || "city",
-          mafia: settings.mafia || 1,
-          time: settings.time || "normal",
-        };
-
-        Modal.success({
-          title: "Success",
-          content: "Settings updated",
-          okText: "OK",
-        });
-      } else {
-        Modal.error({
-          title: "Error",
-          content: "Failed to update settings",
-          okText: "OK",
-        });
-      }
-    },
-
-    async handleStart() {
-      if (this.players.length < 2) {
-        Modal.warning({
-          title: "Not enough players",
-          content: "Need at least 2 players to start the game",
-          okText: "OK",
-        });
-        return;
-      }
-
-      const currentUserId = this.userStore.userId;
-      
-      if (!currentUserId) {
-        Modal.error({
-          title: "Error",
-          content: "User not authenticated. Please log in again.",
-          okText: "OK",
-        });
-        return;
-      }
-
-      console.log("Starting game with:", {
-        ownerId: currentUserId,
-        newStatus: "in-progress",
-        lobbyId: this.lobbyId
-      });
-
-      try {
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ownerId: currentUserId,
-            newStatus: "in-progress"
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          console.log("Start game response:", result);
-          
-          if (result.gameId) {
-            this.$router.push(`/game/${result.gameId}`);
-          } else if (result.lobby && result.lobby.id) {
-            this.$router.push(`/game/${result.lobby.id}`);
-          } else {
-            this.$router.push(`/game/${this.lobbyId}`);
-          }
-        } else {
-          const error = await response.json();
-          Modal.error({
-            title: "Error",
-            content: error.message || "Failed to start game",
-            okText: "OK",
-          });
-        }
-      } catch (error) {
-        Modal.error({
-          title: "Error",
-          content: "Failed to start game: " + error.message,
-          okText: "OK",
-        });
-      }
-    },
-
-    showExitConfirm() {
-      Modal.confirm({
-        title: "Exit Game",
-        content: "Are you sure you want to exit the game?",
-        okText: "Yes, Exit",
-        cancelText: "Cancel",
-        okType: "danger",
-        centered: true,
-        onOk: () => {
-          this.exitLobby();
-        },
-      });
-    },
-
-    async exitLobby() {
-      const currentUserId = this.userStore.userId;
-
-      if (this.isHost) {
-        const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/delete`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ownerId: currentUserId,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          Modal.error({
-            title: "Error",
-            content: `Failed to delete lobby: ${response.status}`,
-            okText: "OK",
-          });
-          return;
-        }
-      } else {
-        const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/leave`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId: currentUserId,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          Modal.error({
-            title: "Error",
-            content: `Failed to leave lobby: ${response.status}`,
-            okText: "OK",
-          });
-          return;
-        }
-      }
-
-      this.$router.push("/createLobby");
-    },
-  },
-};
-</script> -->
-
-<style scoped>
 .lobby-container {
   height: 100vh;
   width: 100vw;
