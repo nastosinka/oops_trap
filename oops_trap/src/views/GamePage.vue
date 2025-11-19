@@ -12,12 +12,8 @@
         <p>Connection: <span :class="connectionStatusClass">{{ connectionStatus }}</span></p>
       </div>
       <div class="hud-buttons">
-        <button @click="showExitConfirm" class="exit-btn">Exit Game</button>
         <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">
           Return to Lobby
-        </button>
-        <button @click="reconnect" class="reconnect-btn" v-if="!isConnected">
-          Reconnect
         </button>
       </div>
     </div>
@@ -35,29 +31,8 @@
           </div>
         </div>
         <div class="overlay-buttons">
-          <button @click="exitToMenu" class="exit-btn">Exit to Menu</button>
           <button @click="returnToLobby" class="lobby-btn" v-if="lobbyId">Return to Lobby</button>
         </div>
-      </div>
-    </div>
-
-    <div v-if="connectionError" class="error-overlay">
-      <div class="error-content">
-        <h3>Connection Error</h3>
-        <p>{{ connectionError }}</p>
-        <div class="error-buttons">
-          <button @click="reconnect" class="reconnect-btn">Try to Reconnect</button>
-          <button @click="exitToMenu" class="exit-btn">Exit to Menu</button>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="waitingForPlayers" class="waiting-overlay">
-      <div class="waiting-content">
-        <h3>Waiting for Players...</h3>
-        <p>Game will start automatically when all players are ready</p>
-        <div class="loading-spinner"></div>
-        <p>Connected: {{ connectedPlayersCount }}/{{ totalPlayersCount }}</p>
       </div>
     </div>
   </div>
@@ -477,44 +452,6 @@ const updateLobbyStatus = async (newStatus) => {
     console.error("❌ Error updating lobby status:", error);
     throw error;
   }
-};
-
-const showExitConfirm = () => {
-  const content = lobbyId.value 
-    ? `Exit to menu or return to lobby? ${isHost.value ? '(As host, returning to lobby will reset the game)' : ''}` 
-    : "Are you sure you want to exit the game? Your progress will be lost.";
-
-  Modal.confirm({
-    title: "Exit Game",
-    content: content,
-    okText: "Exit to Menu",
-    cancelText: lobbyId.value ? "Return to Lobby" : "Cancel",
-    okType: "danger",
-    centered: true,
-    onOk: () => {
-      exitToMenu();
-    },
-    onCancel: () => {
-      if (lobbyId.value) {
-        returnToLobby();
-      }
-    }
-  });
-};
-
-const exitToMenu = async () => {
-  // Если хост и есть лобби, обновляем статус
-  if (lobbyId.value && isHost.value) {
-    try {
-      await updateLobbyStatus('waiting');
-      console.log("🎮 Host exited to menu, lobby status set to waiting");
-    } catch (error) {
-      console.error("❌ Error updating lobby status on exit:", error);
-    }
-  }
-
-  userStore.closeGameSocket();
-  router.push("/createLobby");
 };
 
 // Обработка событий страницы
