@@ -50,13 +50,11 @@ const router = useRouter();
 const userStore = useUserStore();
 const { userId: storeUserId, getGameSocket, isInGame, currentGameId } = storeToRefs(userStore);
 
-// Game data
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
 const userId = computed(() => storeUserId.value);
 const lobbyId = computed(() => route.query.lobbyId);
-const isHost = ref(false); // Будет установлено после проверки
+const isHost = ref(false); 
 
-// Game state
 const timeLeft = ref(0);
 const stats = ref([]);
 const gameEnded = ref(false);
@@ -67,7 +65,6 @@ const waitingForPlayers = ref(false);
 const connectedPlayersCount = ref(0);
 const totalPlayersCount = ref(0);
 
-// Connection status
 const connectionStatus = computed(() => {
   if (connectionError.value) return 'Disconnected';
   if (waitingForPlayers.value) return 'Waiting';
@@ -85,7 +82,6 @@ const connectionStatusClass = computed(() => {
 onMounted(async () => {
   userStore.initializeUser();
   
-  // Проверяем, является ли пользователь хостом
   await checkIfUserIsHost();
   
   connectGameWebSocket();
@@ -96,14 +92,12 @@ onUnmounted(() => {
   cleanupWebSocketHandlers();
 });
 
-// Watch for socket changes
 watch(getGameSocket, (newSocket, oldSocket) => {
   if (newSocket !== oldSocket) {
     setupWebSocketHandlers(newSocket);
   }
 });
 
-// Проверяем, является ли пользователь хостом лобби
 const checkIfUserIsHost = async () => {
   if (!lobbyId.value) {
     isHost.value = false;
@@ -195,7 +189,6 @@ const setupWebSocketHandlers = (socket) => {
     isConnected.value = true;
     connectionError.value = null;
     
-    // Send initial join message
     userStore.sendGameMessage({
       type: "PLAYER_JOINED_GAME_PAGE",
       gameId: gameId.value,
@@ -313,13 +306,11 @@ const initializeGame = () => {
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
     
-    // Add game controls and logic here
     setupGameControls();
   }
 };
 
 const setupGameControls = () => {
-  // Example: Keyboard controls
   const handleKeyDown = (event) => {
     if (!isConnected.value || gameEnded.value) return;
 
@@ -368,7 +359,6 @@ const setupGameControls = () => {
 
   window.addEventListener('keydown', handleKeyDown);
 
-  // Cleanup
   onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
   });
@@ -378,17 +368,14 @@ const updateGameState = (gameState) => {
   if (canvas.value && gameState) {
     const ctx = canvas.value.getContext('2d');
     
-    // Clear canvas
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
     
-    // Draw game objects
     if (gameState.players) {
       gameState.players.forEach(player => {
         ctx.fillStyle = player.color || '#ffffff';
         ctx.fillRect(player.x || 50, player.y || 50, 30, 30);
         
-        // Draw player name
         ctx.fillStyle = '#ffffff';
         ctx.font = '12px Arial';
         ctx.fillText(player.name || `Player ${player.id}`, (player.x || 50) - 10, (player.y || 50) - 5);
@@ -415,7 +402,6 @@ const returnToLobby = async () => {
 
   try {
     if (isHost.value) {
-      // Если хост - обновляем статус лобби на 'waiting'
       await updateLobbyStatus('waiting');
       console.log("🎮 Host returned to lobby, status set to waiting");
     } else {
@@ -423,7 +409,6 @@ const returnToLobby = async () => {
     }
   } catch (error) {
     console.error("❌ Error updating lobby status:", error);
-    // Продолжаем в любом случае
   }
 
   cleanupWebSocketHandlers();
@@ -454,7 +439,6 @@ const updateLobbyStatus = async (newStatus) => {
   }
 };
 
-// Обработка событий страницы
 window.addEventListener('beforeunload', () => {
   if (isInGame.value) {
     userStore.sendGameMessage({

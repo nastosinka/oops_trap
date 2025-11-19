@@ -19,10 +19,10 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/game/:id?',
-    name: 'Game',
-    component: () => import('@/views/GamePage.vue')
-  }
+    path: "/game/:id?",
+    name: "Game",
+    component: () => import("@/views/GamePage.vue"),
+  },
 ];
 
 const router = createRouter({
