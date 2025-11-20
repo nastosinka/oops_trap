@@ -31,11 +31,13 @@ export const useUserStore = defineStore("user", () => {
   };
 
   const setUser = (userData) => {
+    if (!sessionId.value) initializeUser();
     user.value = userData;
     sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
   };
 
   const setToken = (tokenData) => {
+    if (!sessionId.value) initializeUser();
     token.value = tokenData;
     sessionStorage.setItem(`token_${sessionId.value}`, tokenData);
   };
