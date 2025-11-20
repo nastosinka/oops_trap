@@ -125,7 +125,28 @@ jobs:
       #   working-directory: ./oops_trap
       #   run: npm run test:e2e
 
+  backend-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
 
-        
-      
+      - name: some logs
+        run: |
+          pwd
+          ls -la
 
+      - name: setup node.js 
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./backend/package-lock.json
+
+      - name: install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: run tests
+        working-directory: ./backend
+        run: npm run test
