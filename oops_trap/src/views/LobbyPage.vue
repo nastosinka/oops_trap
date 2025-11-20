@@ -468,7 +468,7 @@ export default {
         try {
           // Создаем локальный WebSocket
           const gameSocket = new WebSocket(
-            `ws://localhost/ws/game/${this.lobbyId}`
+            `ws://${import.meta.env.VITE_SERVER_IP}/ws/game/${this.lobbyId}`
           );
 
           // Сохраняем сокет в store

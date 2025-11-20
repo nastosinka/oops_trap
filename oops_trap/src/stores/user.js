@@ -110,8 +110,8 @@ export const useUserStore = defineStore("user", () => {
         closeGameSocket();
 
         // Создаем новое WebSocket соединение
-        const socket = new WebSocket(`ws://localhost/ws/game/${gameId}`);
-
+        const socket = new WebSocket(`ws://${import.meta.env.VITE_SERVER_IP}/ws/game/${gameId}`);
+        
         socket.onopen = () => {
           console.log(
             "✅ Game WebSocket connected successfully for game:",
