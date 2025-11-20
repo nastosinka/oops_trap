@@ -93,6 +93,7 @@ export default {
         };
 
         userStore.login(userData, data.token);
+        localStorage.setItem("token", data.token);
 
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
@@ -136,6 +137,7 @@ export default {
         };
 
         userStore.login(userData, data.token);
+        localStorage.setItem("token", data.token);
 
         this.showSignInModal = false;
         showSuccess("Login successful!");
