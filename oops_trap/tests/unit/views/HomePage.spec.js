@@ -3,48 +3,55 @@ import { mount, flushPromises } from "@vue/test-utils";
 import HomePage from "@/views/HomePage.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
+import { createPinia, setActivePinia } from "pinia";
 
-vi.mock("@/utils/notification-wrapper", () => {
-  return {
-    showSuccess: vi.fn(),
-  };
-});
+vi.mock("@/utils/notification-wrapper", () => ({
+  showSuccess: vi.fn(),
+}));
 
-describe("HomePage", () => {
+vi.mock("@/stores/user", () => ({
+  useUserStore: () => ({
+    login: vi.fn(),
+  }),
+}));
+
+vi.mock("ant-design-vue", () => ({
+  Modal: {
+    error: vi.fn(),
+  },
+}));
+
+describe("HomePage.vue", () => {
   let wrapper;
-  let showSuccessMock;
   let fetchMock;
   let localStorageMock;
   let mockRouter;
-  let mockToast;
 
-  const createComponent = (options = {}) => {
+  const mountComponent = () => {
     return mount(HomePage, {
       global: {
-        mocks: {
-          $router: mockRouter,
-          $toast: mockToast,
-        },
+        plugins: [createPinia()],
+        mocks: { $router: mockRouter },
         stubs: {
           BaseButton: true,
           UniversalModal: true,
         },
       },
-      ...options,
     });
   };
 
-  beforeEach(async () => {
-    showSuccessMock = vi.mocked(
-      (await import("@/utils/notification-wrapper")).showSuccess
-    );
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+
+    mockRouter = { push: vi.fn() };
 
     fetchMock = vi.fn();
     global.fetch = fetchMock;
 
     localStorageMock = {
-      getItem: vi.fn(),
       setItem: vi.fn(),
+      getItem: vi.fn(),
       removeItem: vi.fn(),
       clear: vi.fn(),
     };
@@ -53,75 +60,55 @@ describe("HomePage", () => {
       writable: true,
     });
 
-    mockRouter = {
-      push: vi.fn(),
-    };
-
-    mockToast = {
-      error: vi.fn(),
-    };
-
-    vi.clearAllMocks();
+    wrapper = mountComponent();
   });
 
-  describe("Рендеринг", () => {
-    it("отображает все кнопки", () => {
-      wrapper = createComponent();
-
+  // UI rendering
+  describe("UI rendering", () => {
+    it("рендерит кнопки", () => {
       const buttons = wrapper.findAllComponents(BaseButton);
-      const buttonLabels = buttons.map((button) => button.attributes("label"));
+      const labels = buttons.map((b) => b.attributes("label"));
 
-      expect(buttonLabels).toContain("Sign Up");
-      expect(buttonLabels).toContain("Sign On");
-      expect(buttonLabels).toContain("Rules");
+      expect(labels).toContain("Sign Up");
+      expect(labels).toContain("Sign In");
+      expect(labels).toContain("Rules");
     });
 
-    it("изначально не показывает модальные окна", () => {
-      wrapper = createComponent();
-
-      const modals = wrapper.findAllComponents(UniversalModal);
-      expect(modals).toHaveLength(0);
+    it("модалки скрыты по умолчанию", () => {
+      expect(wrapper.findAllComponents(UniversalModal)).toHaveLength(0);
     });
   });
 
-  describe("Открытие модальных окон", () => {
-    it("показывает модальное окно Sign Up при клике на кнопку", async () => {
-      wrapper = createComponent();
-
-      const signUpButton = wrapper
+  // Opening modals
+  describe("Opening modals", () => {
+    it("открывает Sign Up", async () => {
+      const btn = wrapper
         .findAllComponents(BaseButton)
-        .find((button) => button.attributes("label") === "Sign Up");
-      await signUpButton.trigger("click");
-
+        .find((b) => b.attributes("label") === "Sign Up");
+      await btn.trigger("click");
       expect(wrapper.vm.showSignUpModal).toBe(true);
     });
 
-    it("показывает модальное окно Sign On при клике на кнопку", async () => {
-      wrapper = createComponent();
-
-      const signOnButton = wrapper
+    it("открывает Sign In", async () => {
+      const btn = wrapper
         .findAllComponents(BaseButton)
-        .find((button) => button.attributes("label") === "Sign On");
-      await signOnButton.trigger("click");
-
-      expect(wrapper.vm.showSignOnModal).toBe(true);
+        .find((b) => b.attributes("label") === "Sign In");
+      await btn.trigger("click");
+      expect(wrapper.vm.showSignInModal).toBe(true);
     });
 
-    it("показывает модальное окно Rules при клике на кнопку", async () => {
-      wrapper = createComponent();
-
-      const rulesButton = wrapper
+    it("открывает Rules", async () => {
+      const btn = wrapper
         .findAllComponents(BaseButton)
-        .find((button) => button.attributes("label") === "Rules");
-      await rulesButton.trigger("click");
-
+        .find((b) => b.attributes("label") === "Rules");
+      await btn.trigger("click");
       expect(wrapper.vm.showRulesModal).toBe(true);
     });
   });
 
-  describe("Закрытие модальных окон", () => {
-    it("закрывает модальное окно Sign Up при событии close", async () => {
-      wrapper = createComponent();
+  // Closing modals
+  describe("Closing modals", () => {
+    it("закрывает Sign Up", async () => {
       await wrapper.setData({ showSignUpModal: true });
       await flushPromises();
 
@@ -131,19 +118,17 @@ describe("HomePage", () => {
       expect(wrapper.vm.showSignUpModal).toBe(false);
     });
 
-    it("закрывает модальное окно Sign On при событии close", async () => {
-      wrapper = createComponent();
-      await wrapper.setData({ showSignOnModal: true });
+    it("закрывает Sign In", async () => {
+      await wrapper.setData({ showSignInModal: true });
       await flushPromises();
 
       const modal = wrapper.findAllComponents(UniversalModal)[0];
       modal.vm.$emit("close");
 
-      expect(wrapper.vm.showSignOnModal).toBe(false);
+      expect(wrapper.vm.showSignInModal).toBe(false);
     });
 
-    it("закрывает модальное окно Rules при событии close", async () => {
-      wrapper = createComponent();
+    it("закрывает Rules", async () => {
       await wrapper.setData({ showRulesModal: true });
       await flushPromises();
 
@@ -154,122 +139,135 @@ describe("HomePage", () => {
     });
   });
 
-  describe("Методы", () => {
-    describe("handleSignOn", () => {
-      beforeEach(() => {
-        fetchMock.mockResolvedValue({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              token: "test-token",
-              user: { id: 1, username: "testuser" },
-            }),
-        });
-      });
-
-      it("успешно выполняет вход и перенаправляет", async () => {
-        wrapper = createComponent();
-        await wrapper.setData({ showSignOnModal: true });
-
-        const values = { name: "testuser", password: "password123" };
-        await wrapper.vm.handleSignOn(values);
-
-        expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "testuser",
-            password: "password123",
-          }),
-        });
-
-        expect(localStorageMock.setItem).toHaveBeenCalledWith(
-          "token",
-          "test-token"
-        );
-        expect(localStorageMock.setItem).toHaveBeenCalledWith(
-          "user",
-          JSON.stringify({ id: 1, username: "testuser" })
-        );
-
-        expect(wrapper.vm.showSignOnModal).toBe(false);
-        expect(showSuccessMock).toHaveBeenCalledWith("Login successful!");
-        expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
-      });
-
-      it("обрабатывает ошибку при неудачном входе", async () => {
-        fetchMock.mockResolvedValue({
-          ok: false,
-          json: () =>
-            Promise.resolve({
-              error: "Invalid credentials",
-            }),
-        });
-
-        wrapper = createComponent();
-        await wrapper.setData({ showSignOnModal: true });
-
-        const values = { name: "testuser", password: "wrongpassword" };
-        await wrapper.vm.handleSignOn(values);
-
-        expect(mockToast.error).toHaveBeenCalledWith("Invalid credentials");
-        expect(wrapper.vm.showSignOnModal).toBe(true);
-      });
-
-      it("обрабатывает сетевые ошибки", async () => {
-        fetchMock.mockRejectedValue(new Error("Network error"));
-
-        wrapper = createComponent();
-        await wrapper.setData({ showSignOnModal: true });
-
-        const values = { name: "testuser", password: "password123" };
-        await wrapper.vm.handleSignOn(values);
-
-        expect(mockToast.error).toHaveBeenCalledWith("Network error");
-        expect(wrapper.vm.showSignOnModal).toBe(true);
-      });
-
-      it("обрабатывает ошибку когда response.json() выбрасывает исключение", async () => {
-        fetchMock.mockResolvedValue({
-          ok: false,
-          json: () => Promise.reject(new Error("JSON parse error")),
-        });
-
-        wrapper = createComponent();
-        await wrapper.setData({ showSignOnModal: true });
-
-        const values = { name: "testuser", password: "password123" };
-        await wrapper.vm.handleSignOn(values);
-
-        expect(mockToast.error).toHaveBeenCalledWith("JSON parse error");
-      });
-    });
-  });
-
-  describe("Локальное хранилище", () => {
-    it("сохраняет токен и пользователя в localStorage при успешном входе", async () => {
-      const mockUser = { id: 1, username: "testuser", email: "test@test.com" };
+  // handleSignIn
+  describe("handleSignIn()", () => {
+    it("успешный вход", async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
-            token: "auth-token-123",
-            user: mockUser,
+            token: "test-token",
+            user: { id: 99, username: "admin" },
           }),
       });
 
-      wrapper = createComponent();
-      const values = { name: "testuser", password: "password123" };
-      await wrapper.vm.handleSignOn(values);
+      await wrapper.vm.handleSignIn({
+        name: "admin",
+        password: "123456",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "admin",
+          password: "123456",
+        }),
+      });
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         "token",
-        "auth-token-123"
+        "test-token"
       );
+      expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+    });
+
+    it("backend возвращает ошибку", async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: "Invalid creds" }),
+      });
+
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.handleSignIn({
+        name: "admin",
+        password: "bad",
+      });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+
+    it("json() кидает исключение", async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        json: () => Promise.reject(new Error("JSON broken")),
+      });
+
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.handleSignIn({
+        name: "admin",
+        password: "123456",
+      });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+
+    it("сетевой сбой", async () => {
+      fetchMock.mockRejectedValue(new Error("Network err"));
+
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.handleSignIn({
+        name: "admin",
+        password: "123456",
+      });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+  });
+
+  // handleSignUp
+  describe("handleSignUp()", () => {
+    it("ошибка — пароль слишком короткий", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.handleSignUp({
+        name: "admin",
+        password: "123",
+        confirmPassword: "123",
+      });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+
+    it("ошибка — пароли не совпадают", async () => {
+      const { Modal } = await import("ant-design-vue");
+
+      await wrapper.vm.handleSignUp({
+        name: "admin",
+        password: "123456",
+        confirmPassword: "654321",
+      });
+
+      expect(Modal.error).toHaveBeenCalled();
+    });
+
+    it("успешная регистрация", async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            token: "token123",
+            user: { id: 5, username: "admin" },
+          }),
+      });
+
+      const { showSuccess } = await import("@/utils/notification-wrapper");
+
+      await wrapper.vm.handleSignUp({
+        name: "admin",
+        password: "123456",
+        confirmPassword: "123456",
+      });
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "user",
-        JSON.stringify(mockUser)
+        "token",
+        "token123"
       );
+      expect(showSuccess).toHaveBeenCalled();
+      expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
     });
   });
 });
