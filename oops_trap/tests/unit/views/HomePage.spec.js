@@ -82,21 +82,24 @@ describe("HomePage.vue", () => {
   // Opening modals
   describe("Opening modals", () => {
     it("открывает Sign Up", async () => {
-      const btn = wrapper.findAllComponents(BaseButton)
+      const btn = wrapper
+        .findAllComponents(BaseButton)
         .find((b) => b.attributes("label") === "Sign Up");
       await btn.trigger("click");
       expect(wrapper.vm.showSignUpModal).toBe(true);
     });
 
     it("открывает Sign In", async () => {
-      const btn = wrapper.findAllComponents(BaseButton)
+      const btn = wrapper
+        .findAllComponents(BaseButton)
         .find((b) => b.attributes("label") === "Sign In");
       await btn.trigger("click");
       expect(wrapper.vm.showSignInModal).toBe(true);
     });
 
     it("открывает Rules", async () => {
-      const btn = wrapper.findAllComponents(BaseButton)
+      const btn = wrapper
+        .findAllComponents(BaseButton)
         .find((b) => b.attributes("label") === "Rules");
       await btn.trigger("click");
       expect(wrapper.vm.showRulesModal).toBe(true);
@@ -141,10 +144,11 @@ describe("HomePage.vue", () => {
     it("успешный вход", async () => {
       fetchMock.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          token: "test-token",
-          user: { id: 99, username: "admin" },
-        }),
+        json: () =>
+          Promise.resolve({
+            token: "test-token",
+            user: { id: 99, username: "admin" },
+          }),
       });
 
       await wrapper.vm.handleSignIn({
@@ -161,7 +165,10 @@ describe("HomePage.vue", () => {
         }),
       });
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith("token", "test-token");
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "token",
+        "test-token"
+      );
       expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
     });
 
@@ -240,10 +247,11 @@ describe("HomePage.vue", () => {
     it("успешная регистрация", async () => {
       fetchMock.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          token: "token123",
-          user: { id: 5, username: "admin" },
-        }),
+        json: () =>
+          Promise.resolve({
+            token: "token123",
+            user: { id: 5, username: "admin" },
+          }),
       });
 
       const { showSuccess } = await import("@/utils/notification-wrapper");
@@ -254,7 +262,10 @@ describe("HomePage.vue", () => {
         confirmPassword: "123456",
       });
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith("token", "token123");
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "token",
+        "token123"
+      );
       expect(showSuccess).toHaveBeenCalled();
       expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
     });
