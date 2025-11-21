@@ -1,3 +1,3 @@
-id,name,description,hp,time_1,time_2,time_3,max_players,picture_url
-1,"Лесная карта","Густой лес с секретными тропами",100,60,120,180,4,"/images/forest.jpg"
-2,"Пустынная карта","Горячая пустыня с песчаными бурями",80,45,90,135,6,"/images/desert.jpg"
+name,description,hp,time_1,time_2,time_3,max_players,picture_url
+"Я вижу свет","Первая карта",100,60,120,180,4,"/images/forest.jpg"
+"Глубокие пещеры","Вторая карта",80,45,90,135,6,"/images/desert.jpg"

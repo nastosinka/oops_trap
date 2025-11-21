@@ -1,3 +1,3 @@
-id,name,password
-98,admin,$2a$10$BwA55w3KGIz6kHETMobBO.WFlanizqtzjWYGhYD6egkrACZryQlbm
-99,user1,$2a$10$uI3xpyOH7XeBIvDbBTXui.w74NypTblSkHThVDW.EwNTE1pRF/ijG
+name,password
+admin,$2a$10$BwA55w3KGIz6kHETMobBO.WFlanizqtzjWYGhYD6egkrACZryQlbm
+user1,$2a$10$uI3xpyOH7XeBIvDbBTXui.w74NypTblSkHThVDW.EwNTE1pRF/ijG
