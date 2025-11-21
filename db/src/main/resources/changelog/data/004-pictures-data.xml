@@ -7,7 +7,6 @@
 
     <changeSet id="004-2" author="AnfiNa">
         <loadData tableName="pictures" file="changelog/data/pictures.csv">
-            <column name="id" type="NUMERIC"/>
             <column name="trap_id" type="NUMERIC"/>
             <column name="picture" type="STRING"/>
             <column name="number" type="NUMERIC"/>

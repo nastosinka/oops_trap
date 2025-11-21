@@ -7,7 +7,6 @@
 
         <changeSet id="002-2" author="AnfiNa">
         <loadData tableName="maps" file="changelog/data/maps.csv">
-            <column name="id" type="NUMERIC"/>
             <column name="name" type="STRING"/>
             <column name="description" type="STRING"/>
             <column name="hp" type="NUMERIC"/>
