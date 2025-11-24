@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref(null);
-  const token = ref(null);
+  //const token = ref(null);
   const sessionId = ref(null);
   const gameSocket = ref(null); // Добавляем хранение игрового сокета
   const currentGameId = ref(null); // Текущая игра
@@ -11,40 +11,50 @@ export const useUserStore = defineStore("user", () => {
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");
-  const isAuthenticated = computed(() => !!token.value);
+  const isAuthenticated = computed(() => !!user.value);
   const isInGame = computed(
     () => !!gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN
   );
   const getGameSocket = computed(() => gameSocket.value);
 
+  // const initializeUser = () => {
+  //   if (!sessionId.value) {
+  //     sessionId.value =
+  //       "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+  //   }
+
+  //   const userData = sessionStorage.getItem(`user_${sessionId.value}`);
+  //   const tokenData = sessionStorage.getItem(`token_${sessionId.value}`);
+
+  //   if (userData) user.value = JSON.parse(userData);
+  //   if (tokenData) token.value = tokenData;
+  // };
+
   const initializeUser = () => {
-    if (!sessionId.value) {
-      sessionId.value =
-        "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-    }
-
-    const userData = sessionStorage.getItem(`user_${sessionId.value}`);
-    const tokenData = sessionStorage.getItem(`token_${sessionId.value}`);
-
-    if (userData) user.value = JSON.parse(userData);
-    if (tokenData) token.value = tokenData;
+    const stored = sessionStorage.getItem("user");
+    if (stored) user.value = JSON.parse(stored);
   };
 
-  const setUser = (userData) => {
-    if (!sessionId.value) initializeUser();
+  // const setUser = (userData) => {
+  //   if (!sessionId.value) initializeUser();
+  //   user.value = userData;
+  //   sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
+  // };
+
+  // const setToken = (tokenData) => {
+  //   if (!sessionId.value) initializeUser();
+  //   token.value = tokenData;
+  //   sessionStorage.setItem(`token_${sessionId.value}`, tokenData);
+  // };
+
+  // const login = (userData, authToken) => {
+  //   setUser(userData);
+  //   setToken(authToken);
+  // };
+
+  const login = (userData) => {
     user.value = userData;
-    sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
-  };
-
-  const setToken = (tokenData) => {
-    if (!sessionId.value) initializeUser();
-    token.value = tokenData;
-    sessionStorage.setItem(`token_${sessionId.value}`, tokenData);
-  };
-
-  const login = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
+    sessionStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -219,7 +229,7 @@ export const useUserStore = defineStore("user", () => {
   return {
     // Данные пользователя
     user,
-    token,
+    //token,
     sessionId,
     gameSocket,
     currentGameId,
@@ -234,8 +244,8 @@ export const useUserStore = defineStore("user", () => {
 
     // Методы аутентификации
     initializeUser,
-    setUser,
-    setToken,
+    //setUser,
+    //setToken,
     login,
     logout,
 

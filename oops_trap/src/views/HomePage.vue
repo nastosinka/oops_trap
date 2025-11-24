@@ -93,7 +93,7 @@ export default {
         };
 
         userStore.login(userData, data.token);
-        localStorage.setItem("token", data.token);
+        //localStorage.setItem("token", data.token);
 
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
@@ -119,6 +119,7 @@ export default {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             username: formData.name,
             password: formData.password,
@@ -136,8 +137,9 @@ export default {
           id: data.user?.id,
         };
 
-        userStore.login(userData, data.token);
-        localStorage.setItem("token", data.token);
+        //userStore.login(userData, data.token);
+        userStore.login(userData);
+        //localStorage.setItem("token", data.token);
 
         this.showSignInModal = false;
         showSuccess("Login successful!");

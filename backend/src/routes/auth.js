@@ -153,14 +153,30 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({
-      token,
+    // res.status(200).json({
+    //   token,
+    //   user: {
+    //     id: user.id,
+    //     username: user.name,
+    //     role: user.role || 'user',
+    //   },
+    // });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.json({
       user: {
         id: user.id,
         username: user.name,
         role: user.role || 'user',
-      },
+      }
     });
+
   } catch (err) {
     console.error('Ошибка при авторизации:', err);
     res.status(500).json({ 

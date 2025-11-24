@@ -5,6 +5,7 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
 const { createGameSession} = require('../websockets/game');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const lobbies = new Map();
@@ -13,9 +14,10 @@ let nextLobbyId = 1;
 const games = new Map();
 module.exports = { lobbies, games };
 
-router.post('/newlobby', async (req, res) => {
+router.post('/newlobby', requireAuth, async (req, res) => {
   try {
-    const { ownerId } = req.body;
+    //const { ownerId } = req.body;
+    const ownerId = req.user.id;
 
     if (!ownerId) {
       return res.status(400).json({ error: 'ownerId is required' });
