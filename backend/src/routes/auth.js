@@ -79,17 +79,33 @@ router.post('/register', async (req, res) => {
       {
         id: newUser.id,
         username: newUser.name,
+        role: newUser.role || 'user',
       },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.status(201).json({
-      message: 'Пользователь успешно зарегистрирован',
-      token,
+    // res.status(201).json({
+    //   message: 'Пользователь успешно зарегистрирован',
+    //   //token,
+    //   user: {
+    //     id: newUser.id,
+    //     username: newUser.name,
+    //   },
+    // });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.json({
       user: {
         id: newUser.id,
         username: newUser.name,
+        role: newUser.role || 'user',
       },
     });
 
