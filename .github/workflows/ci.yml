@@ -119,11 +119,11 @@ jobs:
     
       - name: install playwright
         working-directory: ./oops_trap
-        run: npx playwright install --with-deps
+        run: npx playwright install
 
-      # - name: Run e2e tests
-      #   working-directory: ./oops_trap
-      #   run: npm run test:e2e
+      - name: Run e2e tests
+        working-directory: ./oops_trap
+        run: npm run test:e2e
 
   backend-unit:
     runs-on: ubuntu-latest
