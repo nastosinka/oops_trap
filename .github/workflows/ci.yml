@@ -120,6 +120,7 @@ jobs:
       - name: install playwright
         working-directory: ./oops_trap
         run: |
+          npx playwright install
           npx playwright install webkit
           npx playwright install-deps webkit
 
