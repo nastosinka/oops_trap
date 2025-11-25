@@ -119,7 +119,7 @@ jobs:
     
       - name: install playwright
         working-directory: ./oops_trap
-        run: npx playwright install
+        run: npx playwright install install-deps webkit
 
       - name: Run e2e tests
         working-directory: ./oops_trap
