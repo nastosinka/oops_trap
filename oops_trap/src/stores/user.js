@@ -31,7 +31,11 @@ export const useUserStore = defineStore("user", () => {
   // };
 
   const initializeUser = () => {
-    const stored = sessionStorage.getItem("user");
+    if (!sessionId.value) {
+      sessionId.value =
+        "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    }
+    const stored = sessionStorage.getItem(`user_${sessionId.value}`);
     if (stored) user.value = JSON.parse(stored);
   };
 
@@ -53,8 +57,9 @@ export const useUserStore = defineStore("user", () => {
   // };
 
   const login = (userData) => {
+    if (!sessionId.value) initializeUser();
     user.value = userData;
-    sessionStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -67,7 +72,7 @@ export const useUserStore = defineStore("user", () => {
     currentLobbyId.value = null;
 
     sessionStorage.removeItem(`user_${sessionId.value}`);
-    sessionStorage.removeItem(`token_${sessionId.value}`);
+    //sessionStorage.removeItem(`token_${sessionId.value}`);
     sessionId.value = null;
   };
 
