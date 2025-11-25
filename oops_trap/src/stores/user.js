@@ -62,7 +62,7 @@ export const useUserStore = defineStore("user", () => {
     closeGameSocket();
 
     user.value = null;
-    token.value = null;
+    //token.value = null;
     currentGameId.value = null;
     currentLobbyId.value = null;
 
