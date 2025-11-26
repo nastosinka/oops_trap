@@ -53,51 +53,51 @@
 </template>
 
 <script>
-import BaseButton from "@/components/base/BaseButton.vue";
+import BaseButton from '@/components/base/BaseButton.vue'
 
 export default {
-  name: "SettingsModal",
+  name: 'SettingsModal',
   components: {
-    BaseButton,
+    BaseButton
   },
   props: {
     players: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     initialSettings: {
       type: Object,
-      default: () => ({}),
-    },
+      default: () => ({})
+    }
   },
 
-  emits: ["apply"],
+  emits: ['apply'],
 
   data() {
     return {
-      selectedMap: "",
-      selectedMafia: "",
-      selectedTime: "",
+      selectedMap: '',
+      selectedMafia: '',
+      selectedTime: '',
       mapTypes: [
-        { value: 1, label: "city" },
-        { value: 2, label: "village" },
+        { value: 1, label: 'city' },
+        { value: 2, label: 'village' }
       ],
       timeOptions: [
-        { value: "easy", label: "easy" },
-        { value: "normal", label: "normal" },
-        { value: "hard", label: "hard" },
-      ],
-    };
+        { value: 'easy', label: 'easy' },
+        { value: 'normal', label: 'normal' },
+        { value: 'hard', label: 'hard' }
+      ]
+    }
   },
   created() {
     if (this.initialSettings.map) {
-      this.selectedMap = this.initialSettings.map;
+      this.selectedMap = this.initialSettings.map
     }
     if (this.initialSettings.mafia) {
-      this.selectedMafia = this.initialSettings.mafia;
+      this.selectedMafia = this.initialSettings.mafia
     }
     if (this.initialSettings.time) {
-      this.selectedTime = this.initialSettings.time;
+      this.selectedTime = this.initialSettings.time
     }
   },
   methods: {
@@ -105,12 +105,12 @@ export default {
       const settings = {
         map: this.selectedMap,
         mafia: this.selectedMafia,
-        time: this.selectedTime,
-      };
-      this.$emit("apply", settings);
-    },
-  },
-};
+        time: this.selectedTime
+      }
+      this.$emit('apply', settings)
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -129,7 +129,7 @@ export default {
 .setting-title {
   font-size: 24px;
   color: #ffcc00;
-  font-family: "Irish Grover", system-ui;
+  font-family: 'Irish Grover', system-ui;
   text-transform: lowercase;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
@@ -146,7 +146,7 @@ export default {
   border-radius: 12px;
   color: white;
   font-size: 18px;
-  font-family: "Irish Grover", system-ui;
+  font-family: 'Irish Grover', system-ui;
   outline: none;
   transition: all 0.2s ease-in-out;
   text-transform: lowercase;
@@ -161,7 +161,7 @@ export default {
   background: rgba(40, 75, 99, 0.9);
   color: white;
   padding: 12px;
-  font-family: "Irish Grover", system-ui;
+  font-family: 'Irish Grover', system-ui;
   text-transform: lowercase;
 }
 

@@ -4,11 +4,7 @@ module.exports = {
     es2020: true,
     node: true
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:vue/vue3-recommended',
-    '@vue/eslint-config-prettier'
-  ],
+  extends: ['eslint:recommended', 'plugin:vue/vue3-recommended', 'prettier'],
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module'
