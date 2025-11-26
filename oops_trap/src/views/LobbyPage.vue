@@ -415,7 +415,10 @@ export default {
         console.log("🚀 Starting game...");
 
         // 1. Сначала создаем WebSocket соединение
-        await this.userStore.createGameSocketConnection(this.lobbyId, this.lobbyId);
+        await this.userStore.createGameSocketConnection(
+          this.lobbyId,
+          this.lobbyId
+        );
 
         // 2. Затем отправляем запрос на старт игры
         const response = await fetch(

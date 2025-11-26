@@ -87,7 +87,12 @@ export const useUserStore = defineStore("user", () => {
     if (gameId) currentGameId.value = gameId;
     if (lobbyId) currentLobbyId.value = lobbyId;
 
-    console.log("🎮 Game socket set for game:", currentGameId.value, "lobby:", currentLobbyId.value);
+    console.log(
+      "🎮 Game socket set for game:",
+      currentGameId.value,
+      "lobby:",
+      currentLobbyId.value
+    );
   };
 
   const closeGameSocket = (code = 1000, reason = "User left") => {
@@ -103,6 +108,7 @@ export const useUserStore = defineStore("user", () => {
               lobbyId: currentLobbyId.value,
             })
           );
+          console.log("🔌 Game socket closed");
         } catch (error) {
           console.warn("Could not send leave message:", error);
         }
@@ -114,8 +120,6 @@ export const useUserStore = defineStore("user", () => {
 
     currentGameId.value = null;
     currentLobbyId.value = null;
-
-    console.log("🔌 Game socket closed");
   };
 
   const createGameSocketConnection = (gameId, lobbyId = null) => {
