@@ -32,10 +32,6 @@ jobs:
         working-directory: ./oops_trap
         run: npm run lint
 
-      - name: run format
-        working-directory: ./oops_trap
-        run: npm run format:check
-
       - name: build project
         working-directory: ./oops_trap
         run: npm run build

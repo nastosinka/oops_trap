@@ -36,126 +36,126 @@
 </template>
 
 <script>
-import BaseButton from '@/components/base/BaseButton.vue'
-import UniversalModal from '@/components/base/UniversalModal.vue'
-import { Modal } from 'ant-design-vue'
-import { showSuccess } from '@/utils/notification-wrapper'
-import { useUserStore } from '@/stores/user'
+import BaseButton from "@/components/base/BaseButton.vue";
+import UniversalModal from "@/components/base/UniversalModal.vue";
+import { Modal } from "ant-design-vue";
+import { showSuccess } from "@/utils/notification-wrapper";
+import { useUserStore } from "@/stores/user";
 
 export default {
-  name: 'HomePage',
+  name: "HomePage",
   components: {
     BaseButton,
-    UniversalModal
+    UniversalModal,
   },
 
   data() {
     return {
       showSignUpModal: false,
       showSignInModal: false,
-      showRulesModal: false
-    }
+      showRulesModal: false,
+    };
   },
 
   methods: {
     async handleSignUp(formData) {
       try {
-        const userStore = useUserStore()
+        const userStore = useUserStore();
 
         if (formData.password.length < 6) {
-          throw new Error('Password must be at least 6 characters long')
+          throw new Error("Password must be at least 6 characters long");
         }
 
         if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match')
+          throw new Error("Passwords do not match");
         }
 
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             username: formData.name,
-            password: formData.password
-          })
-        })
+            password: formData.password,
+          }),
+        });
 
-        const data = await res.json()
+        const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Registration failed')
+          throw new Error(data.error || "Registration failed");
         }
 
         const userData = {
           name: data.user?.username || formData.name,
-          id: data.user?.id
-        }
+          id: data.user?.id,
+        };
 
-        userStore.login(userData, data.token)
-        localStorage.setItem('token', data.token)
+        userStore.login(userData, data.token);
+        localStorage.setItem("token", data.token);
 
-        this.showSignUpModal = false
-        showSuccess('Registration successful!')
-        console.log('✅ User registered:', userData)
+        this.showSignUpModal = false;
+        showSuccess("Registration successful!");
+        console.log("✅ User registered:", userData);
 
-        this.$router.push('/createLobby')
+        this.$router.push("/createLobby");
       } catch (error) {
-        console.error('❌ Registration error:', error)
+        console.error("❌ Registration error:", error);
         Modal.error({
-          title: 'Registration Error',
-          content: error.message || 'Registration failed. Please try again.',
-          okText: 'OK'
-        })
+          title: "Registration Error",
+          content: error.message || "Registration failed. Please try again.",
+          okText: "OK",
+        });
       }
     },
 
     async handleSignIn(formData) {
       try {
-        const userStore = useUserStore()
+        const userStore = useUserStore();
 
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             username: formData.name,
-            password: formData.password
-          })
-        })
+            password: formData.password,
+          }),
+        });
 
-        const data = await res.json()
+        const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Login failed')
+          throw new Error(data.error || "Login failed");
         }
 
         const userData = {
           name: data.user?.username || formData.name,
-          id: data.user?.id
-        }
+          id: data.user?.id,
+        };
 
-        userStore.login(userData, data.token)
-        localStorage.setItem('token', data.token)
+        userStore.login(userData, data.token);
+        localStorage.setItem("token", data.token);
 
-        this.showSignInModal = false
-        showSuccess('Login successful!')
-        console.log('✅ User signed in:', userData)
+        this.showSignInModal = false;
+        showSuccess("Login successful!");
+        console.log("✅ User signed in:", userData);
 
-        this.$router.push('/createLobby')
+        this.$router.push("/createLobby");
       } catch (error) {
-        console.error('❌ Login error:', error)
+        console.error("❌ Login error:", error);
         Modal.error({
-          title: 'Login Error',
+          title: "Login Error",
           content:
-            error.message || 'Login failed. Please check your credentials.',
-          okText: 'OK'
-        })
+            error.message || "Login failed. Please check your credentials.",
+          okText: "OK",
+        });
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -165,7 +165,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url('@/assets/images/background.jpg') center/cover no-repeat;
+  background: url("@/assets/images/background.jpg") center/cover no-repeat;
   position: fixed;
   top: 0;
   left: 0;
