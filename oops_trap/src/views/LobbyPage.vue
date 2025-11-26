@@ -466,7 +466,7 @@ export default {
       }
     },
 
-    async createGameSocketConnection(gameId, lobbyId) {
+    async createGameSocketConnection() {
       return new Promise((resolve, reject) => {
         try {
           // Создаем локальный WebSocket
