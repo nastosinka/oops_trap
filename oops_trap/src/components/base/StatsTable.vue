@@ -31,36 +31,36 @@
 
 <script>
 export default {
-  name: "StatsTable",
+  name: 'StatsTable',
 
   props: {
     data: {
       type: Array,
-      default: () => [],
-    },
+      default: () => []
+    }
   },
 
   data() {
     return {
-      tableData: [],
-    };
+      tableData: []
+    }
   },
 
   watch: {
     data: {
       immediate: true,
       handler(newData) {
-        this.tableData = newData || [];
-      },
-    },
+        this.tableData = newData || []
+      }
+    }
   },
 
   mounted() {
     if (this.data && this.data.length > 0) {
-      this.tableData = this.data;
+      this.tableData = this.data
     }
-  },
-};
+  }
+}
 </script>
 
 <style scoped>
@@ -109,7 +109,7 @@ export default {
 .stats-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: "Irish Grover", system-ui;
+  font-family: 'Irish Grover', system-ui;
   color: white;
   margin: 0 auto;
 }
