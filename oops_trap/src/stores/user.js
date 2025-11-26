@@ -109,60 +109,47 @@ export const useUserStore = defineStore('user', () => {
         // Закрываем существующее соединение
         closeGameSocket()
 
-        const mainUrl = `ws://${
-          import.meta.env.VITE_SERVER_IP2
-        }/ws/game/${gameId}`
-        const fallbackUrl = `ws://localhost:5173/ws/game/${gameId}`
-
         // Создаем новое WebSocket соединение
-        let socket = new WebSocket(mainUrl)
+        const socket = new WebSocket(
+          `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${gameId}`
+        )
 
-        const setupHandlers = sock => {
-          sock.onopen = () => {
-            console.log(
-              '✅ Game WebSocket connected successfully for game:',
-              gameId
-            )
+        socket.onopen = () => {
+          console.log(
+            '✅ Game WebSocket connected successfully for game:',
+            gameId
+          )
 
-            // Сохраняем сокет в store
-            setGameSocket(sock, gameId, lobbyId)
+          // Сохраняем сокет в store
+          setGameSocket(socket, gameId, lobbyId)
 
-            // Отправляем инициализационное сообщение
-            sock.send(
-              JSON.stringify({
-                type: 'init',
-                playerId: userId.value,
-                gameId,
-                lobbyId,
-                action: 'player_ready'
-              })
-            )
+          // Отправляем инициализационное сообщение
+          socket.send(
+            JSON.stringify({
+              type: 'init',
+              playerId: userId.value,
+              gameId,
+              lobbyId,
+              action: 'player_ready'
+            })
+          )
 
-            resolve(sock)
-          }
-
-          sock.onerror = () => {
-            console.error('❌ Game WebSocket connection error:', sock.url)
-            if (sock.url === mainUrl) {
-              console.warn('🔄 Switching to localhost fallback...')
-              socket = new WebSocket(fallbackUrl)
-              setupHandlers(socket)
-            } else {
-              reject(new Error('Failed to connect to both servers'))
-            }
-          }
-
-          sock.onclose = event => {
-            console.log('🔌 Game WebSocket closed:', event.code, event.reason)
-            if (event.code !== 1000) {
-              // Непредвиденное закрытие - очищаем состояние
-              gameSocket.value = null
-              currentGameId.value = null
-            }
-          }
+          resolve(socket)
         }
 
-        setupHandlers(socket)
+        socket.onerror = error => {
+          console.error('❌ Game WebSocket connection error:', error)
+          reject(new Error('Failed to connect to game server'))
+        }
+
+        socket.onclose = event => {
+          console.log('🔌 Game WebSocket closed:', event.code, event.reason)
+          if (event.code !== 1000) {
+            // Непредвиденное закрытие - очищаем состояние
+            gameSocket.value = null
+            currentGameId.value = null
+          }
+        }
 
         // Таймаут для соединения
         setTimeout(() => {

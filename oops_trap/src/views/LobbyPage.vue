@@ -466,61 +466,49 @@ export default {
     async createGameSocketConnection() {
       return new Promise((resolve, reject) => {
         try {
-          const fallbackUrl = `ws://localhost:5173/ws/game/${this.lobbyId}`
-          const mainUrl = `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${
-            this.lobbyId
-          }`
           // Создаем локальный WebSocket
-          let gameSocket = new WebSocket(mainUrl)
+          const gameSocket = new WebSocket(
+            `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${this.lobbyId}`
+          )
 
-          const setupHandlers = sock => {
-            // Сохраняем сокет в store
-            this.userStore.setGameSocket(sock)
+          // Сохраняем сокет в store
+          this.userStore.setGameSocket(gameSocket)
 
-            sock.onopen = () => {
-              console.log('✅ Game WebSocket connected successfully')
+          gameSocket.onopen = () => {
+            console.log('✅ Game WebSocket connected successfully')
 
-              // Отправляем инициализационное сообщение
-              sock.send(
-                JSON.stringify({
-                  type: 'init',
-                  playerId: this.userId,
-                  gameId: this.lobbyId,
-                  action: 'player_ready',
-                  isHost: this.isHost
-                })
-              )
+            // Отправляем инициализационное сообщение
+            gameSocket.send(
+              JSON.stringify({
+                type: 'init',
+                playerId: this.userId,
+                gameId: this.lobbyId,
+                action: 'player_ready',
+                isHost: this.isHost
+              })
+            )
 
-              resolve(sock)
-            }
+            resolve(gameSocket)
+          }
 
-            sock.onerror = error => {
-              console.error('❌ Game WebSocket connection error:', sock.url)
+          gameSocket.onerror = error => {
+            console.error('❌ Game WebSocket connection error:', error)
+            reject(new Error('Failed to connect to game server'))
+          }
 
-              if (sock.url === mainUrl) {
-                console.warn('🔄 Switching to localhost fallback...')
-                gameSocket = new WebSocket(fallbackUrl)
-                setupHandlers(gameSocket)
-              } else {
-                reject(new Error('Failed to connect to both game servers'))
-              }
-            }
+          gameSocket.onclose = event => {
+            console.log('🔌 Game WebSocket closed:', event.code, event.reason)
+          }
 
-            sock.onclose = event => {
-              console.log('🔌 Game WebSocket closed:', event.code, event.reason)
-            }
-
-            // Обработчик входящих сообщений
-            sock.onmessage = event => {
-              try {
-                const data = JSON.parse(event.data)
-                this.handleGameSocketMessage(data)
-              } catch (error) {
-                console.error('Error parsing game socket message:', error)
-              }
+          // Обработчик входящих сообщений
+          gameSocket.onmessage = event => {
+            try {
+              const data = JSON.parse(event.data)
+              this.handleGameSocketMessage(data)
+            } catch (error) {
+              console.error('Error parsing game socket message:', error)
             }
           }
-          setupHandlers(gameSocket)
 
           // Таймаут для соединения
           setTimeout(() => {
