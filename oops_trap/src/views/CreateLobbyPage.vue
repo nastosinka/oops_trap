@@ -47,31 +47,31 @@
 </template>
 
 <script>
-import BaseButton from "@/components/base/BaseButton.vue";
-import UniversalModal from "@/components/base/UniversalModal.vue";
-import { Modal } from "ant-design-vue";
-import { apiFetch } from "@/utils/api-auth.js";
-import { useUserStore } from "@/stores/user";
-import { storeToRefs } from "pinia";
+import BaseButton from '@/components/base/BaseButton.vue'
+import UniversalModal from '@/components/base/UniversalModal.vue'
+import { Modal } from 'ant-design-vue'
+import { apiFetch } from '@/utils/api-auth.js'
+import { useUserStore } from '@/stores/user'
+import { storeToRefs } from 'pinia'
 
 export default {
-  name: "CreateLobbyPage",
+  name: 'CreateLobbyPage',
 
   components: {
     BaseButton,
-    UniversalModal,
+    UniversalModal
   },
 
   setup() {
-    const userStore = useUserStore();
-    const { user, userId, userName } = storeToRefs(userStore);
+    const userStore = useUserStore()
+    const { user, userId, userName } = storeToRefs(userStore)
 
     return {
       userStore,
       user,
       userId,
-      userName,
-    };
+      userName
+    }
   },
 
   data() {
@@ -80,151 +80,151 @@ export default {
       showJoinLobby: false,
       showStatsModal: false,
       statsData: [],
-      isLoadingStats: false,
-    };
+      isLoadingStats: false
+    }
   },
 
   mounted() {
-    this.userStore.initializeUser();
-    this.fetchStats();
+    this.userStore.initializeUser()
+    this.fetchStats()
   },
 
   methods: {
     async createLobby() {
       try {
-        this.isLoadingStats = true;
+        this.isLoadingStats = true
 
-        const response = await apiFetch("/api/lobby/newlobby", {
-          method: "POST",
-          body: JSON.stringify({ ownerId: this.userId }),
-        });
+        const response = await apiFetch('/api/lobby/newlobby', {
+          method: 'POST',
+          body: JSON.stringify({ ownerId: this.userId })
+        })
 
-        const responseText = await response.text();
+        const responseText = await response.text()
 
         if (!response.ok) {
           throw new Error(
             `HTTP error! status: ${response.status}, body: ${responseText}`
-          );
+          )
         }
 
-        const data = JSON.parse(responseText);
-        console.log("Lobby created successfully:", data);
+        const data = JSON.parse(responseText)
+        console.log('Lobby created successfully:', data)
 
-        this.$router.push(`/lobby?id=${data.id}&mode=create`);
+        this.$router.push(`/lobby?id=${data.id}&mode=create`)
       } catch (error) {
         Modal.error({
-          title: "Failed to Create Lobby",
-          content: error.message || "Unable to create lobby. Please try again.",
-          okText: "OK",
-        });
+          title: 'Failed to Create Lobby',
+          content: error.message || 'Unable to create lobby. Please try again.',
+          okText: 'OK'
+        })
       } finally {
-        this.isLoadingStats = false;
+        this.isLoadingStats = false
       }
     },
 
     showExitConfirm() {
       Modal.confirm({
-        title: "Exit Game",
-        content: "Are you sure you want to exit the game?",
-        okText: "Yes, Exit",
-        cancelText: "Cancel",
-        okType: "danger",
+        title: 'Exit Game',
+        content: 'Are you sure you want to exit the game?',
+        okText: 'Yes, Exit',
+        cancelText: 'Cancel',
+        okType: 'danger',
         centered: true,
         onOk: () => {
-          this.exitGame();
-        },
-      });
+          this.exitGame()
+        }
+      })
     },
 
     exitGame() {
-      this.userStore.logout();
+      this.userStore.logout()
 
       Modal.success({
-        title: "Game Exited",
-        content: "Thank you for playing!",
-        okText: "OK",
+        title: 'Game Exited',
+        content: 'Thank you for playing!',
+        okText: 'OK',
         onOk: () => {
-          this.$router.push("/");
-        },
-      });
+          this.$router.push('/')
+        }
+      })
     },
 
     async fetchStats() {
       try {
-        const response = await fetch(`/api/stats/${this.userId}`);
+        const response = await fetch(`/api/stats/${this.userId}`)
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json();
+        const data = await response.json()
 
-        const processedData = data.map((item) => {
-          const minutes = Math.floor(item.best_time / 60);
-          const seconds = item.best_time % 60;
+        const processedData = data.map(item => {
+          const minutes = Math.floor(item.best_time / 60)
+          const seconds = item.best_time % 60
           const formattedTime = `${minutes}:${seconds
             .toString()
-            .padStart(2, "0")}`;
+            .padStart(2, '0')}`
 
           return {
             map: item.map_id,
             role: item.role,
-            time: formattedTime,
-          };
-        });
+            time: formattedTime
+          }
+        })
 
-        this.statsData = processedData;
+        this.statsData = processedData
 
-        return processedData;
+        return processedData
       } catch (error) {
-        this.statsData = [];
-        throw new Error(`Fetch error: ${error.message}`);
+        this.statsData = []
+        throw new Error(`Fetch error: ${error.message}`)
       }
     },
 
     async joinLobby(formData) {
-      const lobbyCode = formData.lobbyCode;
+      const lobbyCode = formData.lobbyCode
 
       try {
-        this.isLoadingStats = true;
+        this.isLoadingStats = true
 
-        const lobbyId = parseInt(lobbyCode);
+        const lobbyId = parseInt(lobbyCode)
         if (isNaN(lobbyId)) {
-          throw new Error("Please enter a valid lobby number");
+          throw new Error('Please enter a valid lobby number')
         }
 
         const response = await fetch(`/api/lobby/lobbies/${lobbyId}/join`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            userId: this.userId,
-          }),
-        });
+            userId: this.userId
+          })
+        })
 
-        const responseText = await response.text();
+        const responseText = await response.text()
 
         if (!response.ok) {
-          throw new Error(`Failed to join lobby: ${response.status}`);
+          throw new Error(`Failed to join lobby: ${response.status}`)
         }
 
-        const data = JSON.parse(responseText);
-        console.log("Joined lobby:", data);
+        const data = JSON.parse(responseText)
+        console.log('Joined lobby:', data)
 
-        this.$router.push(`/lobby?id=${lobbyId}&mode=join`);
+        this.$router.push(`/lobby?id=${lobbyId}&mode=join`)
       } catch (error) {
         Modal.error({
-          title: "Cannot Join Lobby",
+          title: 'Cannot Join Lobby',
           content: error.message,
-          okText: "OK",
-        });
+          okText: 'OK'
+        })
       } finally {
-        this.isLoadingStats = false;
+        this.isLoadingStats = false
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -234,7 +234,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url("@/assets/images/background.jpg") center/cover no-repeat;
+  background: url('@/assets/images/background.jpg') center/cover no-repeat;
   position: fixed;
   top: 0;
   left: 0;
@@ -272,7 +272,7 @@ export default {
 }
 
 .nickname-label {
-  font-family: "Irish Grover", system-ui;
+  font-family: 'Irish Grover', system-ui;
   font-size: 30px;
   color: #ffcc00;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
