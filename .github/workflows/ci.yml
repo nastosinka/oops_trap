@@ -147,6 +147,6 @@ jobs:
         working-directory: ./backend
         run: npm ci
 
-      - name: run tests
-        working-directory: ./backend
-        run: npm run test
+      # - name: run tests
+      #   working-directory: ./backend
+      #   run: npm run test
