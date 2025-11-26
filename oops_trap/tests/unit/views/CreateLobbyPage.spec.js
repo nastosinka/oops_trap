@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
-import { createPinia, setActivePinia } from "pinia";
-import CreateLobbyPage from "@/views/CreateLobbyPage.vue";
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import CreateLobbyPage from '@/views/CreateLobbyPage.vue'
 
 // Моки компонентов
-vi.mock("@/components/base/BaseButton.vue", () => ({
+vi.mock('@/components/base/BaseButton.vue', () => ({
   default: {
     template: '<button><slot></slot></button>',
     props: ['label', 'size']
@@ -20,7 +20,7 @@ vi.mock('@/components/base/UniversalModal.vue', () => ({
 }))
 
 // Моки внешних зависимостей
-vi.mock("ant-design-vue", () => ({
+vi.mock('ant-design-vue', () => ({
   Modal: {
     success: vi.fn(),
     error: vi.fn(),
@@ -34,16 +34,16 @@ vi.mock('@/utils/api-auth.js', () => ({
 
 // Мок Pinia store
 const mockUserStore = {
-  user: { name: "TestUser" },
+  user: { name: 'TestUser' },
   userId: 1,
-  userName: "TestUser",
+  userName: 'TestUser',
   initializeUser: vi.fn(),
-  logout: vi.fn(),
-};
+  logout: vi.fn()
+}
 
-vi.mock("@/stores/user", () => ({
-  useUserStore: vi.fn(() => mockUserStore),
-}));
+vi.mock('@/stores/user', () => ({
+  useUserStore: vi.fn(() => mockUserStore)
+}))
 
 // Мок fetch
 global.fetch = vi.fn(() =>
@@ -59,15 +59,15 @@ describe('CreateLobbyPage', () => {
   let mockRouter
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    setActivePinia(createPinia());
+    vi.clearAllMocks()
+    setActivePinia(createPinia())
 
     // Сброс мока store
-    mockUserStore.user = { name: "TestUser" };
-    mockUserStore.userId = 1;
-    mockUserStore.userName = "TestUser";
-    mockUserStore.initializeUser.mockClear();
-    mockUserStore.logout.mockClear();
+    mockUserStore.user = { name: 'TestUser' }
+    mockUserStore.userId = 1
+    mockUserStore.userName = 'TestUser'
+    mockUserStore.initializeUser.mockClear()
+    mockUserStore.logout.mockClear()
 
     mockRouter = {
       push: vi.fn()
@@ -95,52 +95,52 @@ describe('CreateLobbyPage', () => {
       expect(wrapper.find('.create-lobby-page').exists()).toBe(true)
     })
 
-    it("инициализирует пользователя при монтировании", () => {
-      expect(mockUserStore.initializeUser).toHaveBeenCalled();
-    });
-  });
+    it('инициализирует пользователя при монтировании', () => {
+      expect(mockUserStore.initializeUser).toHaveBeenCalled()
+    })
+  })
 
-  describe("Управление состоянием модальных окон", () => {
-    it("открывает модалку статистики при клике на трофей", async () => {
-      expect(wrapper.vm.showStatsModal).toBe(false);
-      await wrapper.find(".trophy-icon").trigger("click");
-      expect(wrapper.vm.showStatsModal).toBe(true);
-    });
+  describe('Управление состоянием модальных окон', () => {
+    it('открывает модалку статистики при клике на трофей', async () => {
+      expect(wrapper.vm.showStatsModal).toBe(false)
+      await wrapper.find('.trophy-icon').trigger('click')
+      expect(wrapper.vm.showStatsModal).toBe(true)
+    })
 
-    it("открывает модалку правил", async () => {
-      await wrapper.setData({ showRulesModal: true });
-      expect(wrapper.vm.showRulesModal).toBe(true);
-    });
+    it('открывает модалку правил', async () => {
+      await wrapper.setData({ showRulesModal: true })
+      expect(wrapper.vm.showRulesModal).toBe(true)
+    })
 
-    it("открывает модалку присоединения к лобби", async () => {
-      await wrapper.setData({ showJoinLobby: true });
-      expect(wrapper.vm.showJoinLobby).toBe(true);
-    });
-  });
+    it('открывает модалку присоединения к лобби', async () => {
+      await wrapper.setData({ showJoinLobby: true })
+      expect(wrapper.vm.showJoinLobby).toBe(true)
+    })
+  })
 
-  describe("Создание лобби", () => {
-    it("обрабатывает ошибку при создании лобби", async () => {
-      const { apiFetch } = await import("@/utils/api-auth.js");
-      const { Modal } = await import("ant-design-vue");
+  describe('Создание лобби', () => {
+    it('обрабатывает ошибку при создании лобби', async () => {
+      const { apiFetch } = await import('@/utils/api-auth.js')
+      const { Modal } = await import('ant-design-vue')
 
       apiFetch.mockResolvedValue({
         ok: false,
-        text: () => Promise.resolve("Error message"),
-      });
+        text: () => Promise.resolve('Error message')
+      })
 
       await wrapper.vm.createLobby()
 
-      expect(Modal.error).toHaveBeenCalled();
-    });
+      expect(Modal.error).toHaveBeenCalled()
+    })
 
-    it("обрабатывает JSON parse ошибку в createLobby", async () => {
-      const { apiFetch } = await import("@/utils/api-auth.js");
-      const { Modal } = await import("ant-design-vue");
+    it('обрабатывает JSON parse ошибку в createLobby', async () => {
+      const { apiFetch } = await import('@/utils/api-auth.js')
+      const { Modal } = await import('ant-design-vue')
 
       apiFetch.mockResolvedValue({
         ok: true,
-        text: () => Promise.resolve("invalid json"),
-      });
+        text: () => Promise.resolve('invalid json')
+      })
 
       await wrapper.vm.createLobby()
 
@@ -154,13 +154,13 @@ describe('CreateLobbyPage', () => {
 
       await wrapper.vm.showExitConfirm()
 
-      expect(Modal.confirm).toHaveBeenCalled();
-    });
-  });
+      expect(Modal.confirm).toHaveBeenCalled()
+    })
+  })
 
-  describe("Присоединение к лобби", () => {
-    it("обрабатывает невалидный код лобби", async () => {
-      const { Modal } = await import("ant-design-vue");
+  describe('Присоединение к лобби', () => {
+    it('обрабатывает невалидный код лобби', async () => {
+      const { Modal } = await import('ant-design-vue')
 
       await wrapper.vm.joinLobby({ lobbyCode: 'invalid' })
 
@@ -181,12 +181,12 @@ describe('CreateLobbyPage', () => {
     })
   })
 
-  describe("Дополнительные тесты", () => {
-    it("инициализируется с правильными начальными значениями", () => {
-      expect(wrapper.vm.showRulesModal).toBe(false);
-      expect(wrapper.vm.showJoinLobby).toBe(false);
-      expect(wrapper.vm.showStatsModal).toBe(false);
-      expect(wrapper.vm.isLoadingStats).toBe(false);
-    });
-  });
-});
+  describe('Дополнительные тесты', () => {
+    it('инициализируется с правильными начальными значениями', () => {
+      expect(wrapper.vm.showRulesModal).toBe(false)
+      expect(wrapper.vm.showJoinLobby).toBe(false)
+      expect(wrapper.vm.showStatsModal).toBe(false)
+      expect(wrapper.vm.isLoadingStats).toBe(false)
+    })
+  })
+})
