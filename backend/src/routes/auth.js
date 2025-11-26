@@ -8,7 +8,7 @@ const path = require('path');
 const router = express.Router();
 
 // ========================================
-// GET /api/auth/users - Получить всех пользователей
+// GET /api/auth/users - Получить всех пользователей - для отладки
 // ========================================
 router.get('/users', async (req, res) => {
   try {
@@ -127,7 +127,7 @@ router.post('/register', async (req, res) => {
 });
 
 // ========================================
-// POST /api/auth/login
+// POST /api/auth/login 
 // ========================================
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;

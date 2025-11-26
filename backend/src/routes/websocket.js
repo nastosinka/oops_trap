@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { gameSessions } = require("../websockets/game"); // импорт из game.js
 
-// Получение списка активных WebSocket-комнат
+// Получение списка активных WebSocket-комнат - для отладки
 router.get("/ws/sessions", (req, res) => {
     res.json({
         sessions: Array.from(gameSessions.keys())
@@ -20,7 +20,6 @@ router.get("/ws/game/:id", (req, res) => {
         });
     }
 
-    // Возвращаем URL комнаты для WebSocket-клиента
     res.json({
         ok: true,
         gameId,
