@@ -279,6 +279,35 @@ paths:
           description: Пользователь успешно вышел
         401:
           $ref: '#/components/responses/401Unauthorized'
+          
+  /api/auth/users:
+    get:
+      tags: [Auth]
+      summary: Получить всех пользователей
+      security:
+      - cookieAuth: []
+      responses:
+        200:
+          description: Список всех зарегистрированных игроков
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: user1
+                  total:
+                    type: integer
+                    example: 3
 
 # ================= STATS =================
 
@@ -738,6 +767,73 @@ paths:
           description: Лобби не найдено
         500:
           description: Внутренняя ошибка сервера
+  
+    get:
+      tags: [Lobby]
+      summary: Получить статус лобби
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID лобби
+      responses:
+        200:
+          description: Статус найденного лобби
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: finished
+        400:
+          description: Неверный формат ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid lobby ID
+        404:
+          description: Лобби не найдено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Lobby not found
+        500:
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: Internal server error
+
 
   /api/lobby/lobbies/{id}/join:
     post:
@@ -856,6 +952,111 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 
+  /api/lobby/lobbies/{id}/users:
+    get:
+      tags: [Lobby]
+      summary: Получить список игроков в лобби
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID лобби
+      responses:
+        200:
+          description: Информация о лобби и его игроках
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobbyId:
+                    type: integer
+                    example: 1
+                  playerCount:
+                    type: integer
+                    example: 2
+                  players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 3
+                        name:
+                          type: string
+                          example: user1
+
+  /api/lobby/games:
+    get:
+      tags: [Lobby]
+      summary: Получить список активных игр
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          description: Список активных игр
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 1
+                  games:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        lobbyId:
+                          type: integer
+                          example: 1
+                        map:
+                          type: integer
+                          example: 2
+                        trapper:
+                          type: integer
+                          example: 2
+                        time:
+                          type: string
+                          example: normal
+                          description: Режим длительности игры
+                        playerCount:
+                          type: integer
+                          example: 2
+                        players:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 3
+                              name:
+                                type: string
+                                example: user1
+                        status:
+                          type: string
+                          example: in-progress
+                          description: Статус игры
+        500:
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
 
   /users/{id}:
     get:
@@ -884,3 +1085,77 @@ paths:
           description: Пользователь не найден
         500:
           description: Внутренняя ошибка сервера
+          
+  /api/ws/sessions:
+    get:
+      tags: [WebSocket]
+      summary: Получить список активных игровых WebSocket-сессий
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          description: Список активных WebSocket-сессий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1]
+        500:
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
+  /api/ws/game/{id}:
+    get:
+      tags: [WebSocket]
+      summary: Получить WebSocket URL для игровой сессии
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID игровой сессии (gameId)
+      responses:
+        200:
+          description: Сессия найдена — WebSocket URL доступен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  gameId:
+                    type: integer
+                    example: 1
+                  wsUrl:
+                    type: string
+                    example: "/ws/game/1"
+        404:
+          description: Сессия не найдена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Game session 2 not found"
+
