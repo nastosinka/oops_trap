@@ -96,8 +96,8 @@ router.post('/register', async (req, res) => {
 
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict",
+      //secure: true,
+      sameSite: "lax",
       maxAge: 60 * 60 * 1000,
     });
 
@@ -180,8 +180,8 @@ router.post('/login', async (req, res) => {
 
     res.cookie("auth_token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict",
+      //secure: true,
+      sameSite: "lax",
       maxAge: 60 * 60 * 1000,
     });
 
