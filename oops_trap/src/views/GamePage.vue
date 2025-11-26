@@ -8,7 +8,7 @@
         <p>Game ID: {{ gameId }}</p>
         <p>User ID: {{ userId }}</p>
         <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-        <p>Role: {{ isHost ? 'Host' : 'Player' }}</p>
+        <p>Role: {{ isHost ? "Host" : "Player" }}</p>
         <p>
           Connection:
           <span :class="connectionStatusClass">{{ connectionStatus }}</span>
@@ -31,7 +31,7 @@
             }}</span>
             <span class="player-score">{{ stat.score }} points</span>
             <span class="player-result" :class="{ winner: stat.result === 1 }">
-              {{ stat.result === 1 ? 'Winner' : 'Loser' }}
+              {{ stat.result === 1 ? "Winner" : "Loser" }}
             </span>
           </div>
         </div>
@@ -46,376 +46,378 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { storeToRefs } from 'pinia'
-import { Modal } from 'ant-design-vue'
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { Modal } from "ant-design-vue";
 
-const route = useRoute()
-const router = useRouter()
-const userStore = useUserStore()
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
 const {
   userId: storeUserId,
   getGameSocket,
   isInGame,
-  currentGameId
-} = storeToRefs(userStore)
+  currentGameId,
+} = storeToRefs(userStore);
 
 // Game data
-const gameId = computed(() => route.params.id || currentGameId.value || 1)
-const userId = computed(() => storeUserId.value)
-const lobbyId = computed(() => route.query.lobbyId)
-const isHost = ref(false) // Будет установлено после проверки
+const gameId = computed(() => route.params.id || currentGameId.value || 1);
+const userId = computed(() => storeUserId.value);
+const lobbyId = computed(() => route.query.lobbyId);
+const isHost = ref(false); // Будет установлено после проверки
 
 // Game state
-const timeLeft = ref(0)
-const stats = ref([])
-const gameEnded = ref(false)
-const canvas = ref(null)
-const connectionError = ref(null)
-const isConnected = ref(false)
-const waitingForPlayers = ref(false)
-const connectedPlayersCount = ref(0)
-const totalPlayersCount = ref(0)
+const timeLeft = ref(0);
+const stats = ref([]);
+const gameEnded = ref(false);
+const canvas = ref(null);
+const connectionError = ref(null);
+const isConnected = ref(false);
+const waitingForPlayers = ref(false);
+const connectedPlayersCount = ref(0);
+const totalPlayersCount = ref(0);
 
 // Connection status
 const connectionStatus = computed(() => {
-  if (connectionError.value) return 'Disconnected'
-  if (waitingForPlayers.value) return 'Waiting'
-  return isConnected.value ? 'Connected' : 'Connecting...'
-})
+  if (connectionError.value) return "Disconnected";
+  if (waitingForPlayers.value) return "Waiting";
+  return isConnected.value ? "Connected" : "Connecting...";
+});
 
 const connectionStatusClass = computed(() => {
   return {
-    'status-connected': isConnected.value,
-    'status-disconnected': connectionError.value,
-    'status-waiting': waitingForPlayers.value
-  }
-})
+    "status-connected": isConnected.value,
+    "status-disconnected": connectionError.value,
+    "status-waiting": waitingForPlayers.value,
+  };
+});
 
 onMounted(async () => {
-  userStore.initializeUser()
+  userStore.initializeUser();
 
   // Проверяем, является ли пользователь хостом
-  await checkIfUserIsHost()
+  await checkIfUserIsHost();
 
-  connectGameWebSocket()
-  initializeGame()
-})
+  connectGameWebSocket();
+  initializeGame();
+});
 
 onUnmounted(() => {
-  cleanupWebSocketHandlers()
-})
+  cleanupWebSocketHandlers();
+});
 
 // Watch for socket changes
 watch(getGameSocket, (newSocket, oldSocket) => {
   if (newSocket !== oldSocket) {
-    setupWebSocketHandlers(newSocket)
+    setupWebSocketHandlers(newSocket);
   }
-})
+});
 
 // Проверяем, является ли пользователь хостом лобби
 const checkIfUserIsHost = async () => {
   if (!lobbyId.value) {
-    isHost.value = false
-    return
+    isHost.value = false;
+    return;
   }
 
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`)
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/settings`
+    );
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    const data = await response.json()
+    const data = await response.json();
 
     if (data.success && data.data) {
-      isHost.value = data.data.ownerId === userId.value
+      isHost.value = data.data.ownerId === userId.value;
       console.log(
-        `🎮 User is ${isHost.value ? 'HOST' : 'PLAYER'} of lobby ${
+        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
           lobbyId.value
         }`
-      )
+      );
     } else {
-      isHost.value = false
+      isHost.value = false;
     }
   } catch (error) {
-    console.error('❌ Error checking host status:', error)
-    isHost.value = false
+    console.error("❌ Error checking host status:", error);
+    isHost.value = false;
   }
-}
+};
 
 const connectGameWebSocket = async () => {
   try {
-    connectionError.value = null
-    isConnected.value = false
-    waitingForPlayers.value = false
+    connectionError.value = null;
+    isConnected.value = false;
+    waitingForPlayers.value = false;
 
-    const existingSocket = getGameSocket.value
+    const existingSocket = getGameSocket.value;
 
     if (existingSocket && existingSocket.readyState === WebSocket.OPEN) {
-      console.log('✅ Reusing existing game WebSocket connection')
-      setupWebSocketHandlers(existingSocket)
-      isConnected.value = true
+      console.log("✅ Reusing existing game WebSocket connection");
+      setupWebSocketHandlers(existingSocket);
+      isConnected.value = true;
 
       userStore.sendGameMessage({
-        type: 'PLAYER_JOINED_GAME_PAGE',
+        type: "PLAYER_JOINED_GAME_PAGE",
         gameId: gameId.value,
         userId: userId.value,
         lobbyId: lobbyId.value,
-        isHost: isHost.value
-      })
+        isHost: isHost.value,
+      });
     } else {
-      console.log('🔄 Creating new game WebSocket connection')
+      console.log("🔄 Creating new game WebSocket connection");
 
-      await userStore.createGameSocketConnection(gameId.value, lobbyId.value)
+      await userStore.createGameSocketConnection(gameId.value, lobbyId.value);
 
-      const newSocket = getGameSocket.value
+      const newSocket = getGameSocket.value;
       if (newSocket) {
-        setupWebSocketHandlers(newSocket)
+        setupWebSocketHandlers(newSocket);
 
         if (newSocket.readyState === WebSocket.OPEN) {
-          isConnected.value = true
+          isConnected.value = true;
         }
       }
     }
   } catch (error) {
-    console.error('❌ Failed to connect game WebSocket:', error)
-    connectionError.value = error.message
+    console.error("❌ Failed to connect game WebSocket:", error);
+    connectionError.value = error.message;
     Modal.error({
-      title: 'Connection Failed',
-      content: 'Cannot connect to game server: ' + error.message,
-      okText: 'OK'
-    })
+      title: "Connection Failed",
+      content: "Cannot connect to game server: " + error.message,
+      okText: "OK",
+    });
   }
-}
+};
 
-const setupWebSocketHandlers = socket => {
-  if (!socket) return
+const setupWebSocketHandlers = (socket) => {
+  if (!socket) return;
 
-  socket.onmessage = event => {
+  socket.onmessage = (event) => {
     try {
-      const data = JSON.parse(event.data)
-      handleWebSocketMessage(data)
+      const data = JSON.parse(event.data);
+      handleWebSocketMessage(data);
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error)
+      console.error("Error parsing WebSocket message:", error);
     }
-  }
+  };
 
   socket.onopen = () => {
-    console.log('✅ Game WebSocket connected')
-    isConnected.value = true
-    connectionError.value = null
+    console.log("✅ Game WebSocket connected");
+    isConnected.value = true;
+    connectionError.value = null;
 
     // Send initial join message
     userStore.sendGameMessage({
-      type: 'PLAYER_JOINED_GAME_PAGE',
+      type: "PLAYER_JOINED_GAME_PAGE",
       gameId: gameId.value,
       userId: userId.value,
       lobbyId: lobbyId.value,
-      isHost: isHost.value
-    })
-  }
+      isHost: isHost.value,
+    });
+  };
 
-  socket.onerror = error => {
-    console.error('❌ Game WebSocket error:', error)
-    connectionError.value = 'Connection error occurred'
-    isConnected.value = false
-  }
+  socket.onerror = (error) => {
+    console.error("❌ Game WebSocket error:", error);
+    connectionError.value = "Connection error occurred";
+    isConnected.value = false;
+  };
 
-  socket.onclose = event => {
-    console.log('🔌 Game WebSocket disconnected:', event.code, event.reason)
-    isConnected.value = false
+  socket.onclose = (event) => {
+    console.log("🔌 Game WebSocket disconnected:", event.code, event.reason);
+    isConnected.value = false;
 
     if (event.code !== 1000 && !gameEnded.value) {
       connectionError.value = `Connection lost: ${
-        event.reason || 'Unknown reason'
-      }`
+        event.reason || "Unknown reason"
+      }`;
     }
-  }
-}
+  };
+};
 
 const cleanupWebSocketHandlers = () => {
-  const socket = getGameSocket.value
+  const socket = getGameSocket.value;
   if (socket) {
-    socket.onmessage = null
-    socket.onerror = null
-    socket.onclose = null
+    socket.onmessage = null;
+    socket.onerror = null;
+    socket.onclose = null;
   }
-}
+};
 
-const handleWebSocketMessage = data => {
-  console.log('🎮 Game WebSocket message:', data)
+const handleWebSocketMessage = (data) => {
+  console.log("🎮 Game WebSocket message:", data);
 
   switch (data.type) {
-    case 'GAME_START':
-      timeLeft.value = data.payload?.timeLeft || data.timeLeft || 0
-      gameEnded.value = false
-      connectionError.value = null
-      waitingForPlayers.value = false
-      break
+    case "GAME_START":
+      timeLeft.value = data.payload?.timeLeft || data.timeLeft || 0;
+      gameEnded.value = false;
+      connectionError.value = null;
+      waitingForPlayers.value = false;
+      break;
 
-    case 'TICK':
-      timeLeft.value = data.payload?.timeLeft || data.timeLeft || 0
-      break
+    case "TICK":
+      timeLeft.value = data.payload?.timeLeft || data.timeLeft || 0;
+      break;
 
-    case 'GAME_END':
-      stats.value = data.payload?.stats || data.stats || []
-      gameEnded.value = true
-      break
+    case "GAME_END":
+      stats.value = data.payload?.stats || data.stats || [];
+      gameEnded.value = true;
+      break;
 
-    case 'PLAYER_JOINED':
-      console.log('👤 Player joined game:', data.player)
-      break
+    case "PLAYER_JOINED":
+      console.log("👤 Player joined game:", data.player);
+      break;
 
-    case 'PLAYER_LEFT':
-      console.log('🚪 Player left game:', data.playerId)
-      break
+    case "PLAYER_LEFT":
+      console.log("🚪 Player left game:", data.playerId);
+      break;
 
-    case 'GAME_STATE_UPDATE':
-      updateGameState(data.payload || data)
-      break
+    case "GAME_STATE_UPDATE":
+      updateGameState(data.payload || data);
+      break;
 
-    case 'connection-established':
-      console.log('✅ WebSocket connection confirmed')
-      isConnected.value = true
-      connectionError.value = null
-      break
+    case "connection-established":
+      console.log("✅ WebSocket connection confirmed");
+      isConnected.value = true;
+      connectionError.value = null;
+      break;
 
-    case 'waiting-start':
-      console.log('⏳ Waiting for players:', data.message)
-      waitingForPlayers.value = true
-      connectedPlayersCount.value = data.connectedPlayers?.length || 0
-      totalPlayersCount.value = data.totalPlayers || 0
-      break
+    case "waiting-start":
+      console.log("⏳ Waiting for players:", data.message);
+      waitingForPlayers.value = true;
+      connectedPlayersCount.value = data.connectedPlayers?.length || 0;
+      totalPlayersCount.value = data.totalPlayers || 0;
+      break;
 
-    case 'player-connected':
-      console.log(`👤 Player ${data.playerId} connected`)
-      break
+    case "player-connected":
+      console.log(`👤 Player ${data.playerId} connected`);
+      break;
 
-    case 'player-disconnected':
-      console.log(`🚪 Player ${data.playerId} disconnected`)
-      break
+    case "player-disconnected":
+      console.log(`🚪 Player ${data.playerId} disconnected`);
+      break;
 
-    case 'player-ready':
-      console.log(`✅ Player ${data.playerId} is ready`)
-      break
+    case "player-ready":
+      console.log(`✅ Player ${data.playerId} is ready`);
+      break;
 
-    case 'reconnect-success':
-      console.log('✅ Reconnected successfully')
-      timeLeft.value = data.timeLeft || 0
-      updateGameState(data.gameState)
-      break
+    case "reconnect-success":
+      console.log("✅ Reconnected successfully");
+      timeLeft.value = data.timeLeft || 0;
+      updateGameState(data.gameState);
+      break;
 
-    case 'error':
-      console.error('❌ Game server error:', data.message)
+    case "error":
+      console.error("❌ Game server error:", data.message);
       Modal.error({
-        title: 'Game Error',
+        title: "Game Error",
         content: data.message,
-        okText: 'OK'
-      })
-      break
+        okText: "OK",
+      });
+      break;
 
     default:
-      console.warn('Unknown game message type:', data.type, data)
+      console.warn("Unknown game message type:", data.type, data);
   }
-}
+};
 
 const initializeGame = () => {
   if (canvas.value) {
-    const ctx = canvas.value.getContext('2d')
-    ctx.fillStyle = '#2c3e50'
-    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height)
+    const ctx = canvas.value.getContext("2d");
+    ctx.fillStyle = "#2c3e50";
+    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
 
     // Add game controls and logic here
-    setupGameControls()
+    setupGameControls();
   }
-}
+};
 
 const setupGameControls = () => {
   // Example: Keyboard controls
-  const handleKeyDown = event => {
-    if (!isConnected.value || gameEnded.value) return
+  const handleKeyDown = (event) => {
+    if (!isConnected.value || gameEnded.value) return;
 
     switch (event.key) {
-      case 'ArrowUp':
-      case 'w':
+      case "ArrowUp":
+      case "w":
         userStore.sendGameMessage({
-          type: 'PLAYER_MOVE',
+          type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'up'
-        })
-        break
-      case 'ArrowDown':
-      case 's':
+          direction: "up",
+        });
+        break;
+      case "ArrowDown":
+      case "s":
         userStore.sendGameMessage({
-          type: 'PLAYER_MOVE',
+          type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'down'
-        })
-        break
-      case 'ArrowLeft':
-      case 'a':
+          direction: "down",
+        });
+        break;
+      case "ArrowLeft":
+      case "a":
         userStore.sendGameMessage({
-          type: 'PLAYER_MOVE',
+          type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'left'
-        })
-        break
-      case 'ArrowRight':
-      case 'd':
+          direction: "left",
+        });
+        break;
+      case "ArrowRight":
+      case "d":
         userStore.sendGameMessage({
-          type: 'PLAYER_MOVE',
+          type: "PLAYER_MOVE",
           userId: userId.value,
-          direction: 'right'
-        })
-        break
-      case ' ':
+          direction: "right",
+        });
+        break;
+      case " ":
         userStore.sendGameMessage({
-          type: 'GAME_ACTION',
+          type: "GAME_ACTION",
           userId: userId.value,
-          action: 'use'
-        })
-        break
+          action: "use",
+        });
+        break;
     }
-  }
+  };
 
-  window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener("keydown", handleKeyDown);
 
   // Cleanup
   onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeyDown)
-  })
-}
+    window.removeEventListener("keydown", handleKeyDown);
+  });
+};
 
-const updateGameState = gameState => {
+const updateGameState = (gameState) => {
   if (canvas.value && gameState) {
-    const ctx = canvas.value.getContext('2d')
+    const ctx = canvas.value.getContext("2d");
 
     // Clear canvas
-    ctx.fillStyle = '#2c3e50'
-    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height)
+    ctx.fillStyle = "#2c3e50";
+    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
 
     // Draw game objects
     if (gameState.players) {
-      gameState.players.forEach(player => {
-        ctx.fillStyle = player.color || '#ffffff'
-        ctx.fillRect(player.x || 50, player.y || 50, 30, 30)
+      gameState.players.forEach((player) => {
+        ctx.fillStyle = player.color || "#ffffff";
+        ctx.fillRect(player.x || 50, player.y || 50, 30, 30);
 
         // Draw player name
-        ctx.fillStyle = '#ffffff'
-        ctx.font = '12px Arial'
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px Arial";
         ctx.fillText(
           player.name || `Player ${player.id}`,
           (player.x || 50) - 10,
           (player.y || 50) - 5
-        )
-      })
+        );
+      });
     }
   }
-}
+};
 
 // const reconnect = async () => {
 //   console.log("🔄 Attempting to reconnect...");
@@ -426,84 +428,84 @@ const updateGameState = gameState => {
 const returnToLobby = async () => {
   if (!lobbyId.value) {
     Modal.error({
-      title: 'Cannot Return to Lobby',
-      content: 'Lobby information is not available',
-      okText: 'OK'
-    })
-    return
+      title: "Cannot Return to Lobby",
+      content: "Lobby information is not available",
+      okText: "OK",
+    });
+    return;
   }
 
   try {
     if (isHost.value) {
       // Если хост - обновляем статус лобби на 'waiting'
-      await updateLobbyStatus('waiting')
-      console.log('🎮 Host returned to lobby, status set to waiting')
+      await updateLobbyStatus("waiting");
+      console.log("🎮 Host returned to lobby, status set to waiting");
     } else {
-      console.log('🎮 Player returned to lobby')
+      console.log("🎮 Player returned to lobby");
     }
   } catch (error) {
-    console.error('❌ Error updating lobby status:', error)
+    console.error("❌ Error updating lobby status:", error);
     // Продолжаем в любом случае
   }
 
-  cleanupWebSocketHandlers()
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`)
-}
+  cleanupWebSocketHandlers();
+  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+};
 
-const updateLobbyStatus = async newStatus => {
+const updateLobbyStatus = async (newStatus) => {
   try {
     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         ownerId: userId.value,
-        newStatus
-      })
-    })
+        newStatus,
+      }),
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    return await response.json()
+    return await response.json();
   } catch (error) {
-    console.error('❌ Error updating lobby status:', error)
-    throw error
+    console.error("❌ Error updating lobby status:", error);
+    throw error;
   }
-}
+};
 
 // Обработка событий страницы
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
   if (isInGame.value) {
     userStore.sendGameMessage({
-      type: 'PLAYER_LEFT',
+      type: "PLAYER_LEFT",
       gameId: gameId.value,
       userId: userId.value,
       lobbyId: lobbyId.value,
-      reason: 'page_unload'
-    })
+      reason: "page_unload",
+    });
   }
-})
+});
 
-document.addEventListener('visibilitychange', () => {
+document.addEventListener("visibilitychange", () => {
   if (document.hidden && isInGame.value) {
     userStore.sendGameMessage({
-      type: 'PLAYER_AFK',
+      type: "PLAYER_AFK",
       gameId: gameId.value,
       userId: userId.value,
-      afk: true
-    })
+      afk: true,
+    });
   } else if (!document.hidden && isInGame.value) {
     userStore.sendGameMessage({
-      type: 'PLAYER_AFK',
+      type: "PLAYER_AFK",
       gameId: gameId.value,
       userId: userId.value,
-      afk: false
-    })
+      afk: false,
+    });
   }
-})
+});
 </script>
 
 <style scoped>
@@ -523,7 +525,7 @@ document.addEventListener('visibilitychange', () => {
   color: white;
   padding: 15px;
   border-radius: 8px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   min-width: 200px;
   border: 1px solid #333;
 }

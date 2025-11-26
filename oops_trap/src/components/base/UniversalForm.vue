@@ -20,7 +20,7 @@
         <label
           class="auth-form__label floating-label"
           :class="{
-            'floating-label--active': form[field] || focusedField === field
+            'floating-label--active': form[field] || focusedField === field,
           }"
         >
           {{ fieldLabels[field] }}
@@ -50,119 +50,119 @@
 </template>
 
 <script>
-import BaseButton from './BaseButton.vue'
-import { showError } from '@/utils/notification-wrapper'
+import BaseButton from "./BaseButton.vue";
+import { showError } from "@/utils/notification-wrapper";
 
 export default {
-  name: 'UniversalForm',
+  name: "UniversalForm",
   components: { BaseButton },
 
   props: {
     fields: {
       type: Array,
-      default: () => ['name', 'password', 'confirmPassword']
+      default: () => ["name", "password", "confirmPassword"],
     },
     submitText: {
       type: String,
-      default: 'Sign Up'
+      default: "Sign Up",
     },
     initialData: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
 
-  emits: ['submit'],
+  emits: ["submit"],
 
   data() {
     return {
       form: {
-        name: '',
-        password: '',
-        confirmPassword: '',
-        lobbyCode: '',
-        ...this.initialData
+        name: "",
+        password: "",
+        confirmPassword: "",
+        lobbyCode: "",
+        ...this.initialData,
       },
-      focusedField: null
-    }
+      focusedField: null,
+    };
   },
 
   computed: {
     visibleFields() {
-      return this.fields.filter(field => this.fieldLabels[field])
+      return this.fields.filter((field) => this.fieldLabels[field]);
     },
 
     fieldLabels() {
       return {
-        name: 'Name',
-        password: 'Password',
-        confirmPassword: 'Confirm Password',
-        lobbyCode: 'Lobby Code'
-      }
+        name: "Name",
+        password: "Password",
+        confirmPassword: "Confirm Password",
+        lobbyCode: "Lobby Code",
+      };
     },
 
     showPasswordError() {
       return (
-        this.fields.includes('confirmPassword') &&
+        this.fields.includes("confirmPassword") &&
         this.form.confirmPassword &&
         this.form.password !== this.form.confirmPassword
-      )
+      );
     },
 
     showPasswordSuccess() {
       return (
-        this.fields.includes('confirmPassword') &&
+        this.fields.includes("confirmPassword") &&
         this.form.confirmPassword &&
         this.form.password === this.form.confirmPassword
-      )
+      );
     },
 
     isFormValid() {
-      if (this.fields.includes('lobbyCode')) {
-        return this.form.lobbyCode.trim().length > 0
+      if (this.fields.includes("lobbyCode")) {
+        return this.form.lobbyCode.trim().length > 0;
       }
       if (
-        this.fields.includes('confirmPassword') &&
+        this.fields.includes("confirmPassword") &&
         this.form.password !== this.form.confirmPassword
       ) {
-        return false
+        return false;
       }
 
-      return true
-    }
+      return true;
+    },
   },
 
   methods: {
     getInputType(field) {
-      if (field.includes('password')) return 'password'
-      if (field.includes('confirmPassword')) return 'password'
-      return 'text'
+      if (field.includes("password")) return "password";
+      if (field.includes("confirmPassword")) return "password";
+      return "text";
     },
 
     handleSubmit() {
       if (!this.isFormValid) {
-        if (this.fields.includes('lobbyCode') && !this.form.lobbyCode.trim()) {
-          showError('Please enter lobby code')
+        if (this.fields.includes("lobbyCode") && !this.form.lobbyCode.trim()) {
+          showError("Please enter lobby code");
         } else if (
-          this.fields.includes('confirmPassword') &&
+          this.fields.includes("confirmPassword") &&
           this.form.password !== this.form.confirmPassword
         ) {
-          showError("Passwords don't match")
+          showError("Passwords don't match");
         }
-        return
+        return;
       }
 
-      this.$emit('submit', { ...this.form })
-    }
-  }
-}
+      this.$emit("submit", { ...this.form });
+    },
+  },
+};
 </script>
 
 <style scoped>
 input,
 label {
   color: white;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
   font-weight: 400;
   font-style: normal;
 }
@@ -197,7 +197,7 @@ label {
 .auth-form__error {
   color: #560f0f;
   font-size: 14px;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
   text-align: center;
   margin-top: 4px;
   margin-bottom: -18px;
@@ -208,7 +208,7 @@ label {
 .auth-form__success {
   color: rgb(19, 41, 46);
   font-size: 14px;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
   text-align: center;
   margin-top: 4px;
   margin-bottom: -18px;
