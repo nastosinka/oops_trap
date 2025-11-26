@@ -87,7 +87,7 @@ export const useUserStore = defineStore("user", () => {
     if (gameId) currentGameId.value = gameId;
     if (lobbyId) currentLobbyId.value = lobbyId;
 
-    console.log("🎮 Game socket set for game:", gameId, "lobby:", lobbyId);
+    console.log("🎮 Game socket set for game:", currentGameId.value, "lobby:", currentLobbyId.value);
   };
 
   const closeGameSocket = (code = 1000, reason = "User left") => {
