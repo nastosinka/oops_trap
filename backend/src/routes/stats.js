@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -9,14 +10,11 @@ const router = express.Router();
  * ===========================
  * Получить статистику игрока по всем картам
  */
-router.get('/:id_user', async (req, res) => {
-  const { id_user } = req.params;
+router.get('/:id_user', requireAuth, async (req, res) => {
+  //const { id_user } = req.params;
+  const id_user = req.user.id;
 
   try {
-    // TODO: добавить cookieAuth позже (пример)
-    // const user = await verifyUser(req.cookies);
-    // if (!user) return res.status(401).json({ error: 'Unauthorized' });
-
     const stats = await prisma.stats.findMany({
       where: { id_user: parseInt(id_user) },
       select: {

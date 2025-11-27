@@ -124,10 +124,11 @@ router.post('/lobbies/:id/delete', async (req, res) => {
 // ========================================
 // POST /api/lobby/lobbies/:id/settings
 // ========================================
-router.post('/lobbies/:id/settings', async (req, res) => {
+router.post('/lobbies/:id/settings', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    const { ownerId, map, time, trapper } = req.body;
+    const { map, time, trapper } = req.body;
+    const ownerId = req.user.id;
 
     if (!ownerId) {
       return res.status(400).json({ error: 'ownerId is required' });
@@ -261,10 +262,11 @@ router.get('/lobbies/:id/settings', async (req, res) => {
 // ========================================
 // POST /api/lobby/lobbies/:id/status
 // ========================================
-router.post('/lobbies/:id/status', async (req, res) => {
+router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    const { ownerId, newStatus } = req.body;
+    const { newStatus } = req.body;
+    const ownerId = req.user.id;
 
     if (!ownerId) {
       return res.status(400).json({ error: 'ownerId is required' });
@@ -448,10 +450,11 @@ try {
 // ========================================
 // POST /api/lobby/lobbies/:id/join
 // ========================================
-router.post('/lobbies/:id/join', async (req, res) => {
+router.post('/lobbies/:id/join', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    const { userId } = req.body;
+    //const { userId } = req.body;
+    const userId = req.user.id;
 
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
@@ -513,10 +516,11 @@ router.post('/lobbies/:id/join', async (req, res) => {
 // ========================================
 // POST /api/lobby/lobbies/:id/leave
 // ========================================
-router.post('/lobbies/:id/leave', async (req, res) => {
+router.post('/lobbies/:id/leave', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    const { userId } = req.body;
+    //const { userId } = req.body;
+    const userId = req.user.id;
 
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
