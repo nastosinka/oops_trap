@@ -220,7 +220,7 @@ router.post('/lobbies/:id/settings', requireAuth, async (req, res) => {
 // ========================================
 // GET /api/lobby/lobbies/:id/settings
 // ========================================
-router.get('/lobbies/:id/settings', async (req, res) => {
+router.get('/lobbies/:id/settings', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
 
@@ -592,7 +592,7 @@ router.post('/lobbies/:id/leave', requireAuth, async (req, res) => {
 // ========================================
 // GET /api/lobby/lobbies/:id/users - получить список всех игроков из лобби
 // ========================================
-router.get('/lobbies/:id/users', async (req, res) => {
+router.get('/lobbies/:id/users', requireAuth,  async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
 
@@ -650,7 +650,7 @@ router.get('/games', (req, res) => {
 // =====================================
 // GET /lobbies/:id/status
 // =====================================
-router.get('/lobbies/:id/status', async (req, res) => {
+router.get('/lobbies/:id/status', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
 
