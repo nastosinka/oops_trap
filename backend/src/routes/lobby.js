@@ -1,7 +1,3 @@
-//ownerId подумать
-
-
-
 const express = require('express');
 const prisma = require('../db/prismaClient');
 const { createGameSession} = require('../websockets/game');
@@ -13,6 +9,103 @@ let nextLobbyId = 1;
 
 const games = new Map();
 module.exports = { lobbies, games };
+
+async function saveStatistic(data) {
+  const { id_user, id_map, time, role } = data;
+
+  // Валидация входных данных
+  if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
+    throw {
+      error: 'Обязательные поля: id_user, id_map, time, role',
+    };
+  }
+
+  const userId = parseInt(id_user);
+  const mapId = parseInt(id_map);
+  const timeValue = parseInt(time);
+
+  if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
+    throw {
+      error: 'Поля id_user, id_map и time должны быть числами',
+    };
+  }
+
+  if (typeof role !== 'boolean') {
+    throw {
+      error: 'Поле role должно быть булевым значением',
+    };
+  }
+
+  try {
+    // Проверка существующей статистики
+    const existingStat = await prisma.stats.findFirst({
+      where: {
+        id_user: userId,
+        id_map: mapId,
+        role: role,
+      },
+    });
+
+    let result;
+    let action;
+
+    if (existingStat) {
+      if (existingStat.time > timeValue) {
+        result = await prisma.stats.update({
+          where: { id: existingStat.id },
+          data: { time: timeValue },
+        });
+        action = 'updated';
+        console.log('Статистика обновлена:', result);
+      } else {
+        console.log('Статистика не требует обновлений');
+        result = existingStat;
+        action = 'unchanged';
+      }
+    } else {
+      result = await prisma.stats.create({
+        data: {
+          id_user: userId,
+          id_map: mapId,
+          time: timeValue,
+          role: role,
+        },
+      });
+      action = 'created';
+      console.log('Новая статистика создана:', result);
+    }
+
+    // Форматирование результата
+    const formattedResult = {
+      id: result.id,
+      id_user: result.id_user,
+      id_map: result.id_map,
+      time: result.time,
+      role: result.role,
+    };
+
+    return {
+      success: true,
+      action: action,
+      data: formattedResult,
+    };
+
+  } catch (error) {
+    console.error('Ошибка при сохранении статистики:', error);
+
+    if (error.code === 'P2003') {
+      throw {
+        error: 'Неверный id_user или id_map',
+        details: 'Указанный пользователь или карта не существует'
+      };
+    }
+
+    throw {
+      error: 'Ошибка сервера при сохранении статистики',
+      details: error.message
+    };
+  }
+}
 
 
 // ========================================
@@ -348,7 +441,7 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
       console.log('Game ended with stats:', game.stats);
       
 try {
-  const updatePromises = game.stats.map(async (stat) => {
+  const results = game.stats.map(async (stat) => {
     const statsData = {
       id_user: stat.userId,
       id_map: stat.map,
@@ -357,24 +450,12 @@ try {
     };
 
     console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
-    const response = await fetch('http://localhost:8080/api/stats', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(statsData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    console.log(`Статистика обновлена для пользователя ${stat.userId}:`, result);
+    const result = saveStatistic(statsData);
+    console.log(`Статистика обновлена для пользователя ${stat.userId}`);
     return result;
   });
 
-  const results = await Promise.all(updatePromises);
-  console.log('Все статистики обработаны:', results.filter(result => result !== null));
+  console.log('Все статистики обработаны');
 
   lobby.status = 'finished';
   console.log('Статус лобби изменен на "finished"');

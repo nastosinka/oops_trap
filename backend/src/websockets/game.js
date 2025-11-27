@@ -562,11 +562,11 @@ function activeGame(game) {
     const stats = game.players.map((player) => ({
         userId: player.id,
         userName: player.name,
-        role: 'civilian', // или 'trapper' в зависимости от логики игры
+        role: true, // или 'trapper' в зависимости от логики игры
         score: Math.floor(Math.random() * 100), // пример счета
         result: Math.random() > 0.3 ? 1 : 0, // пример результата (1 - победа, 0 - поражение)
         map: game.map,
-        timePlayed: 20 // секунды
+        time: 20 // секунды
     }));
     return stats;
 }
