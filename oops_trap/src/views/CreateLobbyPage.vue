@@ -152,7 +152,10 @@ export default {
 
     async fetchStats() {
       try {
-        const response = await fetch(`/api/stats/${this.userId}`);
+        const response = await fetch(`/api/stats/${this.userId}`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -196,12 +199,7 @@ export default {
 
         const response = await fetch(`/api/lobby/lobbies/${lobbyId}/join`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: this.userId,
-          }),
+          credentials: "include",
         });
 
         const responseText = await response.text();

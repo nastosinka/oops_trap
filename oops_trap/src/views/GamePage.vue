@@ -123,9 +123,10 @@ const checkIfUserIsHost = async () => {
   }
 
   try {
-    const response = await fetch(
-      `/api/lobby/lobbies/${lobbyId.value}/settings`
-    );
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`, {
+          method: "GET",
+          credentials: "include",
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -460,9 +461,9 @@ const updateLobbyStatus = async (newStatus) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ownerId: userId.value,
         newStatus,
       }),
+      credentials: "include",
     });
 
     if (!response.ok) {

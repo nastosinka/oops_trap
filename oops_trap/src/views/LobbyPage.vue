@@ -141,8 +141,10 @@ export default {
 
       try {
         const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/settings`
-        );
+          `/api/lobby/lobbies/${this.lobbyId}/settings`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -187,7 +189,10 @@ export default {
       try {
         // Получаем статус лобби
         const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`;
-        const statusResponse = await fetch(statusUrl);
+        const statusResponse = await fetch(statusUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!statusResponse.ok) {
           throw new Error(
@@ -205,7 +210,10 @@ export default {
 
         // Получаем настройки лобби для актуальной информации о владельце
         const settingsUrl = `/api/lobby/lobbies/${this.lobbyId}/settings`;
-        const settingsResponse = await fetch(settingsUrl);
+        const settingsResponse = await fetch(settingsUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
@@ -224,7 +232,10 @@ export default {
 
         // Получаем список игроков
         const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`;
-        const playersResponse = await fetch(playersUrl);
+        const playersResponse = await fetch(playersUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!playersResponse.ok) {
           throw new Error(
@@ -314,7 +325,6 @@ export default {
 
     async handleSettingsApply(settings) {
       const currentUserId = this.userStore.userId;
-
       if (!currentUserId) {
         Modal.error({
           title: "Error",
@@ -335,7 +345,6 @@ export default {
       }
 
       const apiSettings = {
-        ownerId: currentUserId,
         map: settings.map || 1,
         time: settings.time || "normal",
         trapper: settings.mafia || 1,
@@ -350,6 +359,7 @@ export default {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(apiSettings),
+            credentials: "include",
           }
         );
 
@@ -429,9 +439,9 @@ export default {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              ownerId: currentUserId,
               newStatus: "in-progress",
             }),
+            credentials: "include",
           }
         );
 
@@ -564,46 +574,20 @@ export default {
 
     async exitLobby() {
       console.log("🚪 Exiting lobby...");
-      const currentUserId = this.userStore.userId;
 
       try {
-        if (this.isHost) {
-          console.log("🗑️ Host - deleting lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/delete`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ownerId: currentUserId,
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-        } else {
-          console.log("👋 Player - leaving lobby");
+        console.log("👋 Player - leaving lobby");
           const response = await fetch(
             `/api/lobby/lobbies/${this.lobbyId}/leave`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                userId: currentUserId,
-              }),
+              credentials: "include",
             }
           );
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
-        }
 
         this.stopPolling();
         this.$router.push("/createLobby");

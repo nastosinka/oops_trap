@@ -348,7 +348,7 @@ function createGameSession(game) {
             waitTimer: null,
             gameTimer: null,
             gameState: initializeGameState(game),
-            timeLeft: 120, // 2 минуты по умолчанию
+            timeLeft: 20, // 2 минуты по умолчанию
             stats: [],
             resolve: resolve,
             gameFinished: false
@@ -566,7 +566,7 @@ function activeGame(game) {
         score: Math.floor(Math.random() * 100), // пример счета
         result: Math.random() > 0.3 ? 1 : 0, // пример результата (1 - победа, 0 - поражение)
         map: game.map,
-        timePlayed: 120 // секунды
+        timePlayed: 20 // секунды
     }));
     return stats;
 }

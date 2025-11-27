@@ -24,12 +24,6 @@ router.get('/:id_user', requireAuth, async (req, res) => {
       },
     });
 
-    if (!stats || stats.length === 0) {
-      return res.status(404).json({
-        error: 'Статистика для данного пользователя не найдена',
-        code: 404,
-      });
-    }
 
     const formattedUserStats = stats.map(stat => ({
       map_id: stat.id_map,
