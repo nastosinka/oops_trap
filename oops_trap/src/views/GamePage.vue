@@ -1,7 +1,5 @@
 <template>
   <div class="game-container">
-    <canvas ref="canvas" width="800" height="600"></canvas>
-
     <div class="hud">
       <div class="hud-info">
         <p>Time left: {{ timeLeft }}s</p>
@@ -20,30 +18,46 @@
         </button>
       </div>
     </div>
+    <div class="container">
+      <div id="chat" class="chat"></div>
 
-    <div v-if="gameEnded" class="overlay">
-      <div class="game-results">
-        <h2>Game Over</h2>
-        <div class="results-list">
-          <div v-for="stat in stats" :key="stat.userId" class="result-item">
-            <span class="player-name">{{
-              stat.userName || `Player ${stat.userId}`
-            }}</span>
-            <span class="player-score">{{ stat.score }} points</span>
-            <span class="player-result" :class="{ winner: stat.result === 1 }">
-              {{ stat.result === 1 ? "Winner" : "Loser" }}
-            </span>
-          </div>
-        </div>
-        <div class="overlay-buttons">
-          <button v-if="lobbyId" class="lobby-btn" @click="returnToLobby">
-            Return to Lobby
-          </button>
-        </div>
+      <div class="input-group">
+        <input type="text" id="messageInput" placeholder="Сообщение" onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Отправить</button>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: white;
+}
+
+.chat {
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 300px;
+  overflow-y: scroll;
+  margin: 10px 0;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input,
+button {
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+</style>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
@@ -58,23 +72,21 @@ const userStore = useUserStore();
 const {
   userId: storeUserId,
   getGameSocket,
-  isInGame,
   currentGameId,
 } = storeToRefs(userStore);
 
-// Game data
+// реактивные данные, но никак не связаны с сокетами
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
 const userId = computed(() => storeUserId.value);
 const lobbyId = computed(() => route.query.lobbyId);
 const isHost = ref(false); // Будет установлено после проверки
 
-// Game state
+// тут создаём реактивные данные (не в дате6 потому что будем ими пуляться в пинию)
 const timeLeft = ref(0);
+const isConnected = ref(false);
 const stats = ref([]);
 const gameEnded = ref(false);
-const canvas = ref(null);
 const connectionError = ref(null);
-const isConnected = ref(false);
 const waitingForPlayers = ref(false);
 const connectedPlayersCount = ref(0);
 const totalPlayersCount = ref(0);
@@ -136,8 +148,7 @@ const checkIfUserIsHost = async () => {
     if (data.success && data.data) {
       isHost.value = data.data.ownerId === userId.value;
       console.log(
-        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
-          lobbyId.value
+        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${lobbyId.value
         }`
       );
     } else {
@@ -171,8 +182,6 @@ const connectGameWebSocket = async () => {
       });
     } else {
       console.log("🔄 Creating new game WebSocket connection");
-
-      await userStore.createGameSocketConnection(gameId.value, lobbyId.value);
 
       const newSocket = getGameSocket.value;
       if (newSocket) {
@@ -232,9 +241,8 @@ const setupWebSocketHandlers = (socket) => {
     isConnected.value = false;
 
     if (event.code !== 1000 && !gameEnded.value) {
-      connectionError.value = `Connection lost: ${
-        event.reason || "Unknown reason"
-      }`;
+      connectionError.value = `Connection lost: ${event.reason || "Unknown reason"
+        }`;
     }
   };
 };
@@ -325,105 +333,6 @@ const handleWebSocketMessage = (data) => {
   }
 };
 
-const initializeGame = () => {
-  if (canvas.value) {
-    const ctx = canvas.value.getContext("2d");
-    ctx.fillStyle = "#2c3e50";
-    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
-
-    // Add game controls and logic here
-    setupGameControls();
-  }
-};
-
-const setupGameControls = () => {
-  // Example: Keyboard controls
-  const handleKeyDown = (event) => {
-    if (!isConnected.value || gameEnded.value) return;
-
-    switch (event.key) {
-      case "ArrowUp":
-      case "w":
-        userStore.sendGameMessage({
-          type: "PLAYER_MOVE",
-          userId: userId.value,
-          direction: "up",
-        });
-        break;
-      case "ArrowDown":
-      case "s":
-        userStore.sendGameMessage({
-          type: "PLAYER_MOVE",
-          userId: userId.value,
-          direction: "down",
-        });
-        break;
-      case "ArrowLeft":
-      case "a":
-        userStore.sendGameMessage({
-          type: "PLAYER_MOVE",
-          userId: userId.value,
-          direction: "left",
-        });
-        break;
-      case "ArrowRight":
-      case "d":
-        userStore.sendGameMessage({
-          type: "PLAYER_MOVE",
-          userId: userId.value,
-          direction: "right",
-        });
-        break;
-      case " ":
-        userStore.sendGameMessage({
-          type: "GAME_ACTION",
-          userId: userId.value,
-          action: "use",
-        });
-        break;
-    }
-  };
-
-  window.addEventListener("keydown", handleKeyDown);
-
-  // Cleanup
-  onUnmounted(() => {
-    window.removeEventListener("keydown", handleKeyDown);
-  });
-};
-
-const updateGameState = (gameState) => {
-  if (canvas.value && gameState) {
-    const ctx = canvas.value.getContext("2d");
-
-    // Clear canvas
-    ctx.fillStyle = "#2c3e50";
-    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
-
-    // Draw game objects
-    if (gameState.players) {
-      gameState.players.forEach((player) => {
-        ctx.fillStyle = player.color || "#ffffff";
-        ctx.fillRect(player.x || 50, player.y || 50, 30, 30);
-
-        // Draw player name
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px Arial";
-        ctx.fillText(
-          player.name || `Player ${player.id}`,
-          (player.x || 50) - 10,
-          (player.y || 50) - 5
-        );
-      });
-    }
-  }
-};
-
-// const reconnect = async () => {
-//   console.log("🔄 Attempting to reconnect...");
-//   connectionError.value = null;
-//   await connectGameWebSocket();
-// };
 
 const returnToLobby = async () => {
   if (!lobbyId.value) {
@@ -475,37 +384,6 @@ const updateLobbyStatus = async (newStatus) => {
     throw error;
   }
 };
-
-// Обработка событий страницы
-window.addEventListener("beforeunload", () => {
-  if (isInGame.value) {
-    userStore.sendGameMessage({
-      type: "PLAYER_LEFT",
-      gameId: gameId.value,
-      userId: userId.value,
-      lobbyId: lobbyId.value,
-      reason: "page_unload",
-    });
-  }
-});
-
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && isInGame.value) {
-    userStore.sendGameMessage({
-      type: "PLAYER_AFK",
-      gameId: gameId.value,
-      userId: userId.value,
-      afk: true,
-    });
-  } else if (!document.hidden && isInGame.value) {
-    userStore.sendGameMessage({
-      type: "PLAYER_AFK",
-      gameId: gameId.value,
-      userId: userId.value,
-      afk: false,
-    });
-  }
-});
 </script>
 
 <style scoped>
@@ -732,13 +610,8 @@ document.addEventListener("visibilitychange", () => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
-}
-
-canvas {
-  display: block;
-  background: #1a1a1a;
-}
-</style>
+}</style>

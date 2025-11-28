@@ -122,93 +122,93 @@ export const useUserStore = defineStore("user", () => {
     currentLobbyId.value = null;
   };
 
-  const createGameSocketConnection = (gameId, lobbyId = null) => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Закрываем существующее соединение
-        closeGameSocket();
+  // const createGameSocketConnection = (gameId, lobbyId = null) => {
+  //   return new Promise((resolve, reject) => {
+  //     try {
+  //       // Закрываем существующее соединение
+  //       closeGameSocket();
 
-        // Создаем новое WebSocket соединение
-        const socket = new WebSocket(
-          `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${gameId}`
-        );
+  //       // Создаем новое WebSocket соединение
+  //       const socket = new WebSocket(
+  //         `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${gameId}`
+  //       );
 
-        socket.onopen = () => {
-          console.log(
-            "✅ Game WebSocket connected successfully for game:",
-            gameId
-          );
+  //       socket.onopen = () => {
+  //         console.log(
+  //           "✅ Game WebSocket connected successfully for game:",
+  //           gameId
+  //         );
 
-          // Сохраняем сокет в store
-          setGameSocket(socket, gameId, lobbyId);
+  //         // Сохраняем сокет в store
+  //         setGameSocket(socket, gameId, lobbyId);
 
-          // Отправляем инициализационное сообщение
-          socket.send(
-            JSON.stringify({
-              type: "init",
-              playerId: userId.value,
-              gameId,
-              lobbyId,
-              action: "player_ready",
-            })
-          );
+  //         // Отправляем инициализационное сообщение
+  //         socket.send(
+  //           JSON.stringify({
+  //             type: "init",
+  //             playerId: userId.value,
+  //             gameId,
+  //             lobbyId,
+  //             action: "player_ready",
+  //           })
+  //         );
 
-          resolve(socket);
-        };
+  //         resolve(socket);
+  //       };
 
-        socket.onerror = (error) => {
-          console.error("❌ Game WebSocket connection error:", error);
-          reject(new Error("Failed to connect to game server"));
-        };
+  //       socket.onerror = (error) => {
+  //         console.error("❌ Game WebSocket connection error:", error);
+  //         reject(new Error("Failed to connect to game server"));
+  //       };
 
-        socket.onclose = (event) => {
-          console.log("🔌 Game WebSocket closed:", event.code, event.reason);
-          if (event.code !== 1000) {
-            // Непредвиденное закрытие - очищаем состояние
-            gameSocket.value = null;
-            currentGameId.value = null;
-          }
-        };
+  //       socket.onclose = (event) => {
+  //         console.log("🔌 Game WebSocket closed:", event.code, event.reason);
+  //         if (event.code !== 1000) {
+  //           // Непредвиденное закрытие - очищаем состояние
+  //           gameSocket.value = null;
+  //           currentGameId.value = null;
+  //         }
+  //       };
 
-        // Таймаут для соединения
-        setTimeout(() => {
-          if (socket.readyState !== WebSocket.OPEN) {
-            socket.close();
-            reject(new Error("WebSocket connection timeout"));
-          }
-        }, 10000);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
+  //       // Таймаут для соединения
+  //       setTimeout(() => {
+  //         if (socket.readyState !== WebSocket.OPEN) {
+  //           socket.close();
+  //           reject(new Error("WebSocket connection timeout"));
+  //         }
+  //       }, 10000);
+  //     } catch (error) {
+  //       reject(error);
+  //     }
+  //   });
+  // };
 
   // Восстановление соединения при перезагрузке страницы
-  const reconnectGameSocket = async (gameId, lobbyId = null) => {
-    if (!gameId) {
-      console.warn("Cannot reconnect: no gameId provided");
-      return null;
-    }
+  // const reconnectGameSocket = async (gameId, lobbyId = null) => {
+  //   if (!gameId) {
+  //     console.warn("Cannot reconnect: no gameId provided");
+  //     return null;
+  //   }
 
-    try {
-      const socket = await createGameSocketConnection(gameId, lobbyId);
+  //   try {
+  //     const socket = await createGameSocketConnection(gameId, lobbyId);
 
-      // Отправляем сообщение о переподключении
-      socket.send(
-        JSON.stringify({
-          type: "PLAYER_RECONNECTED",
-          gameId,
-          userId: userId.value,
-          lobbyId,
-        })
-      );
+  //     // Отправляем сообщение о переподключении
+  //     socket.send(
+  //       JSON.stringify({
+  //         type: "PLAYER_RECONNECTED",
+  //         gameId,
+  //         userId: userId.value,
+  //         lobbyId,
+  //       })
+  //     );
 
-      return socket;
-    } catch (error) {
-      console.error("Failed to reconnect game socket:", error);
-      return null;
-    }
-  };
+  //     return socket;
+  //   } catch (error) {
+  //     console.error("Failed to reconnect game socket:", error);
+  //     return null;
+  //   }
+  // };
 
   // Отправка сообщения через игровой сокет
   const sendGameMessage = (message) => {
@@ -261,8 +261,7 @@ export const useUserStore = defineStore("user", () => {
     // Методы управления игровым сокетом
     setGameSocket,
     closeGameSocket,
-    createGameSocketConnection,
-    reconnectGameSocket,
+
     sendGameMessage,
     clearGameState,
   };

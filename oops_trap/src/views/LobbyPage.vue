@@ -62,6 +62,7 @@ import { Modal } from "ant-design-vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import { createGameSocket } from '@/utils/websocket';
 
 export default {
   name: "LobbyPage",
@@ -257,34 +258,6 @@ export default {
       }
     },
 
-    redirectToGame() {
-      this.stopPolling();
-
-      const gameId = this.lobbyId;
-      console.log("🔄 Redirecting to game:", gameId);
-
-      // Переходим на страницу игры, передавая информацию о хосте
-      this.$router.push({
-        path: `/game/${gameId}`,
-        query: {
-          lobbyId: this.lobbyId,
-          isHost: this.isHost,
-        },
-      });
-    },
-
-    // handleLobbyFinished() {
-    //   Modal.info({
-    //     title: "Game Finished",
-    //     content: "The game has finished. You will be redirected to the lobby creation page.",
-    //     okText: "OK",
-    //     onOk: () => {
-    //       this.stopPolling();
-    //       this.$router.push("/createLobby");
-    //     }
-    //   });
-    // },
-
     updatePlayersList(players) {
       const updatedPlayers = players.map((player, index) => ({
         ...player,
@@ -324,7 +297,6 @@ export default {
         return;
       }
 
-      // Проверяем, что пользователь действительно хост
       if (!this.isHost) {
         Modal.error({
           title: "Error",
@@ -350,6 +322,7 @@ export default {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(apiSettings),
+            credentials: "include"
           }
         );
 
@@ -377,19 +350,121 @@ export default {
       }
     },
 
-    async handleStart() {
-      console.log("🎮 Start button clicked");
-      console.log("📊 Current players count:", this.players.length);
+    showExitConfirm() {
+      Modal.confirm({
+        title: "Exit Lobby",
+        content: this.isHost
+          ? "Are you sure you want to exit and delete the lobby?"
+          : "Are you sure you want to leave the lobby?",
+        okText: "Yes, Exit",
+        cancelText: "Cancel",
+        okType: "danger",
+        centered: true,
+        onOk: () => {
+          this.exitLobby();
+        },
+      });
+    },
 
-      // Проверяем, что пользователь хост
-      if (!this.isHost) {
+    async exitLobby() {
+      console.log("🚪 Exiting lobby...");
+      const currentUserId = this.userStore.userId;
+
+      try {
+        if (this.isHost) {
+          console.log("🗑️ Host - deleting lobby");
+          const response = await fetch(
+            `/api/lobby/lobbies/${this.lobbyId}/leave`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+              userId: currentUserId,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        } else {
+          console.log("👋 Player - leaving lobby");
+          const response = await fetch(
+            `/api/lobby/lobbies/${this.lobbyId}/leave`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId: currentUserId,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        }
+
+        this.stopPolling();
+        this.$router.push("/createLobby");
+      } catch (error) {
+        console.error("❌ Exit lobby error:", error);
         Modal.error({
           title: "Error",
-          content: "Only the host can start the game.",
+          content: this.isHost
+            ? `Failed to delete lobby: ${error.message}`
+            : `Failed to leave lobby: ${error.message}`,
           okText: "OK",
         });
-        return;
       }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// БЛОК ВЕБ СОКЕТОВ
+
+    redirectToGame() { // просто переход на игру, без сокетов
+      this.stopPolling();
+
+      const gameId = this.lobbyId;
+      console.log("🔄 Redirecting to game:", gameId);
+
+      // Переходим на страницу игры, передавая информацию о хосте
+      this.$router.push({
+        path: `/game/${gameId}`,
+        query: {
+          lobbyId: this.lobbyId,
+          isHost: this.isHost,
+        },
+      });
+    },
+
+    async handleStart() { // создаём веб сокет подключение, затем меняем статус лобби
+      console.log("🎮 Start button clicked");
+      console.log("📊 Current players count:", this.players.length);
 
       if (this.players.length < 2) {
         Modal.warning({
@@ -415,7 +490,7 @@ export default {
         console.log("🚀 Starting game...");
 
         // 1. Сначала создаем WebSocket соединение
-        await this.userStore.createGameSocketConnection(
+        await this.createGameSocketConnection(
           this.lobbyId,
           this.lobbyId
         );
@@ -466,16 +541,18 @@ export default {
       }
     },
 
-    async createGameSocketConnection() {
+    async createGameSocketConnection() { // создаём веб сокет и сохраняем в хранилище (2)
+      console.log(`Пытаемся создать подключение с ${this.lobbyId}`);
       return new Promise((resolve, reject) => {
         try {
           // Создаем локальный WebSocket
-          const gameSocket = new WebSocket(
-            `ws://${import.meta.env.VITE_SERVER_IP2}/ws/game/${this.lobbyId}`
-          );
+
+          const gameSocket = createGameSocket(this.lobbyId);
 
           // Сохраняем сокет в store
           this.userStore.setGameSocket(gameSocket, this.lobbyId, this.lobbyId);
+
+          console.log(`мы УдавЛось, дальше обработка`);
 
           gameSocket.onopen = () => {
             console.log("✅ Game WebSocket connected successfully");
@@ -525,7 +602,7 @@ export default {
       });
     },
 
-    handleGameSocketMessage(data) {
+    handleGameSocketMessage(data) { // (3)
       console.log("🎮 Game socket message received:", data);
 
       switch (data.type) {
@@ -545,82 +622,36 @@ export default {
           console.log("📨 Unknown game message type:", data.type);
       }
     },
-
-    showExitConfirm() {
-      Modal.confirm({
-        title: "Exit Lobby",
-        content: this.isHost
-          ? "Are you sure you want to exit and delete the lobby?"
-          : "Are you sure you want to leave the lobby?",
-        okText: "Yes, Exit",
-        cancelText: "Cancel",
-        okType: "danger",
-        centered: true,
-        onOk: () => {
-          this.exitLobby();
-        },
-      });
-    },
-
-    async exitLobby() {
-      console.log("🚪 Exiting lobby...");
-      const currentUserId = this.userStore.userId;
-
-      try {
-        if (this.isHost) {
-          console.log("🗑️ Host - deleting lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/delete`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ownerId: currentUserId,
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-        } else {
-          console.log("👋 Player - leaving lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/leave`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                userId: currentUserId,
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-        }
-
-        this.stopPolling();
-        this.$router.push("/createLobby");
-      } catch (error) {
-        console.error("❌ Exit lobby error:", error);
-        Modal.error({
-          title: "Error",
-          content: this.isHost
-            ? `Failed to delete lobby: ${error.message}`
-            : `Failed to leave lobby: ${error.message}`,
-          okText: "OK",
-        });
-      }
-    },
   },
 };
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <style scoped>
 .player-host {
