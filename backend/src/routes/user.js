@@ -3,7 +3,9 @@ const prisma = require('../db/prismaClient');
 
 const router = express.Router();
 
-
+// ========================================
+// GET /api/user/:id
+// ========================================
 router.get('/:id', async (req, res) => {
   try {
     const userId = parseInt(req.params.id);

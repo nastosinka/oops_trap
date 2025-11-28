@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import { useUserStore } from "@/stores/user";
 
 const routes = [
   {
@@ -31,12 +32,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("token");
+  const userStore = useUserStore();
+  userStore.initializeUser();
 
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
-
-  if (requiresAuth && !token) {
-    next({ name: "Home" });
+  if (to.meta.requiresAuth && !userStore.user) {
+    next("/");
   } else {
     next();
   }
