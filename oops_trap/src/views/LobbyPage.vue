@@ -11,16 +11,8 @@
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div
-            v-for="player in players"
-            :key="player.id"
-            class="player"
-            :class="{ 'player-host': player.isHost }"
-          >
-            <div
-              class="player-color"
-              :style="{ backgroundColor: player.color }"
-            ></div>
+          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
+            <div class="player-color" :style="{ backgroundColor: player.color }"></div>
             <span class="player-name">{{ player.name }}</span>
             <span v-if="player.id === userId" class="player-you">(You) </span>
             <span v-if="player.isHost" class="player-host-badge">👑</span>
@@ -28,32 +20,15 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton
-          v-if="isHost"
-          label="Settings"
-          size="large"
-          @click="showSettings = true"
-        />
-        <BaseButton
-          v-if="isHost && lobbyStatus === 'waiting'"
-          label="Start"
-          size="large"
-          :disabled="players.length < 2"
-          @click="handleStart"
-        />
+        <BaseButton v-if="isHost" label="Settings" size="large" @click="showSettings = true" />
+        <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
+          @click="handleStart" />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
     </div>
   </div>
-  <UniversalModal
-    v-if="showSettings"
-    title="Game Settings"
-    type="settings"
-    :players="players"
-    :initial-settings="currentSettings"
-    @close="showSettings = false"
-    @settings-apply="handleSettingsApply"
-  />
+  <UniversalModal v-if="showSettings" title="Game Settings" type="settings" :players="players"
+    :initial-settings="currentSettings" @close="showSettings = false" @settings-apply="handleSettingsApply" />
 </template>
 
 <script>
@@ -155,8 +130,7 @@ export default {
           this.lobbyOwnerId = data.data.ownerId;
           this.isHost = data.data.ownerId === this.userId;
           console.log(
-            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
-              this.lobbyId
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${this.lobbyId
             }`
           );
           console.log(
@@ -254,7 +228,7 @@ export default {
 
     checkLobbyStatus() {
       if (this.lobbyStatus === "in-progress") {
-        this.redirectToGame();
+        this.redirectToGamePage()
       }
     },
 
@@ -381,7 +355,7 @@ export default {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-              userId: currentUserId,
+                userId: currentUserId,
               }),
             }
           );
@@ -444,17 +418,15 @@ export default {
 
 
 
-// БЛОК ВЕБ СОКЕТОВ
+    // БЛОК ВЕБ СОКЕТОВ
 
-    redirectToGame() { // просто переход на игру, без сокетов
+    redirectToGamePage() {
       this.stopPolling();
 
-      const gameId = this.lobbyId;
-      console.log("🔄 Redirecting to game:", gameId);
+      console.log("🔄 Redirecting to game:", this.lobbyId);
 
-      // Переходим на страницу игры, передавая информацию о хосте
       this.$router.push({
-        path: `/game/${gameId}`,
+        path: `/game/${this.lobbyId}`,
         query: {
           lobbyId: this.lobbyId,
           isHost: this.isHost,
@@ -462,83 +434,89 @@ export default {
       });
     },
 
-    async handleStart() { // создаём веб сокет подключение, затем меняем статус лобби
-      console.log("🎮 Start button clicked");
+    async handleStart() {
+      console.log("🎮 Starting game flow...");
       console.log("📊 Current players count:", this.players.length);
 
-      if (this.players.length < 2) {
-        Modal.warning({
-          title: "Not enough players",
-          content: "Need at least 2 players to start the game",
-          okText: "OK",
-        });
-        return;
-      }
+      // Проверки для хоста
+      if (this.isHost) {
+        if (this.players.length < 2) {
+          Modal.warning({
+            title: "Not enough players",
+            content: "Need at least 2 players to start the game",
+            okText: "OK",
+          });
+          return false;
+        }
 
-      const currentUserId = this.userStore.userId;
-
-      if (!currentUserId) {
-        Modal.error({
-          title: "Error",
-          content: "User not authenticated. Please log in again.",
-          okText: "OK",
-        });
-        return;
+        if (!this.userStore.userId) {
+          Modal.error({
+            title: "Error",
+            content: "User not authenticated. Please log in again.",
+            okText: "OK",
+          });
+          return false;
+        }
       }
 
       try {
-        console.log("🚀 Starting game...");
+        console.log("🚀 Starting game flow for:", this.isHost ? 'HOST' : 'PLAYER');
 
-        // 1. Сначала создаем WebSocket соединение
-        await this.createGameSocketConnection(
-          this.lobbyId,
-          this.lobbyId
-        );
+        // 1. ВСЕ создают WebSocket соединение
+        await this.createGameSocketConnection();
 
-        // 2. Затем отправляем запрос на старт игры
-        const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/status`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ownerId: currentUserId,
-              newStatus: "in-progress",
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          console.log("✅ Start game response:", result);
-
-          Modal.success({
-            title: "Success",
-            content: "Game started successfully! Redirecting to game...",
-            okText: "OK",
-          });
-        } else {
-          const error = await response.json();
-          console.error("❌ Start game failed:", error);
-          Modal.error({
-            title: "Error",
-            content:
-              error.message ||
-              error.details?.join(", ") ||
-              "Failed to start game",
-            okText: "OK",
-          });
+        // 2. Если хост - меняем статус лобби
+        if (this.isHost) {
+          await this.updateLobbyStatusToInProgress();
         }
+
+        // 3. ВСЕ переходят в игру
+        this.redirectToGamePage();
+
+        return true;
+
       } catch (error) {
-        console.error("❌ Start game error:", error);
+        console.error("❌ Game flow error:", error);
         Modal.error({
           title: "Error",
           content: "Failed to start game: " + error.message,
           okText: "OK",
         });
+        return false;
       }
+    },
+
+    // Отдельные методы для каждой операции
+    async updateLobbyStatusToInProgress() {
+      console.log("🔄 Updating lobby status to in-progress...");
+
+      const response = await fetch(
+        `/api/lobby/lobbies/${this.lobbyId}/status`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ownerId: this.userStore.userId,
+            newStatus: "in-progress",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update lobby status");
+      }
+
+      const result = await response.json();
+      console.log("✅ Lobby status updated:", result);
+
+      Modal.success({
+        title: "Success",
+        content: "Game started successfully! Redirecting to game...",
+        okText: "OK",
+      });
     },
 
     async createGameSocketConnection() { // создаём веб сокет и сохраняем в хранилище (2)
@@ -580,16 +558,6 @@ export default {
             console.log("🔌 Game WebSocket closed:", event.code, event.reason);
           };
 
-          // Обработчик входящих сообщений
-          gameSocket.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              this.handleGameSocketMessage(data);
-            } catch (error) {
-              console.error("Error parsing game socket message:", error);
-            }
-          };
-
           // Таймаут для соединения
           setTimeout(() => {
             if (gameSocket.readyState !== WebSocket.OPEN) {
@@ -601,28 +569,7 @@ export default {
         }
       });
     },
-
-    handleGameSocketMessage(data) { // (3)
-      console.log("🎮 Game socket message received:", data);
-
-      switch (data.type) {
-        case "game-joined":
-          console.log("✅ Successfully joined game via WebSocket");
-          break;
-        case "waiting-start":
-          console.log("⏳ Waiting for other players...", data.message);
-          break;
-        case "player-connected":
-          console.log(`👤 Player ${data.playerId} connected`);
-          break;
-        case "player-disconnected":
-          console.log(`🚪 Player ${data.playerId} disconnected`);
-          break;
-        default:
-          console.log("📨 Unknown game message type:", data.type);
-      }
-    },
-  },
+  }
 };
 </script>
 
@@ -720,6 +667,7 @@ export default {
   font-family: "Irish Grover", system-ui;
   color: #e5e5e5;
 }
+
 .nickname {
   position: absolute;
   top: 30px;
@@ -795,6 +743,7 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
+
 .player-color {
   width: 35px;
   height: 35px;

@@ -113,11 +113,10 @@ onMounted(async () => {
   await checkIfUserIsHost();
 
   connectGameWebSocket();
-  initializeGame();
 });
 
 onUnmounted(() => {
-  cleanupWebSocketHandlers();
+  userStore.clearGameState();
 });
 
 // Watch for socket changes
@@ -159,6 +158,77 @@ const checkIfUserIsHost = async () => {
     isHost.value = false;
   }
 };
+
+const returnToLobby = async () => {
+  if (!lobbyId.value) {
+    Modal.error({
+      title: "Cannot Return to Lobby",
+      content: "Lobby information is not available",
+      okText: "OK",
+    });
+    return;
+  }
+
+  try {
+    if (isHost.value) {
+      // Если хост - обновляем статус лобби на 'waiting'
+      await updateLobbyStatus("waiting");
+      console.log("🎮 Host returned to lobby, status set to waiting");
+    } else {
+      console.log("🎮 Player returned to lobby");
+    }
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    // Продолжаем в любом случае
+  }
+  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+};
+
+const updateLobbyStatus = async (newStatus) => {
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ownerId: userId.value,
+        newStatus,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// веб сокетыыыыы
 
 const connectGameWebSocket = async () => {
   try {
@@ -330,58 +400,6 @@ const handleWebSocketMessage = (data) => {
 
     default:
       console.warn("Unknown game message type:", data.type, data);
-  }
-};
-
-
-const returnToLobby = async () => {
-  if (!lobbyId.value) {
-    Modal.error({
-      title: "Cannot Return to Lobby",
-      content: "Lobby information is not available",
-      okText: "OK",
-    });
-    return;
-  }
-
-  try {
-    if (isHost.value) {
-      // Если хост - обновляем статус лобби на 'waiting'
-      await updateLobbyStatus("waiting");
-      console.log("🎮 Host returned to lobby, status set to waiting");
-    } else {
-      console.log("🎮 Player returned to lobby");
-    }
-  } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
-    // Продолжаем в любом случае
-  }
-
-  cleanupWebSocketHandlers();
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-};
-
-const updateLobbyStatus = async (newStatus) => {
-  try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ownerId: userId.value,
-        newStatus,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
-    throw error;
   }
 };
 </script>
