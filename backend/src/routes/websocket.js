@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { gameSessions } = require("../websockets/game"); // импорт из game.js
+const { requireAuth } = require("../middleware/auth");
 
 // Получение списка активных WebSocket-комнат - для отладки
 router.get("/ws/sessions", (req, res) => {

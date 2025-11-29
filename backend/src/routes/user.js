@@ -1,12 +1,13 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
 // ========================================
 // GET /api/user/:id
 // ========================================
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
 

@@ -98,6 +98,8 @@ function setupGameWebSocket(server) {
             if (gameRoom.timer.timeLeft <= 0) {
                 stopGameTimer(gameId);
                 console.log(`⏰ Время вышло для игры ${gameId}`);
+
+                //тут получать стату
             }
         }, 1000);
     }
@@ -115,6 +117,11 @@ function setupGameWebSocket(server) {
                     case 'chat_message':
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
+                    //case 'died':
+                    //    writeTiLox();
+                    //case 'win':
+                    //    writeTiNeLox();
+
                 }
             } catch (error) {
                 console.error('❌ Ошибка в игре:', error);
@@ -217,6 +224,17 @@ function setupGameWebSocket(server) {
         console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
     }
 
+    // function activeGame(gameId) {
+    //  const stats = game.players.map((player) => ({
+    //      userId: player.id,
+    //      role: true,
+    //         time: 12, 
+    //         result: Math.random() > 0.5 ? 1 : 0, // пример результата
+    //         map: game.map
+    //     }));
+    //     return stats;
+    // }
+
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
 
@@ -249,7 +267,6 @@ function setupGameWebSocket(server) {
             gameRoom.hasFirstPlayer = false;
         }
     }
-
     // Очистка пустых комнат
     setInterval(() => {
         for (const [gameId, gameRoom] of gameRooms.entries()) {
@@ -265,5 +282,7 @@ function setupGameWebSocket(server) {
         }
     }, 60000);
 }
+
+
 
 module.exports = { setupGameWebSocket };

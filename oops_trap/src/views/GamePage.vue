@@ -12,7 +12,7 @@
           <p>Game ID: {{ gameId }}</p>
           <p>User ID: {{ userId }}</p>
           <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-          <p>Role: {{ isHost ? "Host" : "Player" }}</p>
+          <p>Role: {{ isHost ? 'Host' : 'Player' }}</p>
           <p>
             Connection:
             <span :class="connectionStatusClass">{{ connectionStatus }}</span>
@@ -30,7 +30,7 @@
             "
             @click="returnToLobby"
           >
-            {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
+            {{ isGameActive ? 'Game in Progress...' : 'Return to Lobby' }}
           </button>
         </div>
       </div>
@@ -68,280 +68,297 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/user";
-import { storeToRefs } from "pinia";
-import { Modal } from "ant-design-vue";
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { storeToRefs } from 'pinia'
+import { Modal } from 'ant-design-vue'
 
-const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 const {
   userId: storeUserId,
   getGameSocket,
-  currentGameId,
-} = storeToRefs(userStore);
+  currentGameId
+} = storeToRefs(userStore)
 
 // реактивные данные
-const gameId = computed(() => route.params.id || currentGameId.value || 1);
-const userId = computed(() => storeUserId.value);
-const lobbyId = computed(() => route.query.lobbyId);
-const isHost = ref(false);
-const showSplash = ref(true);
+const gameId = computed(() => route.params.id || currentGameId.value || 1)
+const userId = computed(() => storeUserId.value)
+const lobbyId = computed(() => route.query.lobbyId)
+const isHost = ref(false)
+const showSplash = ref(true)
 
 // игровые данные
-const timeLeft = ref(0);
-const isConnected = ref(false);
-const gameEnded = ref(false);
-const connectionError = ref(null);
-const timerActive = ref(false);
-const messageInput = ref("");
-const chatMessages = ref([]);
+const timeLeft = ref(0)
+const isConnected = ref(false)
+const gameEnded = ref(false)
+const connectionError = ref(null)
+const timerActive = ref(false)
+const messageInput = ref('')
+const chatMessages = ref([])
 
 // Computed property для проверки активности игры
 const isGameActive = computed(() => {
-  return timerActive.value && timeLeft.value > 0 && !gameEnded.value;
-});
+  return timerActive.value && timeLeft.value > 0 && !gameEnded.value
+})
 
 // Connection status
 const connectionStatus = computed(() => {
-  if (connectionError.value) return "Disconnected";
-  return isConnected.value ? "Connected" : "Connecting...";
-});
+  if (connectionError.value) return 'Disconnected'
+  return isConnected.value ? 'Connected' : 'Connecting...'
+})
 
 const connectionStatusClass = computed(() => {
   return {
-    "status-connected": isConnected.value,
-    "status-disconnected": connectionError.value,
-  };
-});
+    'status-connected': isConnected.value,
+    'status-disconnected': connectionError.value
+  }
+})
 
 onMounted(async () => {
   setTimeout(() => {
-    showSplash.value = false;
-  }, 10000);
+    showSplash.value = false
+  }, 10000)
 
-  userStore.initializeUser();
-  await checkIfUserIsHost();
-  setupGameWebSocket();
-});
+  userStore.initializeUser()
+  await checkIfUserIsHost()
+  setupGameWebSocket()
+})
 
 onUnmounted(() => {
-  cleanupWebSocket();
-});
+  cleanupWebSocket()
+})
 
 // Проверяем, является ли пользователь хостом лобби
 const checkIfUserIsHost = async () => {
   if (!lobbyId.value) {
-    isHost.value = false;
-    return;
+    isHost.value = false
+    return
   }
 
   try {
     const response = await fetch(
-      `/api/lobby/lobbies/${lobbyId.value}/settings`
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      `/api/lobby/lobbies/${lobbyId.value}/settings`,
+      {
+        method: 'GET',
+        credentials: 'include'
+      }
+    )
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
-    const data = await response.json();
+    const data = await response.json()
     if (data.success && data.data) {
-      isHost.value = data.data.ownerId === userId.value;
+      isHost.value = data.data.ownerId === userId.value
       console.log(
-        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
+        `🎮 User is ${isHost.value ? 'HOST' : 'PLAYER'} of lobby ${
           lobbyId.value
         }`
-      );
+      )
     }
   } catch (error) {
-    console.error("❌ Error checking host status:", error);
-    isHost.value = false;
+    console.error('❌ Error checking host status:', error)
+    isHost.value = false
   }
-};
+}
 
 const returnToLobby = async () => {
   // Проверяем, активна ли игра
   if (isGameActive.value) {
     Modal.warning({
-      title: "Game in Progress",
+      title: 'Game in Progress',
       content:
-        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-      okText: "OK",
-    });
-    return;
+        'Cannot return to lobby while the game is active. Please wait for the game to finish.',
+      okText: 'OK'
+    })
+    return
   }
 
   if (!lobbyId.value) {
     Modal.error({
-      title: "Cannot Return to Lobby",
-      content: "Lobby information is not available",
-    });
-    return;
+      title: 'Cannot Return to Lobby',
+      content: 'Lobby information is not available'
+    })
+    return
   }
 
   try {
     if (isHost.value) {
-      await updateLobbyStatus("waiting");
-      console.log("🎮 Host returned to lobby, status set to waiting");
+      await updateLobbyStatus('waiting')
+      console.log('🎮 Host returned to lobby, status set to waiting')
     }
   } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
+    console.error('❌ Error updating lobby status:', error)
   }
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-};
+  router.push(`/lobby?id=${lobbyId.value}&mode=join`)
+}
 
-const updateLobbyStatus = async (newStatus) => {
-  const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerId: userId.value, newStatus }),
-  });
+const updateLobbyStatus = async newStatus => {
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        newStatus
+      }),
+      credentials: 'include'
+    })
 
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return await response.json();
-};
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('❌ Error updating lobby status:', error)
+    throw error
+  }
+}
 
 // Веб-сокеты - используем сохраненный сокет из хранилища
 const setupGameWebSocket = () => {
-  const socket = getGameSocket.value;
+  const socket = getGameSocket.value
 
   if (!socket) {
-    console.error("❌ No game socket found in store");
-    connectionError.value = "No game connection";
-    return;
+    console.error('❌ No game socket found in store')
+    connectionError.value = 'No game connection'
+    return
   }
 
-  isConnected.value = socket.readyState === WebSocket.OPEN;
+  isConnected.value = socket.readyState === WebSocket.OPEN
 
-  socket.onmessage = (event) => {
+  socket.onmessage = event => {
     try {
-      const message = JSON.parse(event.data);
-      handleGameMessage(message);
+      const message = JSON.parse(event.data)
+      handleGameMessage(message)
     } catch (error) {
-      console.error("❌ Error parsing WebSocket message:", error);
+      console.error('❌ Error parsing WebSocket message:', error)
     }
-  };
+  }
 
-  socket.onclose = (event) => {
-    console.log("🔌 Game WebSocket disconnected");
-    isConnected.value = false;
+  socket.onclose = event => {
+    console.log('🔌 Game WebSocket disconnected')
+    isConnected.value = false
 
     if (!event.wasClean) {
       connectionError.value = `Connection lost: ${
-        event.reason || "Unknown error"
-      }`;
+        event.reason || 'Unknown error'
+      }`
     }
-  };
+  }
 
-  socket.onerror = (error) => {
-    console.error("💥 Game WebSocket error:", error);
-    connectionError.value = "Connection error";
-  };
+  socket.onerror = error => {
+    console.error('💥 Game WebSocket error:', error)
+    connectionError.value = 'Connection error'
+  }
 
   // Если сокет уже открыт, отправляем init сообщение
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(
       JSON.stringify({
-        type: "init",
+        type: 'init',
         gameId: gameId.value,
         playerId: userId.value,
-        isHost: isHost.value,
+        isHost: isHost.value
       })
-    );
+    )
   }
-};
+}
 
 const cleanupWebSocket = () => {
   // Не закрываем сокет, так как он управляется хранилищем
   // Просто сбрасываем локальное состояние
-  isConnected.value = false;
-};
+  isConnected.value = false
+}
 
-const handleGameMessage = (message) => {
-  console.log("📨 Received game message:", message);
+const handleGameMessage = message => {
+  console.log('📨 Received game message:', message)
 
   switch (message.type) {
-    case "timer_started":
-      timerActive.value = true;
-      timeLeft.value = message.timeLeft;
-      addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
-      break;
+    case 'timer_started':
+      timerActive.value = true
+      timeLeft.value = message.timeLeft
+      addSystemMessage(`Game started! Time: ${message.totalTime} seconds`)
+      break
 
-    case "timer_update":
-      timerActive.value = message.active;
-      timeLeft.value = message.timeLeft;
+    case 'timer_update':
+      timerActive.value = message.active
+      timeLeft.value = message.timeLeft
       if (message.timeLeft <= 0 && isHost.value) {
-        updateLobbyStatus("finished");
-        gameEnded.value = true;
+        updateLobbyStatus('finished')
+        gameEnded.value = true
       }
-      break;
+      break
 
-    case "chat_message":
+    case 'chat_message':
       addChatMessage({
         id: Date.now() + Math.random(),
         playerId: message.playerId,
         text: message.text,
         timestamp: message.timestamp,
-        isHost: message.isHost,
-      });
-      break;
+        isHost: message.isHost
+      })
+      break
 
-    case "player_joined":
-      addSystemMessage(message.message);
-      break;
+    case 'player_joined':
+      addSystemMessage(message.message)
+      break
 
-    case "player_disconnected":
-      addSystemMessage(message.message);
-      break;
+    case 'player_disconnected':
+      addSystemMessage(message.message)
+      break
 
     default:
-      console.log("Unknown message type:", message.type);
+      console.log('Unknown message type:', message.type)
   }
-};
+}
 
-const addChatMessage = (message) => {
-  chatMessages.value.push(message);
-  scrollChatToBottom();
-};
+const addChatMessage = message => {
+  chatMessages.value.push(message)
+  scrollChatToBottom()
+}
 
-const addSystemMessage = (text) => {
+const addSystemMessage = text => {
   chatMessages.value.push({
     id: Date.now() + Math.random(),
-    playerId: "System",
+    playerId: 'System',
     text,
     timestamp: new Date().toISOString(),
     isHost: false,
-    isSystem: true,
-  });
-  scrollChatToBottom();
-};
+    isSystem: true
+  })
+  scrollChatToBottom()
+}
 
 const scrollChatToBottom = () => {
   nextTick(() => {
-    const chatContainer = document.getElementById("chat");
+    const chatContainer = document.getElementById('chat')
     if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      chatContainer.scrollTop = chatContainer.scrollHeight
     }
-  });
-};
+  })
+}
 
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-};
+const formatTime = timestamp => {
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
 
-const handleKeyPress = (event) => {
-  if (event.key === "Enter") {
-    sendMessage();
+const handleKeyPress = event => {
+  if (event.key === 'Enter') {
+    sendMessage()
   }
-};
+}
 
 const sendMessage = () => {
-  const text = messageInput.value.trim();
+  const text = messageInput.value.trim()
 
   if (
     text &&
@@ -350,22 +367,22 @@ const sendMessage = () => {
   ) {
     getGameSocket.value.send(
       JSON.stringify({
-        type: "chat_message",
+        type: 'chat_message',
         gameId: gameId.value,
         playerId: userId.value,
-        text,
+        text
       })
-    );
-    messageInput.value = "";
+    )
+    messageInput.value = ''
   }
-};
+}
 
 // Следим за изменениями сокета в хранилище
 watch(getGameSocket, (newSocket, oldSocket) => {
   if (newSocket !== oldSocket) {
-    setupGameWebSocket();
+    setupGameWebSocket()
   }
-});
+})
 </script>
 
 <style scoped>
@@ -488,7 +505,7 @@ button {
   color: white;
   padding: 15px;
   border-radius: 8px;
-  font-family: "Courier New", monospace;
+  font-family: 'Courier New', monospace;
   min-width: 200px;
   border: 1px solid #333;
 }
