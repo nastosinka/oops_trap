@@ -1,7 +1,9 @@
 <template>
-  <div v-if="showSplash" class="splash-screen">
+  <!-- загрузочный экран -->
+  <div v-if="showSplash" class="splash-screen"> 
     <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
   </div>
+  <!-- часть игры -->
   <div v-else class="game-container">
     <div class="game-container">
       <div class="hud">
@@ -43,96 +45,6 @@
     </div>
   </div>
 </template>
-
-<style scoped>
-.splash-screen img {
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  background-color: white;
-}
-
-.chat {
-  border: 1px solid #ccc;
-  padding: 10px;
-  height: 300px;
-  overflow-y: scroll;
-  margin: 10px 0;
-}
-
-.chat-message {
-  margin-bottom: 8px;
-  padding: 4px;
-}
-
-.timestamp {
-  font-size: 0.8em;
-  color: #666;
-  margin-right: 8px;
-}
-
-.player {
-  font-weight: bold;
-  margin-right: 4px;
-}
-
-.player.host {
-  color: #ff6b35;
-}
-
-.text {
-  word-break: break-word;
-}
-
-.input-group {
-  display: flex;
-  gap: 10px;
-}
-
-input,
-button {
-  padding: 8px;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Стили для disabled кнопки */
-.lobby-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #f0f0f0;
-  color: #999;
-}
-
-.lobby-btn:disabled:hover {
-  background-color: #f0f0f0;
-}
-
-.status-connected {
-  color: green;
-  font-weight: bold;
-}
-
-.status-disconnected {
-  color: red;
-  font-weight: bold;
-}
-</style>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
@@ -271,25 +183,7 @@ const setupGameWebSocket = () => {
     return;
   }
 
-  // Обновляем статус соединения
   isConnected.value = socket.readyState === WebSocket.OPEN;
-
-  // // Обработчики событий сокета
-  // socket.onopen = () => {
-  //   console.log('✅ Game WebSocket connected');
-  //   isConnected.value = true;
-  //   connectionError.value = null;
-
-  //   // Отправляем инициализационное сообщение
-  //   if (socket.readyState === WebSocket.OPEN) {
-  //     socket.send(JSON.stringify({
-  //       type: 'init',
-  //       gameId: gameId.value,
-  //       playerId: userId.value,
-  //       isHost: isHost.value
-  //     }));
-  //   }
-  // };
 
   socket.onmessage = (event) => {
     try {
@@ -437,6 +331,15 @@ watch(getGameSocket, (newSocket, oldSocket) => {
 </script>
 
 <style scoped>
+.splash-screen img {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+
 .container {
   max-width: 600px;
   margin: 0 auto;
@@ -450,6 +353,75 @@ watch(getGameSocket, (newSocket, oldSocket) => {
   overflow-y: scroll;
   margin: 10px 0;
 }
+
+.chat-message {
+  margin-bottom: 8px;
+  padding: 4px;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #666;
+  margin-right: 8px;
+}
+
+.player {
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.player.host {
+  color: #ff6b35;
+}
+
+.text {
+  word-break: break-word;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input,
+button {
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Стили для disabled кнопки */
+.lobby-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+  color: #999;
+}
+
+.lobby-btn:disabled:hover {
+  background-color: #f0f0f0;
+}
+
+.status-connected {
+  color: green;
+  font-weight: bold;
+}
+
+.status-disconnected {
+  color: red;
+  font-weight: bold;
+}
+</style>
+
+
+<style scoped>
 
 .input-group {
   display: flex;
