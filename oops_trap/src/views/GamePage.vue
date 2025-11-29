@@ -1,6 +1,6 @@
 <template>
   <!-- загрузочный экран -->
-  <div v-if="showSplash" class="splash-screen"> 
+  <div v-if="showSplash" class="splash-screen">
     <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
   </div>
   <!-- часть игры -->
@@ -19,15 +19,28 @@
           </p>
         </div>
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" @click="returnToLobby" :disabled="isGameActive"
-            :title="isGameActive ? 'Cannot return to lobby during active game' : 'Return to lobby'">
-            {{ isGameActive ? 'Game in Progress...' : 'Return to Lobby' }}
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
+            {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
       </div>
       <div class="container">
         <div id="chat" class="chat">
-          <div v-for="message in chatMessages" :key="message.id" class="chat-message">
+          <div
+            v-for="message in chatMessages"
+            :key="message.id"
+            class="chat-message"
+          >
             <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
             <span class="player" :class="{ host: message.isHost }">
               {{ message.playerId }}:
@@ -37,9 +50,17 @@
         </div>
 
         <div class="input-group">
-          <input type="text" id="messageInput" placeholder="Сообщение" v-model="messageInput" @keypress="handleKeyPress"
-            :disabled="!isConnected">
-          <button @click="sendMessage" :disabled="!isConnected">Отправить</button>
+          <input
+            id="messageInput"
+            v-model="messageInput"
+            type="text"
+            placeholder="Сообщение"
+            :disabled="!isConnected"
+            @keypress="handleKeyPress"
+          />
+          <button :disabled="!isConnected" @click="sendMessage">
+            Отправить
+          </button>
         </div>
       </div>
     </div>
@@ -75,7 +96,7 @@ const isConnected = ref(false);
 const gameEnded = ref(false);
 const connectionError = ref(null);
 const timerActive = ref(false);
-const messageInput = ref('');
+const messageInput = ref("");
 const chatMessages = ref([]);
 
 // Computed property для проверки активности игры
@@ -118,13 +139,19 @@ const checkIfUserIsHost = async () => {
   }
 
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`);
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/settings`
+    );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
     if (data.success && data.data) {
       isHost.value = data.data.ownerId === userId.value;
-      console.log(`🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${lobbyId.value}`);
+      console.log(
+        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
+          lobbyId.value
+        }`
+      );
     }
   } catch (error) {
     console.error("❌ Error checking host status:", error);
@@ -137,7 +164,8 @@ const returnToLobby = async () => {
   if (isGameActive.value) {
     Modal.warning({
       title: "Game in Progress",
-      content: "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+      content:
+        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
       okText: "OK",
     });
     return;
@@ -178,8 +206,8 @@ const setupGameWebSocket = () => {
   const socket = getGameSocket.value;
 
   if (!socket) {
-    console.error('❌ No game socket found in store');
-    connectionError.value = 'No game connection';
+    console.error("❌ No game socket found in store");
+    connectionError.value = "No game connection";
     return;
   }
 
@@ -190,32 +218,36 @@ const setupGameWebSocket = () => {
       const message = JSON.parse(event.data);
       handleGameMessage(message);
     } catch (error) {
-      console.error('❌ Error parsing WebSocket message:', error);
+      console.error("❌ Error parsing WebSocket message:", error);
     }
   };
 
   socket.onclose = (event) => {
-    console.log('🔌 Game WebSocket disconnected');
+    console.log("🔌 Game WebSocket disconnected");
     isConnected.value = false;
 
     if (!event.wasClean) {
-      connectionError.value = `Connection lost: ${event.reason || 'Unknown error'}`;
+      connectionError.value = `Connection lost: ${
+        event.reason || "Unknown error"
+      }`;
     }
   };
 
   socket.onerror = (error) => {
-    console.error('💥 Game WebSocket error:', error);
-    connectionError.value = 'Connection error';
+    console.error("💥 Game WebSocket error:", error);
+    connectionError.value = "Connection error";
   };
 
   // Если сокет уже открыт, отправляем init сообщение
   if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      type: 'init',
-      gameId: gameId.value,
-      playerId: userId.value,
-      isHost: isHost.value
-    }));
+    socket.send(
+      JSON.stringify({
+        type: "init",
+        gameId: gameId.value,
+        playerId: userId.value,
+        isHost: isHost.value,
+      })
+    );
   }
 };
 
@@ -226,16 +258,16 @@ const cleanupWebSocket = () => {
 };
 
 const handleGameMessage = (message) => {
-  console.log('📨 Received game message:', message);
+  console.log("📨 Received game message:", message);
 
   switch (message.type) {
-    case 'timer_started':
+    case "timer_started":
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
       addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
       break;
 
-    case 'timer_update':
+    case "timer_update":
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
       if (message.timeLeft <= 0 && isHost.value) {
@@ -244,26 +276,26 @@ const handleGameMessage = (message) => {
       }
       break;
 
-    case 'chat_message':
+    case "chat_message":
       addChatMessage({
         id: Date.now() + Math.random(),
         playerId: message.playerId,
         text: message.text,
         timestamp: message.timestamp,
-        isHost: message.isHost
+        isHost: message.isHost,
       });
       break;
 
-    case 'player_joined':
+    case "player_joined":
       addSystemMessage(message.message);
       break;
 
-    case 'player_disconnected':
+    case "player_disconnected":
       addSystemMessage(message.message);
       break;
 
     default:
-      console.log('Unknown message type:', message.type);
+      console.log("Unknown message type:", message.type);
   }
 };
 
@@ -275,18 +307,18 @@ const addChatMessage = (message) => {
 const addSystemMessage = (text) => {
   chatMessages.value.push({
     id: Date.now() + Math.random(),
-    playerId: 'System',
-    text: text,
+    playerId: "System",
+    text,
     timestamp: new Date().toISOString(),
     isHost: false,
-    isSystem: true
+    isSystem: true,
   });
   scrollChatToBottom();
 };
 
 const scrollChatToBottom = () => {
   nextTick(() => {
-    const chatContainer = document.getElementById('chat');
+    const chatContainer = document.getElementById("chat");
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -295,15 +327,15 @@ const scrollChatToBottom = () => {
 
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+  return date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 };
 
 const handleKeyPress = (event) => {
-  if (event.key === 'Enter') {
+  if (event.key === "Enter") {
     sendMessage();
   }
 };
@@ -311,14 +343,20 @@ const handleKeyPress = (event) => {
 const sendMessage = () => {
   const text = messageInput.value.trim();
 
-  if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
-    getGameSocket.value.send(JSON.stringify({
-      type: 'chat_message',
-      gameId: gameId.value,
-      playerId: userId.value,
-      text: text
-    }));
-    messageInput.value = '';
+  if (
+    text &&
+    getGameSocket.value &&
+    getGameSocket.value.readyState === WebSocket.OPEN
+  ) {
+    getGameSocket.value.send(
+      JSON.stringify({
+        type: "chat_message",
+        gameId: gameId.value,
+        playerId: userId.value,
+        text,
+      })
+    );
+    messageInput.value = "";
   }
 };
 
@@ -338,7 +376,6 @@ watch(getGameSocket, (newSocket, oldSocket) => {
   top: 0;
   left: 0;
 }
-
 
 .container {
   max-width: 600px;
@@ -420,9 +457,7 @@ button:disabled {
 }
 </style>
 
-
 <style scoped>
-
 .input-group {
   display: flex;
   gap: 10px;
