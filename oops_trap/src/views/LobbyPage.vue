@@ -141,10 +141,12 @@ export default {
 
       try {
         const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/settings`, {
-          method: "GET",
-          credentials: "include",
-        });
+          `/api/lobby/lobbies/${this.lobbyId}/settings`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -577,17 +579,17 @@ export default {
 
       try {
         console.log("👋 Player - leaving lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/leave`,
-            {
-              method: "POST",
-              credentials: "include",
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/leave`,
+          {
+            method: "POST",
+            credentials: "include",
           }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
         this.stopPolling();
         this.$router.push("/createLobby");

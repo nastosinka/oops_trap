@@ -123,10 +123,13 @@ const checkIfUserIsHost = async () => {
   }
 
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`, {
-          method: "GET",
-          credentials: "include",
-    });
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/settings`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
