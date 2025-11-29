@@ -226,9 +226,9 @@ export default {
       }
     },
 
-    checkLobbyStatus() {
+    async checkLobbyStatus() {
       if (this.lobbyStatus === "in-progress") {
-        this.redirectToGamePage()
+        await this.redirectToGamePage();
       }
     },
 
@@ -397,48 +397,11 @@ export default {
       }
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // БЛОК ВЕБ СОКЕТОВ
 
-    redirectToGamePage() {
-      this.stopPolling();
+    async handleStart() { // если хост - создаёт подключение и меняет статус, первый уходит в игру
+      console.log("Starting game flow... Current players count:", this.players.length);
 
-      console.log("🔄 Redirecting to game:", this.lobbyId);
-
-      this.$router.push({
-        path: `/game/${this.lobbyId}`,
-        query: {
-          lobbyId: this.lobbyId,
-          isHost: this.isHost,
-        },
-      });
-    },
-
-    async handleStart() {
-      console.log("🎮 Starting game flow...");
-      console.log("📊 Current players count:", this.players.length);
-
-      // Проверки для хоста
       if (this.isHost) {
         if (this.players.length < 2) {
           Modal.warning({
@@ -446,7 +409,7 @@ export default {
             content: "Need at least 2 players to start the game",
             okText: "OK",
           });
-          return false;
+          return;
         }
 
         if (!this.userStore.userId) {
@@ -455,26 +418,21 @@ export default {
             content: "User not authenticated. Please log in again.",
             okText: "OK",
           });
-          return false;
+          return;
         }
       }
 
       try {
-        console.log("🚀 Starting game flow for:", this.isHost ? 'HOST' : 'PLAYER');
-
-        // 1. ВСЕ создают WebSocket соединение
-        await this.createGameSocketConnection();
-
-        // 2. Если хост - меняем статус лобби
+        // создание сокета
+        if (this.isHost) {
+          await this.createGameSocketConnection();
+        }
+        // смена статуса
         if (this.isHost) {
           await this.updateLobbyStatusToInProgress();
         }
-
-        // 3. ВСЕ переходят в игру
-        this.redirectToGamePage();
-
-        return true;
-
+        // уходит в игру
+        await this.redirectToGamePage();
       } catch (error) {
         console.error("❌ Game flow error:", error);
         Modal.error({
@@ -482,14 +440,40 @@ export default {
           content: "Failed to start game: " + error.message,
           okText: "OK",
         });
-        return false;
       }
     },
 
-    // Отдельные методы для каждой операции
-    async updateLobbyStatusToInProgress() {
-      console.log("🔄 Updating lobby status to in-progress...");
+    async redirectToGamePage() { // эта штука запускается для всех, когда статус "в процессе"
+      this.stopPolling();
 
+      console.log("🔄 Redirecting to game:", this.lobbyId);
+
+      try {
+        // если не хост - создаем WebSocket соединение перед переходом (у хоста уже есть сокет)
+        if (!this.isHost) {
+          console.log("👤 Player - creating WebSocket connection before redirect");
+          await this.createGameSocketConnection();
+        }
+
+        // переходим в игру
+        this.$router.push({
+          path: `/game/${this.lobbyId}`,
+          query: {
+            lobbyId: this.lobbyId,
+            isHost: this.isHost,
+          },
+        });
+      } catch (error) {
+        console.error("❌ Failed to redirect to game:", error);
+        Modal.error({
+          title: "Connection Error",
+          content: "Failed to connect to game server",
+          okText: "OK",
+        });
+      }
+    },
+
+    async updateLobbyStatusToInProgress() { // обновление статуса лобби
       const response = await fetch(
         `/api/lobby/lobbies/${this.lobbyId}/status`,
         {
@@ -519,12 +503,11 @@ export default {
       });
     },
 
-    async createGameSocketConnection() { // создаём веб сокет и сохраняем в хранилище (2)
+    async createGameSocketConnection() { // создаём веб сокет и сохраняем в хранилище 
       console.log(`Пытаемся создать подключение с ${this.lobbyId}`);
       return new Promise((resolve, reject) => {
         try {
           // Создаем локальный WebSocket
-
           const gameSocket = createGameSocket(this.lobbyId);
 
           // Сохраняем сокет в store
@@ -572,33 +555,6 @@ export default {
   }
 };
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <style scoped>
 .player-host {

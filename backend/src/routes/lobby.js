@@ -4,7 +4,6 @@
 
 const express = require('express');
 const prisma = require('../db/prismaClient');
-const { createGameSession} = require('../websockets/game');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -261,6 +260,191 @@ router.get('/lobbies/:id/settings', async (req, res) => {
 // ========================================
 // POST /api/lobby/lobbies/:id/status
 // ========================================
+// router.post('/lobbies/:id/status', async (req, res) => {
+//   try {
+//     const lobbyId = parseInt(req.params.id);
+//     const { ownerId, newStatus } = req.body;
+
+//     if (!ownerId) {
+//       return res.status(400).json({ error: 'ownerId is required' });
+//     }
+
+//     if (!newStatus) {
+//       return res.status(400).json({ error: 'newStatus is required' });
+//     }
+
+//     if (isNaN(lobbyId) || lobbyId <= 0) {
+//       return res.status(400).json({ error: 'Invalid lobby ID' });
+//     }
+
+//     const lobby = lobbies.get(lobbyId);
+//     if (!lobby) {
+//       return res.status(404).json({ error: 'Lobby not found' });
+//     }
+//     if (lobby.ownerId !== ownerId) {
+//       return res.status(403).json({ 
+//         error: 'Access denied. Only the lobby owner can change lobby status' 
+//       });
+//     }
+
+//     const validStatuses = ['waiting', 'in-progress', 'finished'];
+//     if (!validStatuses.includes(newStatus)) {
+//       return res.status(400).json({ 
+//         error: `Invalid status: ${newStatus}. Valid statuses: ${validStatuses.join(', ')}` 
+//       });
+//     }
+
+//     const previousStatus = lobby.status;
+
+//     if (newStatus === 'in-progress' && previousStatus === "waiting") {
+//       const errors = [];
+
+//       if (lobby.players.length < 2) {
+//         errors.push('Cannot start game: at least 2 players required');
+//       }
+
+//       if (!lobby.trapper) {
+//         errors.push('Trapper is not assigned');
+//       }
+//       if (!lobby.map) {
+//         errors.push('Map is not selected');
+//       }
+//       if (!lobby.time) {
+//         errors.push('Time setting is not selected');
+//       }
+//       if (lobby.players.length > 5) {
+//         errors.push('Too many players (max 5 allowed)');
+//       }
+
+//       if (errors.length > 0) {
+//         return res.status(400).json({ 
+//           error: 'Cannot change status to in-progress', 
+//           details: errors 
+//         });
+//       }
+//       const game = {
+//         id: lobby.id,
+//         lobbyId: lobby.id,
+//         map: lobby.map,
+//         trapper: lobby.trapper,
+//         time: lobby.time,
+//         players: lobby.players,
+//         status: 'in-progress',
+//         stats: []
+//       };
+
+//       games.set(game.id, game);
+      
+//       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
+//       lobby.status = newStatus;
+//       console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
+      
+
+//       lobby.currentGameId = game.id;
+      
+// try {
+//   const updatePromises = game.stats.map(async (stat) => {
+//     const statsData = {
+//       id_user: stat.userId,
+//       id_map: stat.map,
+//       time: stat.time,
+//       role: stat.role
+//     };
+
+//     console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
+//     const response = await fetch('http://localhost:8080/api/stats', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(statsData)
+//     });
+
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
+//     const result = await response.json();
+//     console.log(`Статистика обновлена для пользователя ${stat.userId}:`, result);
+//     return result;
+//   });
+
+//   const results = await Promise.all(updatePromises);
+//   console.log('Все статистики обработаны:', results.filter(result => result !== null));
+
+//   lobby.status = 'finished';
+//   console.log('Статус лобби изменен на "finished"');
+
+// } catch (error) {
+//   console.error('Ошибка при обновлении статистик:', error);
+// }
+
+
+//       lobby.status = 'finished';
+//     }
+
+//     if (newStatus === 'finished') {
+//       if (lobby.status !== 'in-progress') {
+//         return res.status(400).json({ 
+//           error: 'Cannot finish lobby that is not in progress' 
+//         });
+//       }
+      
+//       if (lobby.currentGameId) {
+//         const game = games.get(lobby.currentGameId);
+//         if (game) {
+//           game.status = 'finished';
+//           console.log(`Game ${game.id} finished with lobby ${lobby.id}`);
+//         }
+//       }
+      
+//       console.log(`Game in lobby ${lobbyId} completed`);
+//       lobby.status = newStatus;
+
+//     }
+
+//     if (newStatus === 'waiting') {
+//       if (lobby.status !== 'finished') {
+//         return res.status(400).json({ 
+//           error: 'Cannot set lobby to waiting that is not finished' 
+//         });
+//       }
+//       games.delete(lobby.currentGameId);
+//       lobby.currentGameId = null;
+//       console.log(`Lobby ${lobbyId} reset for new game`);
+//       lobby.status = newStatus;
+//     }
+
+//     res.status(200).json({ 
+//       message: 'Lobby status updated successfully',
+//       lobby: {
+//         id: lobby.id,
+//         ownerId: lobby.ownerId,
+//         previousStatus: previousStatus,
+//         newStatus: lobby.status,
+//         map: lobby.map,
+//         time: lobby.time,
+//         trapper: lobby.trapper,
+//         players: lobby.players,
+//         playerCount: lobby.players.length,
+//         currentGameId: lobby.currentGameId || null
+//       },
+//       ...(lobby.currentGameId && {
+//         game: {
+//           id: lobby.currentGameId,
+//           stats: games.get(lobby.currentGameId)?.stats || []
+//         }
+//       })
+//     });
+//   } catch (error) {
+//     console.error('Error updating lobby status:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
+
+// ========================================
+// POST /api/lobby/lobbies/:id/status
+// ========================================
 router.post('/lobbies/:id/status', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -282,6 +466,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
     if (!lobby) {
       return res.status(404).json({ error: 'Lobby not found' });
     }
+    
     if (lobby.ownerId !== ownerId) {
       return res.status(403).json({ 
         error: 'Access denied. Only the lobby owner can change lobby status' 
@@ -323,6 +508,7 @@ router.post('/lobbies/:id/status', async (req, res) => {
           details: errors 
         });
       }
+
       const game = {
         id: lobby.id,
         lobbyId: lobby.id,
@@ -337,52 +523,13 @@ router.post('/lobbies/:id/status', async (req, res) => {
       games.set(game.id, game);
       
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
-      lobby.status = newStatus;
+      lobby.status = newStatus; // ТОЛЬКО меняем на in-progress
       console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
       
-
       lobby.currentGameId = game.id;
-      game.stats = await createGameSession(game);
-      console.log('Game ended with stats:', game.stats);
       
-try {
-  const updatePromises = game.stats.map(async (stat) => {
-    const statsData = {
-      id_user: stat.userId,
-      id_map: stat.map,
-      time: stat.time,
-      role: stat.role
-    };
-
-    console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
-    const response = await fetch('http://localhost:8080/api/stats', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(statsData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    console.log(`Статистика обновлена для пользователя ${stat.userId}:`, result);
-    return result;
-  });
-
-  const results = await Promise.all(updatePromises);
-  console.log('Все статистики обработаны:', results.filter(result => result !== null));
-
-  lobby.status = 'finished';
-  console.log('Статус лобби изменен на "finished"');
-
-} catch (error) {
-  console.error('Ошибка при обновлении статистик:', error);
-}
-
-
-      lobby.status = 'finished';
+      // УБИРАЕМ весь блок с отправкой статистик - это должно происходить когда игра ЗАКОНЧИТСЯ
+      // НЕ меняем статус на finished здесь!
     }
 
     if (newStatus === 'finished') {
@@ -397,12 +544,44 @@ try {
         if (game) {
           game.status = 'finished';
           console.log(`Game ${game.id} finished with lobby ${lobby.id}`);
+          
+          // ЗДЕСЬ отправляем статистики когда игра закончилась
+          try {
+            const updatePromises = game.stats.map(async (stat) => {
+              const statsData = {
+                id_user: stat.userId,
+                id_map: stat.map,
+                time: stat.time,
+                role: stat.role
+              };
+
+              console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
+              const response = await fetch('http://localhost:8080/api/stats', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(statsData)
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const result = await response.json();
+              console.log(`Статистика обновлена для пользователя ${stat.userId}:`, result);
+              return result;
+            });
+
+            const results = await Promise.all(updatePromises);
+            console.log('Все статистики обработаны:', results.filter(result => result !== null));
+          } catch (error) {
+            console.error('Ошибка при обновлении статистик:', error);
+          }
         }
       }
       
       console.log(`Game in lobby ${lobbyId} completed`);
       lobby.status = newStatus;
-
     }
 
     if (newStatus === 'waiting') {
@@ -430,20 +609,13 @@ try {
         players: lobby.players,
         playerCount: lobby.players.length,
         currentGameId: lobby.currentGameId || null
-      },
-      ...(lobby.currentGameId && {
-        game: {
-          id: lobby.currentGameId,
-          stats: games.get(lobby.currentGameId)?.stats || []
-        }
-      })
+      }
     });
   } catch (error) {
     console.error('Error updating lobby status:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 // ========================================
 // POST /api/lobby/lobbies/:id/join
