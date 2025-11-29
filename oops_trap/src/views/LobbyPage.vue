@@ -11,8 +11,16 @@
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
-            <div class="player-color" :style="{ backgroundColor: player.color }"></div>
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="player"
+            :class="{ 'player-host': player.isHost }"
+          >
+            <div
+              class="player-color"
+              :style="{ backgroundColor: player.color }"
+            ></div>
             <span class="player-name">{{ player.name }}</span>
             <span v-if="player.id === userId" class="player-you">(You) </span>
             <span v-if="player.isHost" class="player-host-badge">👑</span>
@@ -20,15 +28,32 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton v-if="isHost" label="Settings" size="large" @click="showSettings = true" />
-        <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
-          @click="handleStart" />
+        <BaseButton
+          v-if="isHost"
+          label="Settings"
+          size="large"
+          @click="showSettings = true"
+        />
+        <BaseButton
+          v-if="isHost && lobbyStatus === 'waiting'"
+          label="Start"
+          size="large"
+          :disabled="players.length < 2"
+          @click="handleStart"
+        />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
     </div>
   </div>
-  <UniversalModal v-if="showSettings" title="Game Settings" type="settings" :players="players"
-    :initial-settings="currentSettings" @close="showSettings = false" @settings-apply="handleSettingsApply" />
+  <UniversalModal
+    v-if="showSettings"
+    title="Game Settings"
+    type="settings"
+    :players="players"
+    :initial-settings="currentSettings"
+    @close="showSettings = false"
+    @settings-apply="handleSettingsApply"
+  />
 </template>
 
 <script>
@@ -37,7 +62,7 @@ import { Modal } from "ant-design-vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import { createGameSocket } from '@/utils/websocket';
+import { createGameSocket } from "@/utils/websocket";
 
 export default {
   name: "LobbyPage",
@@ -130,7 +155,8 @@ export default {
           this.lobbyOwnerId = data.data.ownerId;
           this.isHost = data.data.ownerId === this.userId;
           console.log(
-            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${this.lobbyId
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
+              this.lobbyId
             }`
           );
           console.log(
@@ -296,7 +322,7 @@ export default {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(apiSettings),
-            credentials: "include"
+            credentials: "include",
           }
         );
 
@@ -399,8 +425,12 @@ export default {
 
     // БЛОК ВЕБ СОКЕТОВ
 
-    async handleStart() { // если хост - создаёт подключение и меняет статус, первый уходит в игру
-      console.log("Starting game flow... Current players count:", this.players.length);
+    async handleStart() {
+      // если хост - создаёт подключение и меняет статус, первый уходит в игру
+      console.log(
+        "Starting game flow... Current players count:",
+        this.players.length
+      );
 
       if (this.isHost) {
         if (this.players.length < 2) {
@@ -443,7 +473,8 @@ export default {
       }
     },
 
-    async redirectToGamePage() { // эта штука запускается для всех, когда статус "в процессе"
+    async redirectToGamePage() {
+      // эта штука запускается для всех, когда статус "в процессе"
       this.stopPolling();
 
       console.log("🔄 Redirecting to game:", this.lobbyId);
@@ -451,7 +482,9 @@ export default {
       try {
         // если не хост - создаем WebSocket соединение перед переходом (у хоста уже есть сокет)
         if (!this.isHost) {
-          console.log("👤 Player - creating WebSocket connection before redirect");
+          console.log(
+            "👤 Player - creating WebSocket connection before redirect"
+          );
           await this.createGameSocketConnection();
         }
 
@@ -473,7 +506,8 @@ export default {
       }
     },
 
-    async updateLobbyStatusToInProgress() { // обновление статуса лобби
+    async updateLobbyStatusToInProgress() {
+      // обновление статуса лобби
       const response = await fetch(
         `/api/lobby/lobbies/${this.lobbyId}/status`,
         {
@@ -503,7 +537,8 @@ export default {
       });
     },
 
-    async createGameSocketConnection() { // создаём веб сокет и сохраняем в хранилище 
+    async createGameSocketConnection() {
+      // создаём веб сокет и сохраняем в хранилище
       console.log(`Пытаемся создать подключение с ${this.lobbyId}`);
       return new Promise((resolve, reject) => {
         try {
@@ -552,7 +587,7 @@ export default {
         }
       });
     },
-  }
+  },
 };
 </script>
 
