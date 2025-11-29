@@ -1,6 +1,5 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
-const { createGameSession} = require('../websockets/game');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -377,6 +376,7 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
     if (!lobby) {
       return res.status(404).json({ error: 'Lobby not found' });
     }
+    
     if (lobby.ownerId !== ownerId) {
       return res.status(403).json({ 
         error: 'Access denied. Only the lobby owner can change lobby status' 
@@ -418,6 +418,7 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
           details: errors 
         });
       }
+
       const game = {
         id: lobby.id,
         lobbyId: lobby.id,
@@ -432,40 +433,10 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
       games.set(game.id, game);
       
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
-      lobby.status = newStatus;
+      lobby.status = newStatus; // ТОЛЬКО меняем на in-progress
       console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
       
-
       lobby.currentGameId = game.id;
-      game.stats = await createGameSession(game);
-      console.log('Game ended with stats:', game.stats);
-      
-try {
-  const results = game.stats.map(async (stat) => {
-    const statsData = {
-      id_user: stat.userId,
-      id_map: stat.map,
-      time: stat.time,
-      role: stat.role
-    };
-
-    console.log(`Отправляем статистику для пользователя ${stat.userId}:`, statsData);
-    const result = saveStatistic(statsData);
-    console.log(`Статистика обновлена для пользователя ${stat.userId}`);
-    return result;
-  });
-
-  console.log('Все статистики обработаны');
-
-  lobby.status = 'finished';
-  console.log('Статус лобби изменен на "finished"');
-
-} catch (error) {
-  console.error('Ошибка при обновлении статистик:', error);
-}
-
-
-      lobby.status = 'finished';
     }
 
     if (newStatus === 'finished') {
@@ -485,7 +456,6 @@ try {
       
       console.log(`Game in lobby ${lobbyId} completed`);
       lobby.status = newStatus;
-
     }
 
     if (newStatus === 'waiting') {
@@ -513,20 +483,13 @@ try {
         players: lobby.players,
         playerCount: lobby.players.length,
         currentGameId: lobby.currentGameId || null
-      },
-      ...(lobby.currentGameId && {
-        game: {
-          id: lobby.currentGameId,
-          stats: games.get(lobby.currentGameId)?.stats || []
-        }
-      })
+      }
     });
   } catch (error) {
     console.error('Error updating lobby status:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 // ========================================
 // POST /api/lobby/lobbies/:id/join
