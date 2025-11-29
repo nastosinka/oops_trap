@@ -7,7 +7,7 @@ const prisma = require('../db/prismaClient');
 const router = express.Router();
 
 // ========================================
-// GET /api/auth/users - Получить всех пользователей
+// GET /api/auth/users - Получить всех пользователей - для отладки
 // ========================================
 router.get('/users', async (req, res) => {
   try {
@@ -78,17 +78,33 @@ router.post('/register', async (req, res) => {
       {
         id: newUser.id,
         username: newUser.name,
+        role: newUser.role || 'user',
       },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.status(201).json({
-      message: 'Пользователь успешно зарегистрирован',
-      token,
+    // res.status(201).json({
+    //   message: 'Пользователь успешно зарегистрирован',
+    //   //token,
+    //   user: {
+    //     id: newUser.id,
+    //     username: newUser.name,
+    //   },
+    // });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      //secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.json({
       user: {
         id: newUser.id,
         username: newUser.name,
+        role: newUser.role || 'user',
       },
     });
 
@@ -110,7 +126,7 @@ router.post('/register', async (req, res) => {
 });
 
 // ========================================
-// POST /api/auth/login
+// POST /api/auth/login 
 // ========================================
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -152,14 +168,30 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({
-      token,
+    // res.status(200).json({
+    //   token,
+    //   user: {
+    //     id: user.id,
+    //     username: user.name,
+    //     role: user.role || 'user',
+    //   },
+    // });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      //secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    res.json({
       user: {
         id: user.id,
         username: user.name,
         role: user.role || 'user',
-      },
+      }
     });
+
   } catch (err) {
     console.error('Ошибка при авторизации:', err);
     res.status(500).json({ 

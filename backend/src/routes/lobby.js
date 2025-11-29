@@ -5,6 +5,7 @@
 const express = require('express');
 const prisma = require('../db/prismaClient');
 const { createGameSession} = require('../websockets/game');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const lobbies = new Map();
@@ -13,9 +14,14 @@ let nextLobbyId = 1;
 const games = new Map();
 module.exports = { lobbies, games };
 
-router.post('/newlobby', async (req, res) => {
+
+// ========================================
+// POST /api/lobby/newlobby
+// ========================================
+router.post('/newlobby', requireAuth, async (req, res) => {
   try {
-    const { ownerId } = req.body;
+    //const { ownerId } = req.body;
+    const ownerId = req.user.id;
 
     if (!ownerId) {
       return res.status(400).json({ error: 'ownerId is required' });
@@ -56,6 +62,10 @@ router.post('/newlobby', async (req, res) => {
   }
 });
 
+
+// ========================================
+// POST /api/lobby/all-lobbies - для отладки
+// ========================================
 router.get('/all-lobbies', (req, res) => {
   const lobbyList = Array.from(lobbies.values()).map(lobby => ({
     id: lobby.id,
@@ -67,6 +77,10 @@ router.get('/all-lobbies', (req, res) => {
   res.json({ lobbies: lobbyList, total: lobbies.size });
 });
 
+
+// ========================================
+// POST /api/lobby/lobbies/:id/delete - для отладки
+// ========================================
 router.post('/lobbies/:id/delete', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -106,6 +120,10 @@ router.post('/lobbies/:id/delete', async (req, res) => {
   }
 });
 
+
+// ========================================
+// POST /api/lobby/lobbies/:id/settings
+// ========================================
 router.post('/lobbies/:id/settings', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -198,7 +216,9 @@ router.post('/lobbies/:id/settings', async (req, res) => {
   }
 });
 
-
+// ========================================
+// GET /api/lobby/lobbies/:id/settings
+// ========================================
 router.get('/lobbies/:id/settings', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -238,7 +258,9 @@ router.get('/lobbies/:id/settings', async (req, res) => {
 });
 
 
-
+// ========================================
+// POST /api/lobby/lobbies/:id/status
+// ========================================
 router.post('/lobbies/:id/status', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -422,6 +444,10 @@ try {
   }
 });
 
+
+// ========================================
+// POST /api/lobby/lobbies/:id/join
+// ========================================
 router.post('/lobbies/:id/join', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -483,6 +509,10 @@ router.post('/lobbies/:id/join', async (req, res) => {
   }
 });
 
+
+// ========================================
+// POST /api/lobby/lobbies/:id/leave
+// ========================================
 router.post('/lobbies/:id/leave', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -555,8 +585,9 @@ router.post('/lobbies/:id/leave', async (req, res) => {
   }
 });
 
-// =====================================
+// ========================================
 // GET /api/lobby/lobbies/:id/users - получить список всех игроков из лобби
+// ========================================
 router.get('/lobbies/:id/users', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
@@ -582,7 +613,8 @@ router.get('/lobbies/:id/users', async (req, res) => {
 });
 
 // =====================================
-// GET /api/lobby/games - получить список всех активных игр (созданных из лобби)
+// GET /api/lobby/games - получить список всех активных игр (созданных из лобби) - для отладки
+// =====================================
 router.get('/games', (req, res) => {
   try {
     if (games.size === 0) {
@@ -610,6 +642,10 @@ router.get('/games', (req, res) => {
   }
 });
 
+
+// =====================================
+// GET /lobbies/:id/status
+// =====================================
 router.get('/lobbies/:id/status', async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);

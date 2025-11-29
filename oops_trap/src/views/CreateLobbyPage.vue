@@ -96,7 +96,8 @@ export default {
 
         const response = await apiFetch("/api/lobby/newlobby", {
           method: "POST",
-          body: JSON.stringify({ ownerId: this.userId }),
+          credentials: "include",
+          //body: JSON.stringify({ ownerId: this.userId }),
         });
 
         const responseText = await response.text();

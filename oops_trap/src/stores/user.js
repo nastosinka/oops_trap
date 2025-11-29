@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref(null);
-  const token = ref(null);
+  //const token = ref(null);
   const sessionId = ref(null);
   const gameSocket = ref(null); // Добавляем хранение игрового сокета
   const currentGameId = ref(null); // Текущая игра
@@ -11,40 +11,55 @@ export const useUserStore = defineStore("user", () => {
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");
-  const isAuthenticated = computed(() => !!token.value);
+  const isAuthenticated = computed(() => !!user.value);
   const isInGame = computed(
     () => !!gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN
   );
   const getGameSocket = computed(() => gameSocket.value);
+
+  // const initializeUser = () => {
+  //   if (!sessionId.value) {
+  //     sessionId.value =
+  //       "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+  //   }
+
+  //   const userData = sessionStorage.getItem(`user_${sessionId.value}`);
+  //   const tokenData = sessionStorage.getItem(`token_${sessionId.value}`);
+
+  //   if (userData) user.value = JSON.parse(userData);
+  //   if (tokenData) token.value = tokenData;
+  // };
 
   const initializeUser = () => {
     if (!sessionId.value) {
       sessionId.value =
         "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
     }
-
-    const userData = sessionStorage.getItem(`user_${sessionId.value}`);
-    const tokenData = sessionStorage.getItem(`token_${sessionId.value}`);
-
-    if (userData) user.value = JSON.parse(userData);
-    if (tokenData) token.value = tokenData;
+    const stored = sessionStorage.getItem(`user_${sessionId.value}`);
+    if (stored) user.value = JSON.parse(stored);
   };
 
-  const setUser = (userData) => {
+  // const setUser = (userData) => {
+  //   if (!sessionId.value) initializeUser();
+  //   user.value = userData;
+  //   sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
+  // };
+
+  // const setToken = (tokenData) => {
+  //   if (!sessionId.value) initializeUser();
+  //   token.value = tokenData;
+  //   sessionStorage.setItem(`token_${sessionId.value}`, tokenData);
+  // };
+
+  // const login = (userData, authToken) => {
+  //   setUser(userData);
+  //   setToken(authToken);
+  // };
+
+  const login = (userData) => {
     if (!sessionId.value) initializeUser();
     user.value = userData;
     sessionStorage.setItem(`user_${sessionId.value}`, JSON.stringify(userData));
-  };
-
-  const setToken = (tokenData) => {
-    if (!sessionId.value) initializeUser();
-    token.value = tokenData;
-    sessionStorage.setItem(`token_${sessionId.value}`, tokenData);
-  };
-
-  const login = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
   };
 
   const logout = () => {
@@ -52,12 +67,12 @@ export const useUserStore = defineStore("user", () => {
     closeGameSocket();
 
     user.value = null;
-    token.value = null;
+    //token.value = null;
     currentGameId.value = null;
     currentLobbyId.value = null;
 
     sessionStorage.removeItem(`user_${sessionId.value}`);
-    sessionStorage.removeItem(`token_${sessionId.value}`);
+    //sessionStorage.removeItem(`token_${sessionId.value}`);
     sessionId.value = null;
   };
 
@@ -72,7 +87,12 @@ export const useUserStore = defineStore("user", () => {
     if (gameId) currentGameId.value = gameId;
     if (lobbyId) currentLobbyId.value = lobbyId;
 
-    console.log("🎮 Game socket set for game:", gameId, "lobby:", lobbyId);
+    console.log(
+      "🎮 Game socket set for game:",
+      currentGameId.value,
+      "lobby:",
+      currentLobbyId.value
+    );
   };
 
   const closeGameSocket = (code = 1000, reason = "User left") => {
@@ -88,6 +108,7 @@ export const useUserStore = defineStore("user", () => {
               lobbyId: currentLobbyId.value,
             })
           );
+          console.log("🔌 Game socket closed");
         } catch (error) {
           console.warn("Could not send leave message:", error);
         }
@@ -99,8 +120,6 @@ export const useUserStore = defineStore("user", () => {
 
     currentGameId.value = null;
     currentLobbyId.value = null;
-
-    console.log("🔌 Game socket closed");
   };
 
   const createGameSocketConnection = (gameId, lobbyId = null) => {
@@ -219,7 +238,7 @@ export const useUserStore = defineStore("user", () => {
   return {
     // Данные пользователя
     user,
-    token,
+    //token,
     sessionId,
     gameSocket,
     currentGameId,
@@ -234,8 +253,8 @@ export const useUserStore = defineStore("user", () => {
 
     // Методы аутентификации
     initializeUser,
-    setUser,
-    setToken,
+    //setUser,
+    //setToken,
     login,
     logout,
 
