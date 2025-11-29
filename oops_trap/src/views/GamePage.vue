@@ -1,56 +1,59 @@
 <template>
-  <div class="game-container">
-    <div class="hud">
-      <div class="hud-info">
-        <p>Time left: {{ timeLeft }}s</p>
-        <p>Game ID: {{ gameId }}</p>
-        <p>User ID: {{ userId }}</p>
-        <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-        <p>Role: {{ isHost ? "Host" : "Player" }}</p>
-        <p>
-          Connection:
-          <span :class="connectionStatusClass">{{ connectionStatus }}</span>
-        </p>
-      </div>
-      <div class="hud-buttons">
-        <button 
-          v-if="lobbyId" 
-          class="lobby-btn" 
-          @click="returnToLobby"
-          :disabled="isGameActive"
-          :title="isGameActive ? 'Cannot return to lobby during active game' : 'Return to lobby'"
-        >
-          {{ isGameActive ? 'Game in Progress...' : 'Return to Lobby' }}
-        </button>
-      </div>
-    </div>
-    <div class="container">
-      <div id="chat" class="chat">
-        <div v-for="message in chatMessages" :key="message.id" class="chat-message">
-          <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
-          <span class="player" :class="{ host: message.isHost }">
-            {{ message.playerId }}:
-          </span>
-          <span class="text">{{ message.text }}</span>
+  <div v-if="showSplash" class="splash-screen">
+    <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
+  </div>
+  <div v-else class="game-container">
+    <div class="game-container">
+      <div class="hud">
+        <div class="hud-info">
+          <p>Time left: {{ timeLeft }}s</p>
+          <p>Game ID: {{ gameId }}</p>
+          <p>User ID: {{ userId }}</p>
+          <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
+          <p>Role: {{ isHost ? "Host" : "Player" }}</p>
+          <p>
+            Connection:
+            <span :class="connectionStatusClass">{{ connectionStatus }}</span>
+          </p>
+        </div>
+        <div class="hud-buttons">
+          <button v-if="lobbyId" class="lobby-btn" @click="returnToLobby" :disabled="isGameActive"
+            :title="isGameActive ? 'Cannot return to lobby during active game' : 'Return to lobby'">
+            {{ isGameActive ? 'Game in Progress...' : 'Return to Lobby' }}
+          </button>
         </div>
       </div>
+      <div class="container">
+        <div id="chat" class="chat">
+          <div v-for="message in chatMessages" :key="message.id" class="chat-message">
+            <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+            <span class="player" :class="{ host: message.isHost }">
+              {{ message.playerId }}:
+            </span>
+            <span class="text">{{ message.text }}</span>
+          </div>
+        </div>
 
-      <div class="input-group">
-        <input 
-          type="text" 
-          id="messageInput" 
-          placeholder="Сообщение" 
-          v-model="messageInput"
-          @keypress="handleKeyPress"
-          :disabled="!isConnected"
-        >
-        <button @click="sendMessage" :disabled="!isConnected">Отправить</button>
+        <div class="input-group">
+          <input type="text" id="messageInput" placeholder="Сообщение" v-model="messageInput" @keypress="handleKeyPress"
+            :disabled="!isConnected">
+          <button @click="sendMessage" :disabled="!isConnected">Отправить</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.splash-screen img {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+
 .container {
   max-width: 600px;
   margin: 0 auto;
@@ -152,6 +155,7 @@ const gameId = computed(() => route.params.id || currentGameId.value || 1);
 const userId = computed(() => storeUserId.value);
 const lobbyId = computed(() => route.query.lobbyId);
 const isHost = ref(false);
+const showSplash = ref(true);
 
 // игровые данные
 const timeLeft = ref(0);
@@ -181,6 +185,10 @@ const connectionStatusClass = computed(() => {
 });
 
 onMounted(async () => {
+  setTimeout(() => {
+    showSplash.value = false;
+  }, 10000);
+
   userStore.initializeUser();
   await checkIfUserIsHost();
   setupGameWebSocket();
@@ -256,7 +264,7 @@ const updateLobbyStatus = async (newStatus) => {
 // Веб-сокеты - используем сохраненный сокет из хранилища
 const setupGameWebSocket = () => {
   const socket = getGameSocket.value;
-  
+
   if (!socket) {
     console.error('❌ No game socket found in store');
     connectionError.value = 'No game connection';
@@ -265,23 +273,23 @@ const setupGameWebSocket = () => {
 
   // Обновляем статус соединения
   isConnected.value = socket.readyState === WebSocket.OPEN;
-  
-  // Обработчики событий сокета
-  socket.onopen = () => {
-    console.log('✅ Game WebSocket connected');
-    isConnected.value = true;
-    connectionError.value = null;
-    
-    // Отправляем инициализационное сообщение
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({
-        type: 'init',
-        gameId: gameId.value,
-        playerId: userId.value,
-        isHost: isHost.value
-      }));
-    }
-  };
+
+  // // Обработчики событий сокета
+  // socket.onopen = () => {
+  //   console.log('✅ Game WebSocket connected');
+  //   isConnected.value = true;
+  //   connectionError.value = null;
+
+  //   // Отправляем инициализационное сообщение
+  //   if (socket.readyState === WebSocket.OPEN) {
+  //     socket.send(JSON.stringify({
+  //       type: 'init',
+  //       gameId: gameId.value,
+  //       playerId: userId.value,
+  //       isHost: isHost.value
+  //     }));
+  //   }
+  // };
 
   socket.onmessage = (event) => {
     try {
@@ -295,7 +303,7 @@ const setupGameWebSocket = () => {
   socket.onclose = (event) => {
     console.log('🔌 Game WebSocket disconnected');
     isConnected.value = false;
-    
+
     if (!event.wasClean) {
       connectionError.value = `Connection lost: ${event.reason || 'Unknown error'}`;
     }
@@ -325,14 +333,14 @@ const cleanupWebSocket = () => {
 
 const handleGameMessage = (message) => {
   console.log('📨 Received game message:', message);
-  
+
   switch (message.type) {
     case 'timer_started':
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
       addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
       break;
-      
+
     case 'timer_update':
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
@@ -341,7 +349,7 @@ const handleGameMessage = (message) => {
         gameEnded.value = true;
       }
       break;
-      
+
     case 'chat_message':
       addChatMessage({
         id: Date.now() + Math.random(),
@@ -351,15 +359,15 @@ const handleGameMessage = (message) => {
         isHost: message.isHost
       });
       break;
-      
+
     case 'player_joined':
       addSystemMessage(message.message);
       break;
-      
+
     case 'player_disconnected':
       addSystemMessage(message.message);
       break;
-      
+
     default:
       console.log('Unknown message type:', message.type);
   }
@@ -393,8 +401,8 @@ const scrollChatToBottom = () => {
 
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('ru-RU', { 
-    hour: '2-digit', 
+  return date.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
   });
@@ -408,7 +416,7 @@ const handleKeyPress = (event) => {
 
 const sendMessage = () => {
   const text = messageInput.value.trim();
-  
+
   if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
     getGameSocket.value.send(JSON.stringify({
       type: 'chat_message',
