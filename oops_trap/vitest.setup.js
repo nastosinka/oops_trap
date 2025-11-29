@@ -106,7 +106,7 @@
 
 // global.localStorage = localStorageMock;
 
-import { vi } from "vitest";
+import { vi } from 'vitest'
 
 // jsdom автоматически предоставляет DOM API, поэтому эти строки не нужны
 // global.TextEncoder = TextEncoder
@@ -120,13 +120,13 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
   length: 0,
-  key: vi.fn(),
-};
+  key: vi.fn()
+}
 
-global.localStorage = localStorageMock;
+global.localStorage = localStorageMock
 
 // Полный мок для Sentry
-vi.mock("@sentry/vue", () => ({
+vi.mock('@sentry/vue', () => ({
   init: vi.fn(),
   browserTracingIntegration: vi.fn(() => ({})),
   captureMessage: vi.fn(),
@@ -139,17 +139,17 @@ vi.mock("@sentry/vue", () => ({
   getCurrentHub: vi.fn(() => ({
     getScope: vi.fn(() => ({
       setTag: vi.fn(),
-      setUser: vi.fn(),
-    })),
-  })),
-}));
+      setUser: vi.fn()
+    }))
+  }))
+}))
 
 // Упрощенный мок для Vue Router
-vi.mock("vue-router", () => ({
+vi.mock('vue-router', () => ({
   createRouter: vi.fn(),
   createWebHistory: vi.fn(),
-  createWebHashHistory: vi.fn(),
-}));
+  createWebHashHistory: vi.fn()
+}))
 
 // Мокаем ant-design-vue
 const mockModal = {
@@ -158,34 +158,34 @@ const mockModal = {
   confirm: vi.fn(),
   warning: vi.fn(),
   info: vi.fn(),
-  destroyAll: vi.fn(),
-};
+  destroyAll: vi.fn()
+}
 
-vi.mock("ant-design-vue", () => ({
-  Modal: mockModal,
-}));
+vi.mock('ant-design-vue', () => ({
+  Modal: mockModal
+}))
 
 // Мокаем API
-global.fetch = vi.fn();
+global.fetch = vi.fn()
 
 // Мокаем VK Bridge
-vi.mock("@vkontakte/vk-bridge", () => ({
+vi.mock('@vkontakte/vk-bridge', () => ({
   default: {
     send: vi.fn(),
     subscribe: vi.fn(),
     unsubscribe: vi.fn(),
-    supports: vi.fn(),
-  },
-}));
+    supports: vi.fn()
+  }
+}))
 
 // Мокаем утилиты
-vi.mock("@/utils/api-auth.js", () => ({
-  apiFetch: vi.fn(),
-}));
+vi.mock('@/utils/api-auth.js', () => ({
+  apiFetch: vi.fn()
+}))
 
-vi.mock("@/utils/notification-wrapper", () => ({
-  showSuccess: vi.fn(),
-}));
+vi.mock('@/utils/notification-wrapper', () => ({
+  showSuccess: vi.fn()
+}))
 
 // Экспортируем моки для использования в тестах
-export { mockModal, localStorageMock };
+export { mockModal, localStorageMock }
