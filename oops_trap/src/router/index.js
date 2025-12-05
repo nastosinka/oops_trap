@@ -28,6 +28,11 @@ const routes = [
     path: "/test-player",
     name: "TestPlayer",
     component: () => import("@/components/game/CurrentPlayer.vue"),
+  },
+  {
+    path: "/map",
+    name: "TestPlayer",
+    component: () => import("@/views/MapOfGame.vue"),
   }
 ];
 
