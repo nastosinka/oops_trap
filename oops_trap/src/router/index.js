@@ -24,6 +24,11 @@ const routes = [
     name: "Game",
     component: () => import("@/views/GamePage.vue"),
   },
+  {
+    path: "/test-player",
+    name: "TestPlayer",
+    component: () => import("@/components/game/CurrentPlayer.vue"),
+  }
 ];
 
 const router = createRouter({
