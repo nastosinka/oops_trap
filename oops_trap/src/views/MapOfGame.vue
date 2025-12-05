@@ -16,86 +16,121 @@ const screenRef = ref(null)
 const gameContentRef = ref(null)
 const runnerTestRef = ref(null)
 
-// Передаем размеры игровой области вниз
-const gameArea = ref({ width: 0, height: 0 })
+// Базовое (референсное) разрешение игры
+const BASE_WIDTH = 1280
+const BASE_HEIGHT = 720
+
+const gameArea = ref({ 
+    width: 0, 
+    height: 0,
+    scale: 1,
+    baseWidth: BASE_WIDTH,
+    baseHeight: BASE_HEIGHT
+})
+
+// Дебаунс для ресайза
+let resizeTimeout
 
 const updateScreenSize = () => {
-  if (!screenRef.value || !gameContentRef.value) return
-  
-  const width = window.innerWidth
-  const height = Math.round(width * 9 / 16)
-  
-  // Устанавливаем размеры контейнера игры
-  gameContentRef.value.style.width = `${width}px`
-  gameContentRef.value.style.height = `${height}px`
-  
-  // Сохраняем размеры для передачи в RunnerTest
-  gameArea.value = {
-    width: width,
-    height: height
-  }
-  
-  // Центрируем по вертикали если есть место
-  if (height < window.innerHeight) {
-    const marginTop = (window.innerHeight - height) / 2
-    gameContentRef.value.style.marginTop = `${marginTop}px`
-    gameContentRef.value.style.marginLeft = '0'
-  } else {
-    gameContentRef.value.style.marginTop = '0'
-    const gameWidth = Math.round(window.innerHeight * 16 / 9)
-    gameContentRef.value.style.width = `${gameWidth}px`
-    gameContentRef.value.style.marginLeft = `${(window.innerWidth - gameWidth) / 2}px`
+    if (!screenRef.value || !gameContentRef.value) return
     
-    gameArea.value = {
-      width: gameWidth,
-      height: window.innerHeight
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
+    
+    // Рассчитываем размеры для 16:9
+    let gameWidth, gameHeight, marginTop = 0, marginLeft = 0
+    
+    // Вариант 1: Высота больше ширины (узкое окно)
+    if (windowWidth / windowHeight < 16/9) {
+        // Ограничиваем по ширине, черные полосы сверху/снизу
+        gameWidth = windowWidth
+        gameHeight = Math.round(gameWidth * 9 / 16)
+        marginTop = (windowHeight - gameHeight) / 2
+    } 
+    // Вариант 2: Ширина больше высоты (широкое окно)
+    else {
+        // Ограничиваем по высоте, черные полосы по бокам
+        gameHeight = windowHeight
+        gameWidth = Math.round(gameHeight * 16 / 9)
+        marginLeft = (windowWidth - gameWidth) / 2
     }
-  }
-  
-  // Сообщаем RunnerTest о новых размерах
-  if (runnerTestRef.value && runnerTestRef.value.updateBounds) {
-    runnerTestRef.value.updateBounds(gameArea.value);
-  }
+    
+    // Устанавливаем размеры и отступы
+    gameContentRef.value.style.width = `${gameWidth}px`
+    gameContentRef.value.style.height = `${gameHeight}px`
+    gameContentRef.value.style.marginTop = `${marginTop}px`
+    gameContentRef.value.style.marginLeft = `${marginLeft}px`
+    
+    // Вычисляем масштаб (относительно базового размера)
+    const scale = gameWidth / BASE_WIDTH
+    
+    // Обновляем реактивные данные
+    gameArea.value = {
+        width: gameWidth,
+        height: gameHeight,
+        scale: scale,
+        baseWidth: BASE_WIDTH,
+        baseHeight: BASE_HEIGHT,
+        marginTop: marginTop,
+        marginLeft: marginLeft
+    }
+    
+    console.log('🎮 Игровая область обновлена:', {
+        размеры: `${gameWidth}x${gameHeight}`,
+        масштаб: scale.toFixed(3),
+        окно: `${windowWidth}x${windowHeight}`,
+        отступы: `top: ${marginTop}px, left: ${marginLeft}px`
+    })
+    
+    // Передаем данные в RunnerTest
+    if (runnerTestRef.value && typeof runnerTestRef.value.updateGameArea === 'function') {
+        runnerTestRef.value.updateGameArea(gameArea.value)
+    }
 }
 
-// Передаем размеры через provide/inject если нужно
-provide('gameArea', gameArea)
+// Обработчик ресайза с дебаунсом
+const handleResize = () => {
+    clearTimeout(resizeTimeout)
+    resizeTimeout = setTimeout(updateScreenSize, 50) // 50мс дебаунс
+}
 
 onMounted(() => {
-  updateScreenSize()
-  window.addEventListener('resize', updateScreenSize)
+    updateScreenSize()
+    window.addEventListener('resize', handleResize)
+    
+    // Передаем gameArea через provide для вложенных компонентов
+    provide('gameArea', gameArea)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateScreenSize)
+    window.removeEventListener('resize', handleResize)
+    clearTimeout(resizeTimeout)
 })
 
-// Экспортируем функцию обновления для дочерних компонентов
+// Экспортируем методы для внешнего доступа
 defineExpose({
-  updateScreenSize,
-  getGameArea: () => gameArea.value
+    updateScreenSize,
+    getGameArea: () => gameArea.value,
+    getScale: () => gameArea.value.scale
 })
 </script>
 
 <style scoped>
 .game-screen {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  margin: 0;
-  padding: 0;
-  background-color: #2c3e50;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    background-color: #000000; /* Черные полосы */
+    overflow: hidden;
 }
 
 .game-content {
-  position: relative;
-  background-color: #2c3e50;
-  flex-shrink: 0;
+    position: relative;
+    background-color: #2c3e50;
+    transition: all 0.3s ease; /* ← Вот и вся плавность! */
 }
 </style>
