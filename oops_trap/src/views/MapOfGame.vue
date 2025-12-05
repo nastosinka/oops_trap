@@ -2,6 +2,7 @@
     <div class="game-screen" ref="screenRef">
       <div class="game-content">
         <GameMap />
+        <RunnerTest />
       </div>
     </div>
   </template>
@@ -9,6 +10,7 @@
   <script setup>
   import { ref, onMounted, onUnmounted } from 'vue'
   import GameMap from '@/components/game/maps/background/FirstMapBackground.vue'
+  import RunnerTest from '@/components/game/RunnerTest.vue'
   
   const screenRef = ref(null)
   
