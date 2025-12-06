@@ -1,7 +1,8 @@
 <template>
   <div class="game-screen" ref="screenRef">
     <div class="game-content" ref="gameContentRef">
-      <GameMap />
+      <!-- <GameMap1 /> -->
+      <GameMap2 />
       <RunnerTest ref="runnerTestRef" />
     </div>
   </div>
@@ -9,7 +10,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from 'vue'
-import GameMap from '@/components/game/maps/background/FirstMapBackground.vue'
+import GameMap1 from '@/components/game/maps/background/FirstMapBackground.vue'
+import GameMap2 from '@/components/game/maps/background/SecondMapBackground.vue'
 import RunnerTest from '@/components/game/RunnerTest.vue'
 
 const screenRef = ref(null)
