@@ -46,7 +46,12 @@
     </div>
 
     <div ref="canvasContainer" class="canvas-container">
-      <canvas ref="canvas" @mousedown="startDrawing"></canvas>
+      <canvas
+        ref="canvas"
+        @mousedown="onMouseDown"
+        @mousemove="onMouseMove"
+        @mouseup="onMouseUp"
+      ></canvas>
     </div>
 
     <div class="polygon-list">
@@ -79,8 +84,8 @@ export default {
         timer: 0,
         isActive: true,
       },
-      drawing: false,
       selectedPolygonIndex: null,
+      draggedPointIndex: null,
       scale: 1,
       canvasWidth: 800,
       canvasHeight: 600,
@@ -147,16 +152,54 @@ export default {
     transformMouseToImage(x, y) {
       return { x: x / this.scale, y: y / this.scale };
     },
-    startDrawing(event) {
-      if (!this.mapImage) return;
+    onMouseDown(event) {
+      if (this.selectedPolygonIndex === null) return;
       const rect = this.$refs.canvas.getBoundingClientRect();
-      const pos = this.transformMouseToImage(
+      const mousePos = this.transformMouseToImage(
         event.clientX - rect.left,
         event.clientY - rect.top
       );
-      this.currentPolygon.points.push(pos);
-      this.drawing = true;
+      const poly = this.polygons[this.selectedPolygonIndex];
+
+      // ищем точку для перетаскивания
+      this.draggedPointIndex = null;
+      for (let i = 0; i < poly.points.length; i++) {
+        const pt = poly.points[i];
+        const dx = pt.x - mousePos.x;
+        const dy = pt.y - mousePos.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 10 / this.scale) {
+          this.draggedPointIndex = i;
+          break;
+        }
+      }
+
+      // если не нашли точку → создаем новую
+      if (this.draggedPointIndex === null) {
+        poly.points.push(mousePos);
+      }
+
       this.draw();
+    },
+    onMouseMove(event) {
+      if (
+        this.selectedPolygonIndex === null ||
+        this.draggedPointIndex === null
+      )
+        return;
+
+      const rect = this.$refs.canvas.getBoundingClientRect();
+      const mousePos = this.transformMouseToImage(
+        event.clientX - rect.left,
+        event.clientY - rect.top
+      );
+
+      const poly = this.polygons[this.selectedPolygonIndex];
+      poly.points[this.draggedPointIndex] = mousePos;
+
+      this.draw();
+    },
+    onMouseUp() {
+      this.draggedPointIndex = null;
     },
     finishPolygon() {
       if (this.currentPolygon.points.length < 2) {
@@ -168,7 +211,6 @@ export default {
       this.currentPolygon.name = "";
       this.currentPolygon.timer = 0;
       this.currentPolygon.isActive = true;
-      this.drawing = false;
       this.draw();
     },
     draw() {
@@ -193,17 +235,11 @@ export default {
 
       // отрисовка полигонов
       this.polygons.forEach((poly, idx) => {
-        ctx.beginPath();
         if (!poly.points || poly.points.length === 0) return;
-        ctx.moveTo(
-          poly.points[0].x * this.scale,
-          poly.points[0].y * this.scale
-        );
+        ctx.beginPath();
+        ctx.moveTo(poly.points[0].x * this.scale, poly.points[0].y * this.scale);
         for (let i = 1; i < poly.points.length; i++) {
-          ctx.lineTo(
-            poly.points[i].x * this.scale,
-            poly.points[i].y * this.scale
-          );
+          ctx.lineTo(poly.points[i].x * this.scale, poly.points[i].y * this.scale);
         }
         ctx.closePath();
         ctx.fillStyle =
@@ -213,20 +249,26 @@ export default {
         ctx.fill();
         ctx.strokeStyle = idx === this.selectedPolygonIndex ? "red" : "lime";
         ctx.stroke();
+
+        // отрисовка точек выбранного полигона
+        if (idx === this.selectedPolygonIndex) {
+          poly.points.forEach((pt) => {
+            ctx.beginPath();
+            ctx.arc(pt.x * this.scale, pt.y * this.scale, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "yellow";
+            ctx.fill();
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+          });
+        }
       });
 
       // текущий полигон
-      if (this.drawing && this.currentPolygon.points.length > 0) {
+      if (this.currentPolygon.points.length > 0) {
         ctx.beginPath();
-        ctx.moveTo(
-          this.currentPolygon.points[0].x * this.scale,
-          this.currentPolygon.points[0].y * this.scale
-        );
+        ctx.moveTo(this.currentPolygon.points[0].x * this.scale, this.currentPolygon.points[0].y * this.scale);
         for (let i = 1; i < this.currentPolygon.points.length; i++) {
-          ctx.lineTo(
-            this.currentPolygon.points[i].x * this.scale,
-            this.currentPolygon.points[i].y * this.scale
-          );
+          ctx.lineTo(this.currentPolygon.points[i].x * this.scale, this.currentPolygon.points[i].y * this.scale);
         }
         ctx.strokeStyle = "cyan";
         ctx.stroke();
