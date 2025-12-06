@@ -1,38 +1,47 @@
 <template>
-    <div class="game-field">
-        <img 
-            class="player" 
-            :src="currentSprite" 
-            :style="playerStyle" 
-        />
+    <div class="game-field" ref="gameField">
+        <img class="player" :src="currentSprite" :style="playerStyle" />
     </div>
 </template>
-
+  
 <script>
+// import { useUserStore } from "@/stores/user";
 import idleFrame from "@/assets/images/players/1/bl1.png";
 import walk1 from "@/assets/images/players/1/bl2.png";
 import walk2 from "@/assets/images/players/1/bl1.png";
 
 export default {
-    name: "RunnerTest",
+    name: "GamePlayer",
 
     data() {
         return {
+            //-------------
+            //auth
+            //-------------
+            //userId: null,  ← будет храниться id игрока из Pinia / JWT
+
+            //-----------------------------
+            //images for walk
+            //-----------------------------
             idleFrame,
             animationFrames: [walk1, walk2],
 
-            // Координаты в РЕАЛЬНЫХ пикселях игровой области
+            //-----------------------------
+            //coordinates now in PIXELS
+            //-----------------------------
             player: {
-                x: 100,  // пиксели от левого края .game-content
-                y: 100,  // пиксели от верхнего края .game-content
-                speed: 15  // пиксели за нажатие (будет масштабироваться)
+                x: 100,
+                y: 100,
+                speed: 15
             },
 
             isMoving: false,
             animationIndex: 0,
             animationInterval: null,
-            
-            // Данные об игровой области от MapOfGame
+
+            //-----------------------------
+            // game area data (from parent)
+            //-----------------------------
             gameArea: {
                 width: 0,
                 height: 0,
@@ -44,166 +53,154 @@ export default {
     },
 
     computed: {
+        //Текущий отображаемый кадр
         currentSprite() {
             return this.isMoving
                 ? this.animationFrames[this.animationIndex]
                 : this.idleFrame;
         },
-        
-        // Базовый размер игрока (при масштабе 1)
+
+        //--------------------------------------
+        // base player size at scale=1
+        //--------------------------------------
         basePlayerSize() {
             return {
-                width: 50,   // пикселей при scale=1
-                height: 80   // пикселей при scale=1
+                width: 50,
+                height: 80
             };
         },
-        
-        // Фактический размер игрока (с учетом текущего масштаба)
+
+        // масштабированный размер челикуса
         playerSize() {
             return {
                 width: this.basePlayerSize.width * this.gameArea.scale,
                 height: this.basePlayerSize.height * this.gameArea.scale
             };
         },
-        
-        // Фактическая скорость (с учетом масштаба)
+
+        // масштабированная скорость челикуса
         actualSpeed() {
             return this.player.speed * this.gameArea.scale;
         },
-        
-        // Стиль игрока с масштабированием
+
+        // полный набор масштабируемых признаков игрока
         playerStyle() {
             return {
-                left: `${this.player.x}px`,
-                top: `${this.player.y}px`,
-                width: `${this.playerSize.width}px`,
-                height: `${this.playerSize.height}px`,
-                transform: `scale(${this.gameArea.scale})`, // Дополнительное масштабирование если нужно
-                transformOrigin: 'top left'
+                left: this.player.x + "px",
+                top: this.player.y + "px",
+                width: this.playerSize.width + "px",
+                height: this.playerSize.height + "px",
             };
         }
     },
 
     mounted() {
-        console.log('🎮 RunnerTest загружен');
-        
+        //-----------------------------
+        //load auth data
+        //-----------------------------
+        // const userStore = useUserStore();
+        // this.userId = userStore.userId;
+
         window.addEventListener("keydown", this.handleMove);
         window.addEventListener("keyup", this.stopAnimationSafely);
-        
-        // Получаем начальные границы
+
+        // NEW: auto detect size
         this.updateParentBounds();
-        
-        // Ищем родительский компонент для получения gameArea
+
+        // NEW: find parent MapOfGame
         this.findAndConnectToParent();
     },
 
     beforeUnmount() {
         window.removeEventListener("keydown", this.handleMove);
         window.removeEventListener("keyup", this.stopAnimationSafely);
-        
-        if (this.animationInterval) {
-            clearInterval(this.animationInterval);
-        }
     },
 
     methods: {
-        // Метод для обновления данных от MapOfGame
+        //--------------------------------------
+        // receive scale + boundaries from parent
+        //--------------------------------------
         updateGameArea(newGameArea) {
-            console.log('📐 Получены новые данные от MapOfGame:', newGameArea);
-            
-            // Сохраняем масштаб ДО обновления
             const oldScale = this.gameArea.scale;
             const newScale = newGameArea.scale;
-            
-            // Обновляем gameArea
+
             this.gameArea = { ...newGameArea };
-            
-            // Масштабируем позицию игрока
+
+            // scale coordinates too
             if (oldScale !== newScale && oldScale > 0) {
-                const scaleRatio = newScale / oldScale;
-                this.player.x *= scaleRatio;
-                this.player.y *= scaleRatio;
-                console.log('🔄 Масштабирована позиция игрока:', {
-                    старыйМасштаб: oldScale,
-                    новыйМасштаб: newScale,
-                    коэффициент: scaleRatio,
-                    новаяПозиция: { x: this.player.x, y: this.player.y }
-                });
+                const ratio = newScale / oldScale;
+                this.player.x *= ratio;
+                this.player.y *= ratio;
             }
-            
-            // Проверяем границы
+
             this.keepInsideParent();
         },
-        
-        // Поиск родительского компонента для получения gameArea
+
+        //--------------------------------------
+        // search parent component with getGameArea()
+        //--------------------------------------
         findAndConnectToParent() {
-            // Вариант 1: Через provide/inject (уже есть в MapOfGame)
-            // Вариант 2: Через $parent
             let parent = this.$parent;
             let attempts = 0;
-            
+
             while (parent && attempts < 10) {
                 if (parent.getGameArea) {
-                    const gameAreaData = parent.getGameArea();
-                    if (gameAreaData) {
-                        this.updateGameArea(gameAreaData);
-                        console.log('✅ Найден родитель с gameArea');
+                    const area = parent.getGameArea();
+                    if (area) {
+                        this.updateGameArea(area);
                         return;
                     }
                 }
                 parent = parent.$parent;
                 attempts++;
             }
-            
-            console.log('⚠️ Не найден родитель с gameArea, использую автоопределение');
+
+            // fallback
             this.updateParentBounds();
         },
-        
-        updateParentBounds() {
-            const parentElement = this.$el?.parentElement;
-            if (!parentElement) return;
 
-            const rect = parentElement.getBoundingClientRect();
-            
-            // Автоматическое определение если нет данных от MapOfGame
+        //--------------------------------------
+        // fallback auto-resolution of bounds
+        //--------------------------------------
+        updateParentBounds() {
+            const parentEl = this.$el?.parentElement;
+            if (!parentEl) return;
+
+            const rect = parentEl.getBoundingClientRect();
+
+            // baseWidth — keep original comment & approach
             this.gameArea = {
                 width: rect.width,
                 height: rect.height,
                 baseWidth: 1280,
                 baseHeight: 720,
-                scale: rect.width / baseWidth, // Предполагаем базовую ширину 1280
+                scale: rect.width / 1280
             };
-            
-            console.log('📏 Автоопределение границ:', this.gameArea);
+
             this.keepInsideParent();
         },
 
         handleMove(event) {
-            if (['w', 's', 'a', 'd', 'ц', 'ы', 'ф', 'в'].includes(event.key.toLowerCase())) {
-                event.preventDefault(); // Отключаем прокрутку страницы
-            }
-            
-            const key = event.key.toLowerCase();
+            const k = event.key.toLowerCase();
             let moved = false;
 
-            switch (key) {
+            switch (k) {
                 case "w":
-                case "ц":
                     this.player.y -= this.actualSpeed;
                     moved = true;
                     break;
+
                 case "s":
-                case "ы":
                     this.player.y += this.actualSpeed;
                     moved = true;
                     break;
+
                 case "a":
-                case "ф":
                     this.player.x -= this.actualSpeed;
                     moved = true;
                     break;
+
                 case "d":
-                case "в":
                     this.player.x += this.actualSpeed;
                     moved = true;
                     break;
@@ -213,86 +210,84 @@ export default {
                 this.isMoving = true;
                 this.startAnimation();
                 this.keepInsideParent();
-                
-                console.log('🚶 Движение:', {
-                    клавиша: key,
-                    позиция: { x: this.player.x, y: this.player.y },
-                    скорость: this.actualSpeed,
-                    масштаб: this.gameArea.scale
-                });
-            }
-        },
-        
-        keepInsideParent() {
-            if (!this.gameArea.width || !this.gameArea.height) return;
-            
-            const playerWidth = this.playerSize.width;
-            const playerHeight = this.playerSize.height;
-            
-            // Левый край
-            if (this.player.x < 0) {
-                this.player.x = 0;
-            }
-            
-            // Верхний край
-            if (this.player.y < 0) {
-                this.player.y = 0;
-            }
-            
-            // Правый край
-            if (this.player.x > this.gameArea.width - playerWidth) {
-                this.player.x = this.gameArea.width - playerWidth;
-            }
-            
-            // Нижний край
-            if (this.player.y > this.gameArea.height - playerHeight) {
-                this.player.y = this.gameArea.height - playerHeight;
+
+                //-----------------------------
+                //send movement to server
+                //-----------------------------
+                // this.sendMoveToServer();
             }
         },
 
+        //сохраняем игрока внутри экрана родителя
+        keepInsideParent() {
+            const W = this.gameArea.width;
+            const H = this.gameArea.height;
+
+            const pw = this.playerSize.width;
+            const ph = this.playerSize.height;
+
+            if (!W || !H) return;
+
+            if (this.player.x < 0) this.player.x = 0;
+            if (this.player.y < 0) this.player.y = 0;
+
+            if (this.player.x > W - pw) this.player.x = W - pw;
+            if (this.player.y > H - ph) this.player.y = H - ph;
+        },
+
+        //-----------------------------
+        //animation
+        //-----------------------------
         startAnimation() {
-            if (this.animationInterval) {
-                clearInterval(this.animationInterval);
-            }
-            
+            if (this.animationInterval) return;
+
             this.animationInterval = setInterval(() => {
-                this.animationIndex = (this.animationIndex + 1) % this.animationFrames.length;
-            }, 200);
+                this.animationIndex =
+                    (this.animationIndex + 1) % this.animationFrames.length;
+            }, 200); //скорость смены кадров
         },
 
         stopAnimationSafely() {
+            //вызывается, когда отпускаются wasd
             this.isMoving = false;
             this.stopAnimation();
         },
 
         stopAnimation() {
-            if (this.animationInterval) {
-                clearInterval(this.animationInterval);
-                this.animationInterval = null;
-            }
-            this.animationIndex = 0;
+            clearInterval(this.animationInterval);
+            this.animationInterval = null;
+            this.animationIndex = 0; //вернуться к idle
         }
+
+        //-----------------------------
+        //websocket
+        //-----------------------------
+        // sendMoveToServer() {
+        //   gameSocket.emit("playerMove", {
+        //     userId: this.userId,
+        //     x: this.player.x,
+        //     y: this.player.y
+        //   });
+        // }
     }
 };
 </script>
-
-<style scoped>
+  
+<style>
 .game-field {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;
+    background: #f0f0f0;
     overflow: hidden;
-    pointer-events: none; /* Клики проходят сквозь */
 }
 
 .player {
     position: absolute;
     image-rendering: pixelated;
-    transition: all 0.3s ease; /* ← И здесь тоже! */
-    will-change: transform, left, top;
-    z-index: 7;
+    z-index: 10;
 }
 </style>
+  
