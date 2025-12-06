@@ -9,11 +9,17 @@
       <label>Загрузить JSON карты:</label>
       <input type="file" accept=".json" @change="onJsonFileChange" />
 
+      <!-- === Редактирование/создание названия === -->
       <label>Название полигона:</label>
-      <input v-model="currentPolygon.name" placeholder="Название" />
+      <input
+        v-model="polygonEditor.name"
+        placeholder="Название"
+        @input="applyPolygonEdit"
+      />
 
+      <!-- === Редактирование/создание типа === -->
       <label>Тип полигона:</label>
-      <select v-model="currentPolygon.type">
+      <select v-model="polygonEditor.type" @change="applyPolygonEdit">
         <option value="rope">Канат</option>
         <option value="vine">Лианы</option>
         <option value="water">Вода</option>
@@ -25,20 +31,30 @@
         <option value="trap">Ловушка</option>
       </select>
 
+      <!-- === timer === -->
       <label
         v-if="
-          currentPolygon.type === 'rope' ||
-          currentPolygon.type === 'vine' ||
-          currentPolygon.type === 'water'
+          polygonEditor.type === 'rope' ||
+          polygonEditor.type === 'vine' ||
+          polygonEditor.type === 'water'
         "
       >
         Таймер (ms):
-        <input v-model.number="currentPolygon.timer" type="number" />
+        <input
+          v-model.number="polygonEditor.timer"
+          type="number"
+          @input="applyPolygonEdit"
+        />
       </label>
 
-      <label v-if="currentPolygon.type === 'trap'">
+      <!-- === isActive === -->
+      <label v-if="polygonEditor.type === 'trap'">
         Активна:
-        <input v-model="currentPolygon.isActive" type="checkbox" />
+        <input
+          v-model="polygonEditor.isActive"
+          type="checkbox"
+          @change="applyPolygonEdit"
+        />
       </label>
 
       <button @click="finishPolygon">Закончить полигон</button>
@@ -84,24 +100,37 @@ export default {
         timer: 0,
         isActive: true,
       },
+
+      /** объект, через который редактируется выбранный полигон */
+      polygonEditor: {
+        name: "",
+        type: "rope",
+        timer: 0,
+        isActive: true,
+      },
+
       selectedPolygonIndex: null,
       draggedPointIndex: null,
-      isDragging: false,
+
       scale: 1,
       canvasWidth: 800,
       canvasHeight: 600,
     };
   },
+
   mounted() {
     window.addEventListener("resize", this.onWindowResize);
     window.addEventListener("keydown", this.onKeyDown);
     this.onWindowResize();
   },
+
   beforeUnmount() {
     window.removeEventListener("resize", this.onWindowResize);
     window.removeEventListener("keydown", this.onKeyDown);
   },
+
   methods: {
+    /* Масштабирование */
     onWindowResize() {
       const container = this.$refs.canvasContainer;
       if (!container || !this.mapImage) return;
@@ -120,10 +149,10 @@ export default {
       const canvas = this.$refs.canvas;
       canvas.width = this.canvasWidth;
       canvas.height = this.canvasHeight;
-
       this.draw();
     },
 
+    /* Загрузка картинки карты */
     onMapFileChange(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -140,6 +169,7 @@ export default {
       reader.readAsDataURL(file);
     },
 
+    /* Загрузка JSON */
     onJsonFileChange(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -149,121 +179,111 @@ export default {
         try {
           const data = JSON.parse(e.target.result);
           this.polygons = data.polygons || [];
+          this.selectPolygon(null);
           this.draw();
-        } catch {
+        } catch (err) {
           alert("Неверный JSON файл");
         }
       };
       reader.readAsText(file);
     },
 
+    /* Перевод координат */
     transformMouseToImage(x, y) {
       return { x: x / this.scale, y: y / this.scale };
     },
 
-    // расстояние от точки до линии
-    pointToSegmentDist(px, py, x1, y1, x2, y2) {
-      const A = px - x1;
-      const B = py - y1;
-      const C = x2 - x1;
-      const D = y2 - y1;
-
-      const dot = A * C + B * D;
-      const lenSq = C * C + D * D;
-      let param = -1;
-      if (lenSq !== 0) param = dot / lenSq;
-
-      let xx, yy;
-      if (param < 0) {
-        xx = x1;
-        yy = y1;
-      } else if (param > 1) {
-        xx = x2;
-        yy = y2;
-      } else {
-        xx = x1 + param * C;
-        yy = y1 + param * D;
-      }
-
-      const dx = px - xx;
-      const dy = py - yy;
-      return Math.sqrt(dx * dx + dy * dy);
-    },
-
+    /* Клик мыши */
     onMouseDown(event) {
       const rect = this.$refs.canvas.getBoundingClientRect();
-      const mouse = this.transformMouseToImage(
+      const mousePos = this.transformMouseToImage(
         event.clientX - rect.left,
         event.clientY - rect.top
       );
 
-      // создание нового полигона
-      if (this.selectedPolygonIndex === null) {
-        this.currentPolygon.points.push(mouse);
+      /* --- если выбран полигон → редактируем --- */
+      if (this.selectedPolygonIndex !== null) {
+        const poly = this.polygons[this.selectedPolygonIndex];
+
+        // ищем точку для перетаскивания
+        this.draggedPointIndex = null;
+        for (let i = 0; i < poly.points.length; i++) {
+          const pt = poly.points[i];
+          const dx = pt.x - mousePos.x;
+          const dy = pt.y - mousePos.y;
+          if (Math.sqrt(dx * dx + dy * dy) < 10 / this.scale) {
+            this.draggedPointIndex = i;
+            return;
+          }
+        }
+
+        // если не нашли точку — вставляем новую на ближайшее ребро
+        let bestDist = Infinity;
+        let bestIndex = 0;
+
+        for (let i = 0; i < poly.points.length; i++) {
+          const a = poly.points[i];
+          const b = poly.points[(i + 1) % poly.points.length];
+
+          const t = Math.max(
+            0,
+            Math.min(
+              1,
+              ((mousePos.x - a.x) * (b.x - a.x) +
+                (mousePos.y - a.y) * (b.y - a.y)) /
+                ((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+            )
+          );
+
+          const proj = { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) };
+          const dist = Math.hypot(mousePos.x - proj.x, mousePos.y - proj.y);
+
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestIndex = i + 1;
+          }
+        }
+
+        poly.points.splice(bestIndex, 0, mousePos);
+        this.draggedPointIndex = bestIndex;
         this.draw();
         return;
       }
 
-      // редактирование существующего
-      const poly = this.polygons[this.selectedPolygonIndex];
-
-      // сначала проверяем — попали ли в точку
-      for (let i = 0; i < poly.points.length; i++) {
-        const p = poly.points[i];
-        if (Math.hypot(p.x - mouse.x, p.y - mouse.y) < 10 / this.scale) {
-          this.draggedPointIndex = i;
-          this.isDragging = true;
-          return;
-        }
-      }
-
-      // иначе ищем ближайшую сторону
-      let bestDist = Infinity;
-      let insertIndex = -1;
-
-      for (let i = 0; i < poly.points.length; i++) {
-        const a = poly.points[i];
-        const b = poly.points[(i + 1) % poly.points.length];
-
-        const dist = this.pointToSegmentDist(mouse.x, mouse.y, a.x, a.y, b.x, b.y);
-        if (dist < bestDist) {
-          bestDist = dist;
-          insertIndex = i + 1;
-        }
-      }
-
-      // добавляем точку между вершинами
-      poly.points.splice(insertIndex, 0, mouse);
+      /* --- иначе создаём новый полигон --- */
+      this.currentPolygon.points.push(mousePos);
       this.draw();
     },
 
+    /* Движение мыши */
     onMouseMove(event) {
-      if (!this.isDragging) return;
-      if (this.selectedPolygonIndex === null) return;
-      if (this.draggedPointIndex === null) return;
+      if (this.draggedPointIndex === null || this.selectedPolygonIndex === null)
+        return;
 
       const rect = this.$refs.canvas.getBoundingClientRect();
-      const mouse = this.transformMouseToImage(
+      const mousePos = this.transformMouseToImage(
         event.clientX - rect.left,
         event.clientY - rect.top
       );
 
       const poly = this.polygons[this.selectedPolygonIndex];
-      poly.points[this.draggedPointIndex] = mouse;
+      poly.points[this.draggedPointIndex] = mousePos;
+
       this.draw();
     },
 
     onMouseUp() {
-      this.isDragging = false;
       this.draggedPointIndex = null;
     },
 
+    /* Удаление точки кнопкой Z */
     onKeyDown(e) {
-      if (e.key.toLowerCase() === "z" && this.isDragging) {
-        if (this.selectedPolygonIndex === null) return;
+      if (!this.selectedPolygonIndex || this.draggedPointIndex === null) return;
+
+      if (e.key.toLowerCase() === "z") {
         const poly = this.polygons[this.selectedPolygonIndex];
 
-        if (this.draggedPointIndex !== null && poly.points.length > 2) {
+        if (poly.points.length > 2) {
           poly.points.splice(this.draggedPointIndex, 1);
           this.draggedPointIndex = null;
           this.draw();
@@ -271,12 +291,15 @@ export default {
       }
     },
 
+    /* Завершение нового полигона */
     finishPolygon() {
       if (this.currentPolygon.points.length < 2) {
         alert("Полигон должен иметь минимум 2 точки");
         return;
       }
+
       this.polygons.push({ ...this.currentPolygon });
+
       this.currentPolygon = {
         name: "",
         type: "rope",
@@ -284,9 +307,72 @@ export default {
         timer: 0,
         isActive: true,
       };
+
       this.draw();
     },
 
+    /* Выбор полигона */
+    selectPolygon(index) {
+      this.selectedPolygonIndex = index;
+
+      if (index === null) {
+        this.polygonEditor = {
+          name: "",
+          type: "rope",
+          timer: 0,
+          isActive: true,
+        };
+        this.draw();
+        return;
+      }
+
+      const poly = this.polygons[index];
+
+      this.polygonEditor = {
+        name: poly.name || "",
+        type: poly.type,
+        timer: poly.timer ?? 0,
+        isActive: poly.isActive ?? true,
+      };
+
+      this.draw();
+    },
+
+    /* === Применение изменений к выбранному полигону === */
+    applyPolygonEdit() {
+      if (this.selectedPolygonIndex === null) return;
+
+      const poly = this.polygons[this.selectedPolygonIndex];
+      poly.name = this.polygonEditor.name;
+      poly.type = this.polygonEditor.type;
+      poly.timer = this.polygonEditor.timer;
+      poly.isActive = this.polygonEditor.isActive;
+
+      this.draw();
+    },
+
+    /* Удаление полигона */
+    deletePolygon(index) {
+      this.polygons.splice(index, 1);
+      this.selectedPolygonIndex = null;
+      this.draw();
+    },
+
+    /* Сохранить JSON */
+    saveJson() {
+      const data = { polygons: this.polygons };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "map.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+
+    /* Рисование */
     draw() {
       const canvas = this.$refs.canvas;
       const ctx = canvas.getContext("2d");
@@ -306,18 +392,20 @@ export default {
         );
       }
 
-      // полигоны
       this.polygons.forEach((poly, idx) => {
-        if (!poly.points.length) return;
-
         ctx.beginPath();
-        ctx.moveTo(poly.points[0].x * this.scale, poly.points[0].y * this.scale);
-
+        ctx.moveTo(
+          poly.points[0].x * this.scale,
+          poly.points[0].y * this.scale
+        );
         for (let i = 1; i < poly.points.length; i++) {
-          ctx.lineTo(poly.points[i].x * this.scale, poly.points[i].y * this.scale);
+          ctx.lineTo(
+            poly.points[i].x * this.scale,
+            poly.points[i].y * this.scale
+          );
         }
-
         ctx.closePath();
+
         ctx.fillStyle =
           idx === this.selectedPolygonIndex
             ? "rgba(255,0,0,0.3)"
@@ -327,11 +415,10 @@ export default {
         ctx.strokeStyle = idx === this.selectedPolygonIndex ? "red" : "lime";
         ctx.stroke();
 
-        // точки выбранного полигона
         if (idx === this.selectedPolygonIndex) {
           poly.points.forEach((pt) => {
             ctx.beginPath();
-            ctx.arc(pt.x * this.scale, pt.y * this.scale, 5, 0, Math.PI * 2);
+            ctx.arc(pt.x * this.scale, pt.y * this.scale, 5, 0, 2 * Math.PI);
             ctx.fillStyle = "yellow";
             ctx.fill();
             ctx.strokeStyle = "black";
@@ -340,49 +427,21 @@ export default {
         }
       });
 
-      // текущий полигон
       if (this.currentPolygon.points.length > 0) {
         ctx.beginPath();
         ctx.moveTo(
           this.currentPolygon.points[0].x * this.scale,
           this.currentPolygon.points[0].y * this.scale
         );
-
         for (let i = 1; i < this.currentPolygon.points.length; i++) {
           ctx.lineTo(
             this.currentPolygon.points[i].x * this.scale,
             this.currentPolygon.points[i].y * this.scale
           );
         }
-
         ctx.strokeStyle = "cyan";
         ctx.stroke();
       }
-    },
-
-    selectPolygon(index) {
-      this.selectedPolygonIndex = index;
-      this.draw();
-    },
-
-    deletePolygon(index) {
-      this.polygons.splice(index, 1);
-      this.selectedPolygonIndex = null;
-      this.draw();
-    },
-
-    saveJson() {
-      const data = { polygons: this.polygons };
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "map.json";
-      a.click();
-      URL.revokeObjectURL(url);
     },
   },
 };
@@ -397,7 +456,6 @@ export default {
   color: white;
   font-family: sans-serif;
 }
-
 .controls {
   margin-bottom: 10px;
   display: flex;
@@ -405,7 +463,6 @@ export default {
   gap: 10px;
   color: white;
 }
-
 .canvas-container {
   border: 1px solid #555;
   display: inline-block;
@@ -413,7 +470,6 @@ export default {
   width: 100%;
   text-align: center;
 }
-
 canvas {
   display: block;
   margin: 0 auto;
@@ -422,16 +478,13 @@ canvas {
   max-width: 100%;
   height: auto;
 }
-
 .polygon-list {
   margin-top: 10px;
 }
-
 .polygon-list ul {
   list-style: none;
   padding: 0;
 }
-
 .polygon-list li {
   margin: 5px 0;
   cursor: pointer;
