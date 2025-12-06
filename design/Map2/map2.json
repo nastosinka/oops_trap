@@ -533,7 +533,7 @@
       "isActive": true
     },
     {
-      "name": "water-suck",
+      "name": "water-flow",
       "type": "trap",
       "points": [
         {
