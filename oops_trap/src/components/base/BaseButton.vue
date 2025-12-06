@@ -8,23 +8,23 @@
 
 <script>
 export default {
-  name: 'BaseButton',
+  name: "BaseButton",
 
   props: {
     label: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
   },
 
-  emits: ['click'],
+  emits: ["click"],
 
   methods: {
     handleClick(event) {
-      this.$emit('click', event)
-    }
-  }
-}
+      this.$emit("click", event);
+    },
+  },
+};
 </script>
 
 <style>
@@ -41,7 +41,7 @@ export default {
   color: white;
   box-shadow: 0 4px 4px rgba(255, 255, 255, 0.4);
 
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
   font-weight: 400;
   font-style: normal;
   min-height: 44px;

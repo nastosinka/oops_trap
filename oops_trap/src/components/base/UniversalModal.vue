@@ -43,88 +43,88 @@
 </template>
 
 <script>
-import UniversalForm from '@/components/base/UniversalForm.vue'
-import RulesModal from '@/components/base/RulesModal.vue'
-import StatsTable from '@/components/base/StatsTable.vue'
-import SettingsModal from '@/components/base/SettingsModal.vue'
+import UniversalForm from "@/components/base/UniversalForm.vue";
+import RulesModal from "@/components/base/RulesModal.vue";
+import StatsTable from "@/components/base/StatsTable.vue";
+import SettingsModal from "@/components/base/SettingsModal.vue";
 
 export default {
-  name: 'UniversalModal',
+  name: "UniversalModal",
   components: {
     UniversalForm,
     RulesModal,
     StatsTable,
-    SettingsModal
+    SettingsModal,
   },
   props: {
     title: {
       type: String,
-      default: 'Modal'
+      default: "Modal",
     },
     type: {
       type: String,
-      default: 'auth' // 'auth', 'rules', 'custom'
+      default: "auth", // 'auth', 'rules', 'custom'
     },
     fields: {
       type: Array,
-      default: () => ['name', 'password', 'confirmPassword']
+      default: () => ["name", "password", "confirmPassword"],
     },
     submitText: {
       type: String,
-      default: 'Sign Up'
+      default: "Sign Up",
     },
     initialData: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     initialSection: {
       type: String,
-      default: 'common'
+      default: "common",
     },
     content: {
       type: String,
-      default: ''
+      default: "",
     },
     statsData: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     players: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     initialSettings: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
 
-  emits: ['close', 'submit', 'settings-apply'],
+  emits: ["close", "submit", "settings-apply"],
 
   computed: {
     modalClass() {
       return {
-        'modal--rules': this.type === 'rules',
-        'modal--stats': this.type === 'stats'
-      }
-    }
+        "modal--rules": this.type === "rules",
+        "modal--stats": this.type === "stats",
+      };
+    },
   },
 
   methods: {
     closeModal() {
-      this.$emit('close')
+      this.$emit("close");
     },
 
     handleAuthSubmit(formData) {
-      this.$emit('submit', formData)
+      this.$emit("submit", formData);
     },
 
     handleSettingsApply(settings) {
-      this.$emit('settings-apply', settings)
-      this.closeModal()
-    }
-  }
-}
+      this.$emit("settings-apply", settings);
+      this.closeModal();
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -165,7 +165,7 @@ export default {
   font-size: 28px;
   font-weight: 600;
   color: white;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
 }
 
 .modal__close {
