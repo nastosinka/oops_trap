@@ -26,9 +26,6 @@ export default {
             idleFrame,
             animationFrames: [walk1, walk2],
 
-            //-----------------------------
-            //coordinates now in PIXELS
-            //-----------------------------
             player: {
                 x: 100,
                 y: 100,

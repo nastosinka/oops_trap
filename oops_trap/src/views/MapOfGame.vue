@@ -19,8 +19,8 @@ const gameContentRef = ref(null)
 const runnerTestRef = ref(null)
 
 // Базовое (референсное) разрешение игры
-const BASE_WIDTH = 1280
-const BASE_HEIGHT = 720
+const BASE_WIDTH = 1920
+const BASE_HEIGHT = 1080
 
 const gameArea = ref({ 
     width: 0, 
@@ -77,13 +77,6 @@ const updateScreenSize = () => {
         marginLeft: marginLeft
     }
     
-    console.log('🎮 Игровая область обновлена:', {
-        размеры: `${gameWidth}x${gameHeight}`,
-        масштаб: scale.toFixed(3),
-        окно: `${windowWidth}x${windowHeight}`,
-        отступы: `top: ${marginTop}px, left: ${marginLeft}px`
-    })
-    
     // Передаем данные в RunnerTest
     if (runnerTestRef.value && typeof runnerTestRef.value.updateGameArea === 'function') {
         runnerTestRef.value.updateGameArea(gameArea.value)
@@ -126,13 +119,13 @@ defineExpose({
     left: 0;
     margin: 0;
     padding: 0;
-    background-color: #000000; /* Черные полосы */
+    background-color: #2c3e50; /* Черные полосы */
     overflow: hidden;
 }
 
 .game-content {
     position: relative;
     background-color: #2c3e50;
-    transition: all 0.3s ease; /* ← Вот и вся плавность! */
+    transition: all 0.3s ease; 
 }
 </style>
