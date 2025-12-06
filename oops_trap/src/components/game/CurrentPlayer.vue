@@ -1,11 +1,11 @@
 <template>
-  <div class="game-field" ref="gameField">
+  <div ref="gameField" class="game-field">
     <img
       class="player"
       :src="currentSprite"
       :style="{
         left: player.x + '%',
-        top: player.y + '%'
+        top: player.y + '%',
       }"
     />
   </div>
@@ -27,7 +27,6 @@ export default {
       //-------------
       //userId: null, // ← будет храниться id игрока из Pinia / JWT
 
-
       //-----------------------------
       //images for walk
       //-----------------------------
@@ -35,14 +34,14 @@ export default {
       animationFrames: [walk1, walk2],
 
       player: {
-        x: 10,  //world units (0–100)
+        x: 10, //world units (0–100)
         y: 10,
-        speed: 1
+        speed: 1,
       },
 
       isMoving: false,
       animationIndex: 0,
-      animationInterval: null
+      animationInterval: null,
     };
   },
 
@@ -52,7 +51,7 @@ export default {
       return this.isMoving
         ? this.animationFrames[this.animationIndex]
         : this.idleFrame;
-    }
+    },
   },
 
   mounted() {
@@ -148,7 +147,7 @@ export default {
     //     y: this.player.y
     //   });
     // }
-  }
+  },
 };
 </script>
 
@@ -167,6 +166,6 @@ export default {
   position: absolute;
   width: 32px;
   height: 32px;
-  image-rendering: pixelated; 
+  image-rendering: pixelated;
 }
 </style>

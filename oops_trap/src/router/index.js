@@ -38,7 +38,7 @@ const routes = [
     path: "/map",
     name: "MapOfGame",
     component: () => import("@/views/MapOfGame.vue"),
-  }
+  },
 ];
 
 const router = createRouter({
