@@ -6,24 +6,24 @@
 
 <script>
 export default {
-  name: 'MyRouterLink',
+  name: "MyRouterLink",
   props: {
     to: {
       type: String,
-      default: ''
+      default: "",
     },
     title: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
   },
   methods: {
     goToAnother() {
-      this.$router.push(this.to)
+      this.$router.push(this.to);
     },
     linkReturn() {
-      return this.to
-    }
-  }
-}
+      return this.to;
+    },
+  },
+};
 </script>

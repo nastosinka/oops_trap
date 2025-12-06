@@ -9,7 +9,7 @@
         <div class="accordion-header" @click="toggleSection('common')">
           <h3 class="accordion-title">Common Rules</h3>
           <span class="accordion-icon">{{
-            activeSection === 'common' ? '−' : '+'
+            activeSection === "common" ? "−" : "+"
           }}</span>
         </div>
         <div v-if="activeSection === 'common'" class="accordion-content">
@@ -77,7 +77,7 @@
         <div class="accordion-header" @click="toggleSection('trapmaker')">
           <h3 class="accordion-title">Trapmaker Rules</h3>
           <span class="accordion-icon">{{
-            activeSection === 'trapmaker' ? '−' : '+'
+            activeSection === "trapmaker" ? "−" : "+"
           }}</span>
         </div>
         <div v-if="activeSection === 'trapmaker'" class="accordion-content">
@@ -108,7 +108,7 @@
         <div class="accordion-header" @click="toggleSection('runner')">
           <h3 class="accordion-title">Runner Rules</h3>
           <span class="accordion-icon">{{
-            activeSection === 'runner' ? '−' : '+'
+            activeSection === "runner" ? "−" : "+"
           }}</span>
         </div>
         <div v-if="activeSection === 'runner'" class="accordion-content">
@@ -139,7 +139,7 @@
         <div class="accordion-header" @click="toggleSection('maps')">
           <h3 class="accordion-title">Maps & Environment</h3>
           <span class="accordion-icon">{{
-            activeSection === 'maps' ? '−' : '+'
+            activeSection === "maps" ? "−" : "+"
           }}</span>
         </div>
         <div v-if="activeSection === 'maps'" class="accordion-content">
@@ -323,27 +323,27 @@
 
 <script>
 export default {
-  name: 'RulesModal',
+  name: "RulesModal",
 
   props: {
     initialSection: {
       type: String,
-      default: 'common'
-    }
+      default: "common",
+    },
   },
 
   data() {
     return {
-      activeSection: this.initialSection
-    }
+      activeSection: this.initialSection,
+    };
   },
 
   methods: {
     toggleSection(section) {
-      this.activeSection = this.activeSection === section ? null : section
-    }
-  }
-}
+      this.activeSection = this.activeSection === section ? null : section;
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -380,7 +380,7 @@ export default {
   font-size: 1.2rem;
   font-weight: 600;
   color: #f5f5f5;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
 }
 
 .accordion-icon {
@@ -406,7 +406,7 @@ export default {
   color: #f5f5f5;
   margin: 1.5rem 0 0.5rem 0;
   font-size: 1.1rem;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
 }
 
 .rules-text-content h4:first-child {
