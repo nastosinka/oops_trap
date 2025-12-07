@@ -381,7 +381,6 @@ export default {
 
     async exitLobby() {
       console.log("🚪 Exiting lobby...");
-      //const currentUserId = this.userStore.userId;
 
       try {
         console.log("👋 Player - leaving lobby");

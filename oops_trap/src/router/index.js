@@ -24,6 +24,12 @@ const routes = [
     name: "Game",
     component: () => import("@/views/GamePage.vue"),
   },
+  {
+    path: "/map-edit",
+    name: "MapEdit",
+    component: () => import("@/views/MapEditPage.vue"),
+    //meta: { devOnly: true }
+  },
 ];
 
 const router = createRouter({
