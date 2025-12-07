@@ -1,122 +1,115 @@
 <template>
   <div ref="gameField" class="game-field">
-    <img class="player" :src="currentSprite" :style="playerStyle" />
+    <div
+      class="player"
+      :class="playerClasses"
+      :style="playerStyle"
+    ></div>
   </div>
 </template>
 
 <script>
-// import { useUserStore } from "@/stores/user";
-import idleFrame from "@/assets/images/players/1/bl1.png";
-import walk1 from "@/assets/images/players/1/bl2.png";
-import walk2 from "@/assets/images/players/1/bl1.png";
+  import idle from "@/assets/images/players/1/bp1.png";
+  import walk1 from "@/assets/images/players/1/bp1.png";
+  import walk2 from "@/assets/images/players/1/bp2.png";
 
-export default {
-  name: "GamePlayer",
+  export default {
+    name: "GamePlayer",
 
-  data() {
-    return {
-      //-------------
-      //auth
-      //-------------
-      //userId: null,  ← будет храниться id игрока из Pinia / JWT
+    data() {
+      return {
+        idle,
+        walk1,
+        walk2,
 
-      //-----------------------------
-      //images for walk
-      //-----------------------------
-      idleFrame,
-      animationFrames: [walk1, walk2],
+        player: {
+          x: 100,
+          y: 100,
+          speed: 4,
+          dir: "right",
+        },
 
-      player: {
-        x: 100,
-        y: 100,
-        speed: 15,
+        moving: {
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+        },
+
+        animLoop: null,
+
+        gameArea: {
+          width: 0,
+          height: 0,
+          scale: 1,
+          baseWidth: 1280,
+          baseHeight: 720,
+        },
+      };
+    },
+
+    computed: {
+      playerClasses() {
+        return {
+          walking: this.isWalking,
+          left: this.player.dir === "left",
+          right: this.player.dir === "right",
+        };
       },
 
-      isMoving: false,
-      animationIndex: 0,
-      animationInterval: null,
-
-      //-----------------------------
-      // game area data (from parent)
-      //-----------------------------
-      gameArea: {
-        width: 0,
-        height: 0,
-        scale: 1,
-        baseWidth: 1280,
-        baseHeight: 720,
+      isWalking() {
+        return (
+          this.moving.left ||
+          this.moving.right ||
+          this.moving.up ||
+          this.moving.down
+        );
       },
-    };
-  },
 
-  computed: {
-    //Текущий отображаемый кадр
-    currentSprite() {
-      return this.isMoving
-        ? this.animationFrames[this.animationIndex]
-        : this.idleFrame;
-    },
+      basePlayerSize() {
+        return {
+          width: 50,
+          height: 80,
+        };
+      },
 
-    //--------------------------------------
-    // base player size at scale=1
-    //--------------------------------------
-    basePlayerSize() {
-      return {
-        width: 50,
-        height: 80,
-      };
-    },
+      playerSize() {
+        return {
+          width: this.basePlayerSize.width * this.gameArea.scale,
+          height: this.basePlayerSize.height * this.gameArea.scale,
+        };
+      },
 
-    // масштабированный размер челикуса
-    playerSize() {
-      return {
-        width: this.basePlayerSize.width * this.gameArea.scale,
-        height: this.basePlayerSize.height * this.gameArea.scale,
-      };
-    },
+      actualSpeed() {
+        return this.player.speed * this.gameArea.scale;
+      },
 
-    // масштабированная скорость челикуса
-    actualSpeed() {
-      return this.player.speed * this.gameArea.scale;
+      playerStyle() {
+        return {
+          left: this.player.x + "px",
+          top: this.player.y + "px",
+          width: this.playerSize.width + "px",
+          height: this.playerSize.height + "px",
+        };
+      },
     },
-
-    // полный набор масштабируемых признаков игрока
-    playerStyle() {
-      return {
-        left: this.player.x + "px",
-        top: this.player.y + "px",
-        width: this.playerSize.width + "px",
-        height: this.playerSize.height + "px",
-      };
-    },
-  },
 
   mounted() {
-    //-----------------------------
-    //load auth data
-    //-----------------------------
-    // const userStore = useUserStore();
-    // this.userId = userStore.userId;
+    window.addEventListener("keydown", this.keyDown);
+    window.addEventListener("keyup", this.keyUp);
 
-    window.addEventListener("keydown", this.handleMove);
-    window.addEventListener("keyup", this.stopAnimationSafely);
-
-    // NEW: auto detect size
+    this.startLoop();
     this.updateParentBounds();
-
-    // NEW: find parent MapOfGame
     this.findAndConnectToParent();
   },
 
   beforeUnmount() {
-    window.removeEventListener("keydown", this.handleMove);
-    window.removeEventListener("keyup", this.stopAnimationSafely);
+    window.removeEventListener("keydown", this.keyDown);
+    window.removeEventListener("keyup", this.keyUp);
+    cancelAnimationFrame(this.animLoop);
   },
 
   methods: {
-    //--------------------------------------
-    // receive scale + boundaries from parent
-    //--------------------------------------
     updateGameArea(newGameArea) {
       const oldScale = this.gameArea.scale;
       const newScale = newGameArea.scale;
@@ -132,10 +125,6 @@ export default {
 
       this.keepInsideParent();
     },
-
-    //--------------------------------------
-    // search parent component with getGameArea()
-    //--------------------------------------
     findAndConnectToParent() {
       let parent = this.$parent;
       let attempts = 0;
@@ -155,7 +144,59 @@ export default {
       // fallback
       this.updateParentBounds();
     },
+    
+    keyDown(e) {
+      const k = e.key.toLowerCase();
+      if (k === "a") this.moving.left = true;
+      if (k === "d") this.moving.right = true;
+      if (k === "w") this.moving.up = true;
+      if (k === "s") this.moving.down = true;
 
+      if (k === "a") this.player.dir = "left";
+      if (k === "d") this.player.dir = "right";
+    },
+
+    keyUp(e) {
+      const k = e.key.toLowerCase();
+      if (k === "a") this.moving.left = false;
+      if (k === "d") this.moving.right = false;
+      if (k === "w") this.moving.up = false;
+      if (k === "s") this.moving.down = false;
+    },
+
+    startLoop() {
+      const step = () => {
+        let speed = this.actualSpeed;
+
+        if (this.moving.left) this.player.x -= speed;
+        if (this.moving.right) this.player.x += speed;
+        if (this.moving.up) this.player.y -= speed;
+        if (this.moving.down) this.player.y += speed;
+
+        this.keepInsideParent();
+
+        this.animLoop = requestAnimationFrame(step);
+      };
+
+      this.animLoop = requestAnimationFrame(step);
+    },
+
+    keepInsideParent() {
+      const W = this.gameArea.width;
+      const H = this.gameArea.height;
+
+      const pw = this.playerSize.width;
+      const ph = this.playerSize.height;
+
+      if (!W || !H) return;
+
+      if (this.player.x < 0) this.player.x = 0;
+      if (this.player.y < 0) this.player.y = 0;
+
+      if (this.player.x > W - pw) this.player.x = W - pw;
+      if (this.player.y > H - ph) this.player.y = H - ph;
+    },
+    
     //--------------------------------------
     // fallback auto-resolution of bounds
     //--------------------------------------
@@ -176,114 +217,45 @@ export default {
 
       this.keepInsideParent();
     },
-
-    handleMove(event) {
-      const k = event.key.toLowerCase();
-      let moved = false;
-
-      switch (k) {
-        case "w":
-          this.player.y -= this.actualSpeed;
-          moved = true;
-          break;
-
-        case "s":
-          this.player.y += this.actualSpeed;
-          moved = true;
-          break;
-
-        case "a":
-          this.player.x -= this.actualSpeed;
-          moved = true;
-          break;
-
-        case "d":
-          this.player.x += this.actualSpeed;
-          moved = true;
-          break;
-      }
-
-      if (moved) {
-        this.isMoving = true;
-        this.startAnimation();
-        this.keepInsideParent();
-
-        //-----------------------------
-        //send movement to server
-        //-----------------------------
-        // this.sendMoveToServer();
-      }
-    },
-
-    //сохраняем игрока внутри экрана родителя
-    keepInsideParent() {
-      const W = this.gameArea.width;
-      const H = this.gameArea.height;
-
-      const pw = this.playerSize.width;
-      const ph = this.playerSize.height;
-
-      if (!W || !H) return;
-
-      if (this.player.x < 0) this.player.x = 0;
-      if (this.player.y < 0) this.player.y = 0;
-
-      if (this.player.x > W - pw) this.player.x = W - pw;
-      if (this.player.y > H - ph) this.player.y = H - ph;
-    },
-
-    //-----------------------------
-    //animation
-    //-----------------------------
-    startAnimation() {
-      if (this.animationInterval) return;
-
-      this.animationInterval = setInterval(() => {
-        this.animationIndex =
-          (this.animationIndex + 1) % this.animationFrames.length;
-      }, 200); //скорость смены кадров
-    },
-
-    stopAnimationSafely() {
-      //вызывается, когда отпускаются wasd
-      this.isMoving = false;
-      this.stopAnimation();
-    },
-
-    stopAnimation() {
-      clearInterval(this.animationInterval);
-      this.animationInterval = null;
-      this.animationIndex = 0; //вернуться к idle
-    },
-
-    //-----------------------------
-    //websocket
-    //-----------------------------
-    // sendMoveToServer() {
-    //   gameSocket.emit("playerMove", {
-    //     userId: this.userId,
-    //     x: this.player.x,
-    //     y: this.player.y
-    //   });
-    // }
   },
 };
+
 </script>
 
 <style>
-.game-field {
+  .game-field {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #f0f0f0;
+  inset: 0;
   overflow: hidden;
+  background: #ddd;
 }
 
 .player {
+  background-image: url("@/assets/images/players/1/bp1.png");
   position: absolute;
   image-rendering: pixelated;
+  background-size: contain;
+  background-repeat: no-repeat;
   z-index: 10;
 }
+
+/* direction */
+.player.right {
+  transform: scaleX(1);
+}
+.player.left {
+  transform: scaleX(-1);
+}
+
+/* walking animation */
+.player.walking {
+  animation: walkAnim 0.2s steps(2) infinite;
+}
+
+@keyframes walkAnim {
+  0%   { background-image: url("@/assets/images/players/1/bp1.png"); }
+  50%  { background-image: url("@/assets/images/players/1/bp2.png"); }
+  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
+}
+
 </style>
