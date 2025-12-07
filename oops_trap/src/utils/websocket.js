@@ -1,7 +1,7 @@
 export function createGameSocket(lobbyId) {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   // const host = import.meta.env.VITE_SERVER_IP || window.location.host;
-  const host = "localhost";
+  const host = import.meta.env.VITE_SERVER_IP2 || "localhost";
   console.log(`${protocol}//${host}/ws/game/${lobbyId}`);
   return new WebSocket(`${protocol}//${host}/ws/game/${lobbyId}`);
 }
