@@ -94,19 +94,19 @@ export default {
       mapImage: null,
       polygons: [],
       currentPolygon: {
-        name: '',
-        type: 'rope',
+        name: "",
+        type: "rope",
         points: [],
         timer: 0,
-        isActive: true
+        isActive: true,
       },
 
       /** объект, через который редактируется выбранный полигон */
       polygonEditor: {
-        name: '',
-        type: 'rope',
+        name: "",
+        type: "rope",
         timer: 0,
-        isActive: true
+        isActive: true,
       },
 
       selectedPolygonIndex: null,
@@ -114,116 +114,116 @@ export default {
 
       scale: 1,
       canvasWidth: 800,
-      canvasHeight: 600
-    }
+      canvasHeight: 600,
+    };
   },
 
   mounted() {
-    window.addEventListener('resize', this.onWindowResize)
-    window.addEventListener('keydown', this.onKeyDown)
-    this.onWindowResize()
+    window.addEventListener("resize", this.onWindowResize);
+    window.addEventListener("keydown", this.onKeyDown);
+    this.onWindowResize();
   },
 
   beforeUnmount() {
-    window.removeEventListener('resize', this.onWindowResize)
-    window.removeEventListener('keydown', this.onKeyDown)
+    window.removeEventListener("resize", this.onWindowResize);
+    window.removeEventListener("keydown", this.onKeyDown);
   },
 
   methods: {
     /* Масштабирование */
     onWindowResize() {
-      const container = this.$refs.canvasContainer
-      if (!container || !this.mapImage) return
+      const container = this.$refs.canvasContainer;
+      if (!container || !this.mapImage) return;
 
-      const maxWidth = container.clientWidth
-      const maxHeight = window.innerHeight - container.offsetTop - 20
+      const maxWidth = container.clientWidth;
+      const maxHeight = window.innerHeight - container.offsetTop - 20;
 
-      const scaleX = maxWidth / this.mapImage.width
-      const scaleY = maxHeight / this.mapImage.height
+      const scaleX = maxWidth / this.mapImage.width;
+      const scaleY = maxHeight / this.mapImage.height;
 
-      this.scale = Math.min(scaleX, scaleY)
+      this.scale = Math.min(scaleX, scaleY);
 
-      this.canvasWidth = this.mapImage.width * this.scale
-      this.canvasHeight = this.mapImage.height * this.scale
+      this.canvasWidth = this.mapImage.width * this.scale;
+      this.canvasHeight = this.mapImage.height * this.scale;
 
-      const canvas = this.$refs.canvas
-      canvas.width = this.canvasWidth
-      canvas.height = this.canvasHeight
-      this.draw()
+      const canvas = this.$refs.canvas;
+      canvas.width = this.canvasWidth;
+      canvas.height = this.canvasHeight;
+      this.draw();
     },
 
     /* Загрузка картинки карты */
     onMapFileChange(event) {
-      const file = event.target.files[0]
-      if (!file) return
+      const file = event.target.files[0];
+      if (!file) return;
 
-      const reader = new FileReader()
-      reader.onload = e => {
-        const img = new Image()
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
         img.onload = () => {
-          this.mapImage = img
-          this.onWindowResize()
-        }
-        img.src = e.target.result
-      }
-      reader.readAsDataURL(file)
+          this.mapImage = img;
+          this.onWindowResize();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     },
 
     /* Загрузка JSON */
     onJsonFileChange(event) {
-      const file = event.target.files[0]
-      if (!file) return
+      const file = event.target.files[0];
+      if (!file) return;
 
-      const reader = new FileReader()
-      reader.onload = e => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         try {
-          const data = JSON.parse(e.target.result)
-          this.polygons = data.polygons || []
-          this.selectPolygon(null)
-          this.draw()
+          const data = JSON.parse(e.target.result);
+          this.polygons = data.polygons || [];
+          this.selectPolygon(null);
+          this.draw();
         } catch (err) {
-          alert('Неверный JSON файл')
+          alert("Неверный JSON файл");
         }
-      }
-      reader.readAsText(file)
+      };
+      reader.readAsText(file);
     },
 
     /* Перевод координат */
     transformMouseToImage(x, y) {
-      return { x: x / this.scale, y: y / this.scale }
+      return { x: x / this.scale, y: y / this.scale };
     },
 
     /* Клик мыши */
     onMouseDown(event) {
-      const rect = this.$refs.canvas.getBoundingClientRect()
+      const rect = this.$refs.canvas.getBoundingClientRect();
       const mousePos = this.transformMouseToImage(
         event.clientX - rect.left,
         event.clientY - rect.top
-      )
+      );
 
       /* --- если выбран полигон → редактируем --- */
       if (this.selectedPolygonIndex !== null) {
-        const poly = this.polygons[this.selectedPolygonIndex]
+        const poly = this.polygons[this.selectedPolygonIndex];
 
         // ищем точку для перетаскивания
-        this.draggedPointIndex = null
+        this.draggedPointIndex = null;
         for (let i = 0; i < poly.points.length; i++) {
-          const pt = poly.points[i]
-          const dx = pt.x - mousePos.x
-          const dy = pt.y - mousePos.y
+          const pt = poly.points[i];
+          const dx = pt.x - mousePos.x;
+          const dy = pt.y - mousePos.y;
           if (Math.sqrt(dx * dx + dy * dy) < 10 / this.scale) {
-            this.draggedPointIndex = i
-            return
+            this.draggedPointIndex = i;
+            return;
           }
         }
 
         // если не нашли точку — вставляем новую на ближайшее ребро
-        let bestDist = Infinity
-        let bestIndex = 0
+        let bestDist = Infinity;
+        let bestIndex = 0;
 
         for (let i = 0; i < poly.points.length; i++) {
-          const a = poly.points[i]
-          const b = poly.points[(i + 1) % poly.points.length]
+          const a = poly.points[i];
+          const b = poly.points[(i + 1) % poly.points.length];
 
           const t = Math.max(
             0,
@@ -233,60 +233,60 @@ export default {
                 (mousePos.y - a.y) * (b.y - a.y)) /
                 ((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
             )
-          )
+          );
 
-          const proj = { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) }
-          const dist = Math.hypot(mousePos.x - proj.x, mousePos.y - proj.y)
+          const proj = { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) };
+          const dist = Math.hypot(mousePos.x - proj.x, mousePos.y - proj.y);
 
           if (dist < bestDist) {
-            bestDist = dist
-            bestIndex = i + 1
+            bestDist = dist;
+            bestIndex = i + 1;
           }
         }
 
-        poly.points.splice(bestIndex, 0, mousePos)
-        this.draggedPointIndex = bestIndex
-        this.draw()
-        return
+        poly.points.splice(bestIndex, 0, mousePos);
+        this.draggedPointIndex = bestIndex;
+        this.draw();
+        return;
       }
 
       /* --- иначе создаём новый полигон --- */
-      this.currentPolygon.points.push(mousePos)
-      this.draw()
+      this.currentPolygon.points.push(mousePos);
+      this.draw();
     },
 
     /* Движение мыши */
     onMouseMove(event) {
       if (this.draggedPointIndex === null || this.selectedPolygonIndex === null)
-        return
+        return;
 
-      const rect = this.$refs.canvas.getBoundingClientRect()
+      const rect = this.$refs.canvas.getBoundingClientRect();
       const mousePos = this.transformMouseToImage(
         event.clientX - rect.left,
         event.clientY - rect.top
-      )
+      );
 
-      const poly = this.polygons[this.selectedPolygonIndex]
-      poly.points[this.draggedPointIndex] = mousePos
+      const poly = this.polygons[this.selectedPolygonIndex];
+      poly.points[this.draggedPointIndex] = mousePos;
 
-      this.draw()
+      this.draw();
     },
 
     onMouseUp() {
-      this.draggedPointIndex = null
+      this.draggedPointIndex = null;
     },
 
     /* Удаление точки кнопкой Z */
     onKeyDown(e) {
-      if (!this.selectedPolygonIndex || this.draggedPointIndex === null) return
+      if (!this.selectedPolygonIndex || this.draggedPointIndex === null) return;
 
-      if (e.key.toLowerCase() === 'z') {
-        const poly = this.polygons[this.selectedPolygonIndex]
+      if (e.key.toLowerCase() === "z") {
+        const poly = this.polygons[this.selectedPolygonIndex];
 
         if (poly.points.length > 2) {
-          poly.points.splice(this.draggedPointIndex, 1)
-          this.draggedPointIndex = null
-          this.draw()
+          poly.points.splice(this.draggedPointIndex, 1);
+          this.draggedPointIndex = null;
+          this.draw();
         }
       }
     },
@@ -294,93 +294,93 @@ export default {
     /* Завершение нового полигона */
     finishPolygon() {
       if (this.currentPolygon.points.length < 2) {
-        alert('Полигон должен иметь минимум 2 точки')
-        return
+        alert("Полигон должен иметь минимум 2 точки");
+        return;
       }
 
-      this.polygons.push({ ...this.currentPolygon })
+      this.polygons.push({ ...this.currentPolygon });
 
       this.currentPolygon = {
-        name: '',
-        type: 'rope',
+        name: "",
+        type: "rope",
         points: [],
         timer: 0,
-        isActive: true
-      }
+        isActive: true,
+      };
 
-      this.draw()
+      this.draw();
     },
 
     /* Выбор полигона */
     selectPolygon(index) {
-      this.selectedPolygonIndex = index
+      this.selectedPolygonIndex = index;
 
       if (index === null) {
         this.polygonEditor = {
-          name: '',
-          type: 'rope',
+          name: "",
+          type: "rope",
           timer: 0,
-          isActive: true
-        }
-        this.draw()
-        return
+          isActive: true,
+        };
+        this.draw();
+        return;
       }
 
-      const poly = this.polygons[index]
+      const poly = this.polygons[index];
 
       this.polygonEditor = {
-        name: poly.name || '',
+        name: poly.name || "",
         type: poly.type,
         timer: poly.timer ?? 0,
-        isActive: poly.isActive ?? true
-      }
+        isActive: poly.isActive ?? true,
+      };
 
-      this.draw()
+      this.draw();
     },
 
     /* === Применение изменений к выбранному полигону === */
     applyPolygonEdit() {
-      if (this.selectedPolygonIndex === null) return
+      if (this.selectedPolygonIndex === null) return;
 
-      const poly = this.polygons[this.selectedPolygonIndex]
-      poly.name = this.polygonEditor.name
-      poly.type = this.polygonEditor.type
-      poly.timer = this.polygonEditor.timer
-      poly.isActive = this.polygonEditor.isActive
+      const poly = this.polygons[this.selectedPolygonIndex];
+      poly.name = this.polygonEditor.name;
+      poly.type = this.polygonEditor.type;
+      poly.timer = this.polygonEditor.timer;
+      poly.isActive = this.polygonEditor.isActive;
 
-      this.draw()
+      this.draw();
     },
 
     /* Удаление полигона */
     deletePolygon(index) {
-      this.polygons.splice(index, 1)
-      this.selectedPolygonIndex = null
-      this.draw()
+      this.polygons.splice(index, 1);
+      this.selectedPolygonIndex = null;
+      this.draw();
     },
 
     /* Сохранить JSON */
     saveJson() {
-      const data = { polygons: this.polygons }
+      const data = { polygons: this.polygons };
       const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json'
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'map.json'
-      a.click()
-      URL.revokeObjectURL(url)
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "map.json";
+      a.click();
+      URL.revokeObjectURL(url);
     },
 
     /* Рисование */
     draw() {
-      const canvas = this.$refs.canvas
-      const ctx = canvas.getContext('2d')
+      const canvas = this.$refs.canvas;
+      const ctx = canvas.getContext("2d");
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#1e1e1e'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = "#1e1e1e";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       if (this.mapImage) {
         ctx.drawImage(
@@ -389,59 +389,62 @@ export default {
           0,
           this.mapImage.width * this.scale,
           this.mapImage.height * this.scale
-        )
+        );
       }
 
       this.polygons.forEach((poly, idx) => {
-        ctx.beginPath()
-        ctx.moveTo(poly.points[0].x * this.scale, poly.points[0].y * this.scale)
+        ctx.beginPath();
+        ctx.moveTo(
+          poly.points[0].x * this.scale,
+          poly.points[0].y * this.scale
+        );
         for (let i = 1; i < poly.points.length; i++) {
           ctx.lineTo(
             poly.points[i].x * this.scale,
             poly.points[i].y * this.scale
-          )
+          );
         }
-        ctx.closePath()
+        ctx.closePath();
 
         ctx.fillStyle =
           idx === this.selectedPolygonIndex
-            ? 'rgba(255,0,0,0.3)'
-            : 'rgba(0,255,0,0.2)'
-        ctx.fill()
+            ? "rgba(255,0,0,0.3)"
+            : "rgba(0,255,0,0.2)";
+        ctx.fill();
 
-        ctx.strokeStyle = idx === this.selectedPolygonIndex ? 'red' : 'lime'
-        ctx.stroke()
+        ctx.strokeStyle = idx === this.selectedPolygonIndex ? "red" : "lime";
+        ctx.stroke();
 
         if (idx === this.selectedPolygonIndex) {
-          poly.points.forEach(pt => {
-            ctx.beginPath()
-            ctx.arc(pt.x * this.scale, pt.y * this.scale, 5, 0, 2 * Math.PI)
-            ctx.fillStyle = 'yellow'
-            ctx.fill()
-            ctx.strokeStyle = 'black'
-            ctx.stroke()
-          })
+          poly.points.forEach((pt) => {
+            ctx.beginPath();
+            ctx.arc(pt.x * this.scale, pt.y * this.scale, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "yellow";
+            ctx.fill();
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+          });
         }
-      })
+      });
 
       if (this.currentPolygon.points.length > 0) {
-        ctx.beginPath()
+        ctx.beginPath();
         ctx.moveTo(
           this.currentPolygon.points[0].x * this.scale,
           this.currentPolygon.points[0].y * this.scale
-        )
+        );
         for (let i = 1; i < this.currentPolygon.points.length; i++) {
           ctx.lineTo(
             this.currentPolygon.points[i].x * this.scale,
             this.currentPolygon.points[i].y * this.scale
-          )
+          );
         }
-        ctx.strokeStyle = 'cyan'
-        ctx.stroke()
+        ctx.strokeStyle = "cyan";
+        ctx.stroke();
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>

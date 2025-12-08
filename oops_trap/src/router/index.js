@@ -1,51 +1,51 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import { createRouter, createWebHashHistory } from "vue-router";
+import { useUserStore } from "@/stores/user";
 
 const routes = [
   {
-    path: '/',
-    name: 'Home',
-    component: () => import('@/views/HomePage.vue')
+    path: "/",
+    name: "Home",
+    component: () => import("@/views/HomePage.vue"),
   },
   {
-    path: '/createLobby',
-    name: 'CreateLobby',
-    component: () => import('@/views/CreateLobbyPage.vue'),
-    meta: { requiresAuth: true }
+    path: "/createLobby",
+    name: "CreateLobby",
+    component: () => import("@/views/CreateLobbyPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
-    path: '/lobby',
-    name: 'Lobby',
-    component: () => import('@/views/LobbyPage.vue'),
-    meta: { requiresAuth: true }
+    path: "/lobby",
+    name: "Lobby",
+    component: () => import("@/views/LobbyPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
-    path: '/game/:id?',
-    name: 'Game',
-    component: () => import('@/views/GamePage.vue')
+    path: "/game/:id?",
+    name: "Game",
+    component: () => import("@/views/GamePage.vue"),
   },
   {
-    path: '/map-edit',
-    name: 'MapEdit',
-    component: () => import('@/views/MapEditPage.vue')
+    path: "/map-edit",
+    name: "MapEdit",
+    component: () => import("@/views/MapEditPage.vue"),
     //meta: { devOnly: true }
-  }
-]
+  },
+];
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
-})
+  routes,
+});
 
 router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
-  userStore.initializeUser()
+  const userStore = useUserStore();
+  userStore.initializeUser();
 
   if (to.meta.requiresAuth && !userStore.user) {
-    next('/')
+    next("/");
   } else {
-    next()
+    next();
   }
-})
+});
 
-export default router
+export default router;

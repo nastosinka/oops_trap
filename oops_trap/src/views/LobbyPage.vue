@@ -1,7 +1,7 @@
 <template>
   <div class="lobby-container">
     <div class="nickname">
-      {{ userName }} (ID: {{ userId }}) {{ isHost ? '👑' : '' }}
+      {{ userName }} (ID: {{ userId }}) {{ isHost ? "👑" : "" }}
     </div>
     <div class="content">
       <div class="lobby-code">Code: {{ lobbyCode }}</div>
@@ -57,30 +57,30 @@
 </template>
 
 <script>
-import BaseButton from '@/components/base/BaseButton.vue'
-import { Modal } from 'ant-design-vue'
-import UniversalModal from '@/components/base/UniversalModal.vue'
-import { useUserStore } from '@/stores/user'
-import { storeToRefs } from 'pinia'
-import { createGameSocket } from '@/utils/websocket'
+import BaseButton from "@/components/base/BaseButton.vue";
+import { Modal } from "ant-design-vue";
+import UniversalModal from "@/components/base/UniversalModal.vue";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { createGameSocket } from "@/utils/websocket";
 
 export default {
-  name: 'LobbyPage',
+  name: "LobbyPage",
   components: {
     BaseButton,
-    UniversalModal
+    UniversalModal,
   },
 
   setup() {
-    const userStore = useUserStore()
-    const { user, userId, userName } = storeToRefs(userStore)
+    const userStore = useUserStore();
+    const { user, userId, userName } = storeToRefs(userStore);
 
     return {
       userStore,
       user,
       userId,
-      userName
-    }
+      userName,
+    };
   },
 
   data() {
@@ -90,184 +90,184 @@ export default {
       showSettings: false,
       currentSettings: {},
       lobbyId: null,
-      lobbyStatus: 'waiting',
+      lobbyStatus: "waiting",
       pollInterval: null,
       currentGameId: null,
-      lobbyOwnerId: null // ID владельца лобби
-    }
+      lobbyOwnerId: null, // ID владельца лобби
+    };
   },
 
   computed: {
     lobbyCode() {
-      return this.lobbyId ? this.lobbyId.toString() : ''
+      return this.lobbyId ? this.lobbyId.toString() : "";
     },
     statusClass() {
       return {
-        'status-waiting': this.lobbyStatus === 'waiting',
-        'status-in-progress': this.lobbyStatus === 'in-progress',
-        'status-finished': this.lobbyStatus === 'finished'
-      }
-    }
+        "status-waiting": this.lobbyStatus === "waiting",
+        "status-in-progress": this.lobbyStatus === "in-progress",
+        "status-finished": this.lobbyStatus === "finished",
+      };
+    },
   },
 
   async created() {
-    console.log('🟡 LobbyPage created - initializing...')
-    this.userStore.initializeUser()
-    this.lobbyId = this.$route.query.id
+    console.log("🟡 LobbyPage created - initializing...");
+    this.userStore.initializeUser();
+    this.lobbyId = this.$route.query.id;
 
-    console.log('🔵 Lobby data:', {
+    console.log("🔵 Lobby data:", {
       lobbyId: this.lobbyId,
       userId: this.userId,
-      routeQuery: this.$route.query
-    })
+      routeQuery: this.$route.query,
+    });
 
     // Сначала проверяем, является ли пользователь хостом
-    await this.checkIfUserIsHost()
+    await this.checkIfUserIsHost();
 
-    this.startPolling()
-    this.fetchLobbyData()
+    this.startPolling();
+    this.fetchLobbyData();
   },
 
   beforeUnmount() {
-    this.stopPolling()
+    this.stopPolling();
   },
 
   methods: {
     // Проверяем, является ли пользователь хостом лобби
     async checkIfUserIsHost() {
       if (!this.lobbyId) {
-        this.isHost = false
-        return
+        this.isHost = false;
+        return;
       }
 
       try {
         const response = await fetch(
           `/api/lobby/lobbies/${this.lobbyId}/settings`,
           {
-            method: 'GET',
-            credentials: 'include'
+            method: "GET",
+            credentials: "include",
           }
-        )
+        );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (data.success && data.data) {
-          this.lobbyOwnerId = data.data.ownerId
-          this.isHost = data.data.ownerId === this.userId
+          this.lobbyOwnerId = data.data.ownerId;
+          this.isHost = data.data.ownerId === this.userId;
           console.log(
-            `🎮 User is ${this.isHost ? 'HOST' : 'PLAYER'} of lobby ${
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
               this.lobbyId
             }`
-          )
+          );
           console.log(
             `👑 Lobby owner ID: ${this.lobbyOwnerId}, User ID: ${this.userId}`
-          )
+          );
         } else {
-          this.isHost = false
+          this.isHost = false;
         }
       } catch (error) {
-        console.error('❌ Error checking host status:', error)
-        this.isHost = false
+        console.error("❌ Error checking host status:", error);
+        this.isHost = false;
       }
     },
 
     startPolling() {
       this.pollInterval = setInterval(() => {
-        this.fetchLobbyData()
-      }, 2000)
+        this.fetchLobbyData();
+      }, 2000);
     },
 
     stopPolling() {
       if (this.pollInterval) {
-        clearInterval(this.pollInterval)
-        this.pollInterval = null
+        clearInterval(this.pollInterval);
+        this.pollInterval = null;
       }
     },
 
     async fetchLobbyData() {
       try {
         // Получаем статус лобби
-        const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`
+        const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`;
         const statusResponse = await fetch(statusUrl, {
-          method: 'GET',
-          credentials: 'include'
-        })
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!statusResponse.ok) {
           throw new Error(
             `HTTP ${statusResponse.status} - ${statusResponse.statusText}`
-          )
+          );
         }
 
-        const statusData = await statusResponse.json()
+        const statusData = await statusResponse.json();
 
         if (statusData.success && statusData.data) {
-          const newStatus = statusData.data.status
-          this.lobbyStatus = newStatus
-          this.checkLobbyStatus()
+          const newStatus = statusData.data.status;
+          this.lobbyStatus = newStatus;
+          this.checkLobbyStatus();
         }
 
         // Получаем настройки лобби для актуальной информации о владельце
-        const settingsUrl = `/api/lobby/lobbies/${this.lobbyId}/settings`
+        const settingsUrl = `/api/lobby/lobbies/${this.lobbyId}/settings`;
         const settingsResponse = await fetch(settingsUrl, {
-          method: 'GET',
-          credentials: 'include'
-        })
+          method: "GET",
+          credentials: "include",
+        });
 
         if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json()
+          const settingsData = await settingsResponse.json();
           if (settingsData.success && settingsData.data) {
-            this.lobbyOwnerId = settingsData.data.ownerId
-            this.isHost = settingsData.data.ownerId === this.userId
+            this.lobbyOwnerId = settingsData.data.ownerId;
+            this.isHost = settingsData.data.ownerId === this.userId;
 
             // Обновляем текущие настройки
             this.currentSettings = {
-              map: settingsData.data.map || 'city',
+              map: settingsData.data.map || "city",
               mafia: settingsData.data.trapper || 1,
-              time: settingsData.data.time || 'normal'
-            }
+              time: settingsData.data.time || "normal",
+            };
           }
         }
 
         // Получаем список игроков
-        const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`
+        const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`;
         const playersResponse = await fetch(playersUrl, {
-          method: 'GET',
-          credentials: 'include'
-        })
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!playersResponse.ok) {
           throw new Error(
             `HTTP ${playersResponse.status} - ${statusResponse.statusText}`
-          )
+          );
         }
 
-        const playersData = await playersResponse.json()
+        const playersData = await playersResponse.json();
 
         // Обновляем список игроков, если он изменился
         const currentPlayersStr = JSON.stringify(
-          this.players.map(p => ({ id: p.id, name: p.name }))
-        )
+          this.players.map((p) => ({ id: p.id, name: p.name }))
+        );
         const newPlayersStr = JSON.stringify(
-          playersData.players.map(p => ({ id: p.id, name: p.name }))
-        )
+          playersData.players.map((p) => ({ id: p.id, name: p.name }))
+        );
 
         if (currentPlayersStr !== newPlayersStr) {
-          this.updatePlayersList(playersData.players)
+          this.updatePlayersList(playersData.players);
         }
       } catch (error) {
-        console.error('❌ Error fetching lobby data:', error)
+        console.error("❌ Error fetching lobby data:", error);
         // Не выбрасываем ошибку, чтобы поллинг продолжался
       }
     },
 
     async checkLobbyStatus() {
-      if (this.lobbyStatus === 'in-progress') {
-        await this.redirectToGamePage()
+      if (this.lobbyStatus === "in-progress") {
+        await this.redirectToGamePage();
       }
     },
 
@@ -275,138 +275,138 @@ export default {
       const updatedPlayers = players.map((player, index) => ({
         ...player,
         color: this.getPlayerColor(index),
-        isHost: player.id === this.lobbyOwnerId // Помечаем хоста
-      }))
+        isHost: player.id === this.lobbyOwnerId, // Помечаем хоста
+      }));
 
-      this.players = updatedPlayers
-      console.log('👥 Updated players list:', this.players)
+      this.players = updatedPlayers;
+      console.log("👥 Updated players list:", this.players);
     },
 
     getPlayerColor(index) {
       const colors = [
-        '#FF6B6B',
-        '#4ECDC4',
-        '#FFD166',
-        '#6A0572',
-        '#118AB2',
-        '#06D6A0',
-        '#EF476F',
-        '#FFD166',
-        '#118AB2',
-        '#06D6A0'
-      ]
-      return colors[index % colors.length]
+        "#FF6B6B",
+        "#4ECDC4",
+        "#FFD166",
+        "#6A0572",
+        "#118AB2",
+        "#06D6A0",
+        "#EF476F",
+        "#FFD166",
+        "#118AB2",
+        "#06D6A0",
+      ];
+      return colors[index % colors.length];
     },
 
     async handleSettingsApply(settings) {
-      const currentUserId = this.userStore.userId
+      const currentUserId = this.userStore.userId;
 
       if (!currentUserId) {
         Modal.error({
-          title: 'Error',
-          content: 'User ID not available. Please refresh the page.',
-          okText: 'OK'
-        })
-        return
+          title: "Error",
+          content: "User ID not available. Please refresh the page.",
+          okText: "OK",
+        });
+        return;
       }
 
       if (!this.isHost) {
         Modal.error({
-          title: 'Error',
-          content: 'Only the host can change settings.',
-          okText: 'OK'
-        })
-        return
+          title: "Error",
+          content: "Only the host can change settings.",
+          okText: "OK",
+        });
+        return;
       }
 
       const apiSettings = {
         ownerId: currentUserId,
         map: settings.map || 1,
-        time: settings.time || 'normal',
-        trapper: settings.mafia || 1
-      }
+        time: settings.time || "normal",
+        trapper: settings.mafia || 1,
+      };
 
       try {
         const response = await fetch(
           `/api/lobby/lobbies/${this.lobbyId}/settings`,
           {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json'
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(apiSettings),
-            credentials: 'include'
+            credentials: "include",
           }
-        )
+        );
 
         if (response.ok) {
           this.currentSettings = {
-            map: settings.map || 'city',
+            map: settings.map || "city",
             mafia: settings.mafia || 1,
-            time: settings.time || 'normal'
-          }
+            time: settings.time || "normal",
+          };
 
           Modal.success({
-            title: 'Success',
-            content: 'Settings updated',
-            okText: 'OK'
-          })
+            title: "Success",
+            content: "Settings updated",
+            okText: "OK",
+          });
         } else {
-          throw new Error(`HTTP ${response.status}`)
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
         Modal.error({
-          title: 'Error',
-          content: 'Failed to update settings',
-          okText: 'OK'
-        })
+          title: "Error",
+          content: "Failed to update settings",
+          okText: "OK",
+        });
       }
     },
 
     showExitConfirm() {
       Modal.confirm({
-        title: 'Exit Lobby',
+        title: "Exit Lobby",
         content: this.isHost
-          ? 'Are you sure you want to exit and delete the lobby?'
-          : 'Are you sure you want to leave the lobby?',
-        okText: 'Yes, Exit',
-        cancelText: 'Cancel',
-        okType: 'danger',
+          ? "Are you sure you want to exit and delete the lobby?"
+          : "Are you sure you want to leave the lobby?",
+        okText: "Yes, Exit",
+        cancelText: "Cancel",
+        okType: "danger",
         centered: true,
         onOk: () => {
-          this.exitLobby()
-        }
-      })
+          this.exitLobby();
+        },
+      });
     },
 
     async exitLobby() {
-      console.log('🚪 Exiting lobby...')
+      console.log("🚪 Exiting lobby...");
 
       try {
-        console.log('👋 Player - leaving lobby')
+        console.log("👋 Player - leaving lobby");
         const response = await fetch(
           `/api/lobby/lobbies/${this.lobbyId}/leave`,
           {
-            method: 'POST',
-            credentials: 'include'
+            method: "POST",
+            credentials: "include",
           }
-        )
+        );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        this.stopPolling()
-        this.$router.push('/createLobby')
+        this.stopPolling();
+        this.$router.push("/createLobby");
       } catch (error) {
-        console.error('❌ Exit lobby error:', error)
+        console.error("❌ Exit lobby error:", error);
         Modal.error({
-          title: 'Error',
+          title: "Error",
           content: this.isHost
             ? `Failed to delete lobby: ${error.message}`
             : `Failed to leave lobby: ${error.message}`,
-          okText: 'OK'
-        })
+          okText: "OK",
+        });
       }
     },
 
@@ -415,64 +415,64 @@ export default {
     async handleStart() {
       // если хост - создаёт подключение и меняет статус, первый уходит в игру
       console.log(
-        'Starting game flow... Current players count:',
+        "Starting game flow... Current players count:",
         this.players.length
-      )
+      );
 
       if (this.isHost) {
         if (this.players.length < 2) {
           Modal.warning({
-            title: 'Not enough players',
-            content: 'Need at least 2 players to start the game',
-            okText: 'OK'
-          })
-          return
+            title: "Not enough players",
+            content: "Need at least 2 players to start the game",
+            okText: "OK",
+          });
+          return;
         }
 
         if (!this.userStore.userId) {
           Modal.error({
-            title: 'Error',
-            content: 'User not authenticated. Please log in again.',
-            okText: 'OK'
-          })
-          return
+            title: "Error",
+            content: "User not authenticated. Please log in again.",
+            okText: "OK",
+          });
+          return;
         }
       }
 
       try {
         // создание сокета
         if (this.isHost) {
-          await this.createGameSocketConnection()
+          await this.createGameSocketConnection();
         }
         // смена статуса
         if (this.isHost) {
-          await this.updateLobbyStatusToInProgress()
+          await this.updateLobbyStatusToInProgress();
         }
         // уходит в игру
-        await this.redirectToGamePage()
+        await this.redirectToGamePage();
       } catch (error) {
-        console.error('❌ Game flow error:', error)
+        console.error("❌ Game flow error:", error);
         Modal.error({
-          title: 'Error',
-          content: 'Failed to start game: ' + error.message,
-          okText: 'OK'
-        })
+          title: "Error",
+          content: "Failed to start game: " + error.message,
+          okText: "OK",
+        });
       }
     },
 
     async redirectToGamePage() {
       // эта штука запускается для всех, когда статус "в процессе"
-      this.stopPolling()
+      this.stopPolling();
 
-      console.log('🔄 Redirecting to game:', this.lobbyId)
+      console.log("🔄 Redirecting to game:", this.lobbyId);
 
       try {
         // если не хост - создаем WebSocket соединение перед переходом (у хоста уже есть сокет)
         if (!this.isHost) {
           console.log(
-            '👤 Player - creating WebSocket connection before redirect'
-          )
-          await this.createGameSocketConnection()
+            "👤 Player - creating WebSocket connection before redirect"
+          );
+          await this.createGameSocketConnection();
         }
 
         // переходим в игру
@@ -480,16 +480,16 @@ export default {
           path: `/game/${this.lobbyId}`,
           query: {
             lobbyId: this.lobbyId,
-            isHost: this.isHost
-          }
-        })
+            isHost: this.isHost,
+          },
+        });
       } catch (error) {
-        console.error('❌ Failed to redirect to game:', error)
+        console.error("❌ Failed to redirect to game:", error);
         Modal.error({
-          title: 'Connection Error',
-          content: 'Failed to connect to game server',
-          okText: 'OK'
-        })
+          title: "Connection Error",
+          content: "Failed to connect to game server",
+          okText: "OK",
+        });
       }
     },
 
@@ -498,84 +498,84 @@ export default {
       const response = await fetch(
         `/api/lobby/lobbies/${this.lobbyId}/status`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            newStatus: 'in-progress'
+            newStatus: "in-progress",
           }),
-          credentials: 'include'
+          credentials: "include",
         }
-      )
+      );
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to update lobby status')
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update lobby status");
       }
 
-      const result = await response.json()
-      console.log('✅ Lobby status updated:', result)
+      const result = await response.json();
+      console.log("✅ Lobby status updated:", result);
 
       Modal.success({
-        title: 'Success',
-        content: 'Game started successfully! Redirecting to game...',
-        okText: 'OK'
-      })
+        title: "Success",
+        content: "Game started successfully! Redirecting to game...",
+        okText: "OK",
+      });
     },
 
     async createGameSocketConnection() {
       // создаём веб сокет и сохраняем в хранилище
-      console.log(`Пытаемся создать подключение с ${this.lobbyId}`)
+      console.log(`Пытаемся создать подключение с ${this.lobbyId}`);
       return new Promise((resolve, reject) => {
         try {
           // Создаем локальный WebSocket
-          const gameSocket = createGameSocket(this.lobbyId)
+          const gameSocket = createGameSocket(this.lobbyId);
 
           // Сохраняем сокет в store
-          this.userStore.setGameSocket(gameSocket, this.lobbyId, this.lobbyId)
+          this.userStore.setGameSocket(gameSocket, this.lobbyId, this.lobbyId);
 
-          console.log(`мы УдавЛось, дальше обработка`)
+          console.log(`мы УдавЛось, дальше обработка`);
 
           gameSocket.onopen = () => {
-            console.log('✅ Game WebSocket connected successfully')
+            console.log("✅ Game WebSocket connected successfully");
 
             // Отправляем инициализационное сообщение
             gameSocket.send(
               JSON.stringify({
-                type: 'init',
+                type: "init",
                 playerId: this.userId,
                 gameId: this.lobbyId,
-                action: 'player_ready',
-                isHost: this.isHost
+                action: "player_ready",
+                isHost: this.isHost,
               })
-            )
+            );
 
-            resolve(gameSocket)
-          }
+            resolve(gameSocket);
+          };
 
-          gameSocket.onerror = error => {
-            console.error('❌ Game WebSocket connection error:', error)
-            reject(new Error('Failed to connect to game server'))
-          }
+          gameSocket.onerror = (error) => {
+            console.error("❌ Game WebSocket connection error:", error);
+            reject(new Error("Failed to connect to game server"));
+          };
 
-          gameSocket.onclose = event => {
-            console.log('🔌 Game WebSocket closed:', event.code, event.reason)
-          }
+          gameSocket.onclose = (event) => {
+            console.log("🔌 Game WebSocket closed:", event.code, event.reason);
+          };
 
           // Таймаут для соединения
           setTimeout(() => {
             if (gameSocket.readyState !== WebSocket.OPEN) {
-              reject(new Error('WebSocket connection timeout'))
+              reject(new Error("WebSocket connection timeout"));
             }
-          }, 5000)
+          }, 5000);
         } catch (error) {
-          reject(error)
+          reject(error);
         }
-      })
-    }
-  }
-}
+      });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -635,14 +635,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url('@/assets/images/background.jpg') center/cover no-repeat;
+  background: url("@/assets/images/background.jpg") center/cover no-repeat;
   position: fixed;
   top: 0;
   left: 0;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Irish Grover', system-ui;
+  font-family: "Irish Grover", system-ui;
   color: #e5e5e5;
 }
 
