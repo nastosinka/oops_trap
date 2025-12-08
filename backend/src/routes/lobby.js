@@ -7,7 +7,6 @@ const lobbies = new Map();
 let nextLobbyId = 1;
 
 const games = new Map();
-module.exports = { lobbies, games };
 
 async function saveStatistic(data) {
   const { id_user, id_map, time, role } = data;
@@ -726,3 +725,5 @@ router.get('/lobbies/:id/status', requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.lobbies = lobbies;
+module.exports.games = games;
