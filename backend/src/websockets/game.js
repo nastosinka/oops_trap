@@ -4,6 +4,11 @@ const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
 
+function validateCoord(lastSettings, settings){
+    //+ логика
+    return true;
+}
+
 function setupGameWebSocket(server) {
     const wss = new WebSocket.Server({ noServer: true });
 
@@ -113,23 +118,23 @@ function setupGameWebSocket(server) {
                 console.log('📨 Сообщение в игре:', message);
 
                 switch (message.type) {
-                    case 'init':
+                    case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    case 'chat_message':
+                    case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'died':
+                    case 'died': // игрок умер (готово)
                         handlePlayerDied(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'win':
-                        writeTiNeLox();
+                    case 'win': // игрок победил (не готово)
+                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'stats':
+                    case 'stats': // получить статистику по игре (не готово)
                         handleStats(ws, message.gameId);
                         break;
-                    case 'coord':
-                        handleCoordMessage(ws, message.gameId);
+                    case 'coord_message': // поменять координаты игрока (проверено работает)
+                        handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
 
                 }
@@ -207,6 +212,7 @@ function setupGameWebSocket(server) {
                         trapper: false,
                         alive: true,
                         time: null,
+                        lastImage: null,
                     });
             }
             console.log(`Хранение координат инициализировано`);
@@ -243,7 +249,6 @@ function setupGameWebSocket(server) {
         const player = gameRoom.players.get(playerId);
         if (!player) return;
 
-        // Отправляем сообщение чата всем в игре
         broadcastToGame(gameId, {
             type: 'chat_message',
             playerId,
@@ -261,16 +266,27 @@ function setupGameWebSocket(server) {
 
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
-        player.x = settings.x;
-        player.y = settings.y;
-        // + логика
+        if (validateCoord(gameRoom.playersWithSettings, settings) == true) {
+            player.x = settings.x;
+            player.y = settings.y;
+            player.lastImage = settings.lastImage;
+        };
+
+        const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, player]) => ({
+        id: id,
+        ...player
+        }));
+
         broadcastToGame(gameId, {
             type: 'coord_message',
-            text,
+            playerId,
+            coords: playersArray,
             timestamp: new Date().toISOString(),
+            isHost: player.isHost,
         });
 
         console.log(`Координаты отправлены`);
+        console.log(playersArray);
     }
 
     function handlePlayerDied(ws, gameId, playerId, text) {
@@ -283,10 +299,11 @@ function setupGameWebSocket(server) {
         player.alive = false;
 
         broadcastToGame(gameId, {
-            type: 'chat-message',
+            type: 'died',
             playerId,
             text,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            isHost: player.isHost,
         });
         console.log(gameRoom);
         console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
