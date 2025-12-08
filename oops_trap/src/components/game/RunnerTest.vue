@@ -1,98 +1,94 @@
 <template>
   <div ref="gameField" class="game-field">
-    <div
-      class="player"
-      :class="playerClasses"
-      :style="playerStyle"
-    ></div>
+    <div class="player" :class="playerClasses" :style="playerStyle"></div>
   </div>
 </template>
 
 <script>
-  import idle from "@/assets/images/players/1/bp1.png";
-  import walk1 from "@/assets/images/players/1/bp1.png";
-  import walk2 from "@/assets/images/players/1/bp2.png";
+import idle from "@/assets/images/players/1/bp1.png";
+import walk1 from "@/assets/images/players/1/bp1.png";
+import walk2 from "@/assets/images/players/1/bp2.png";
 
-  export default {
-    name: "GamePlayer",
+export default {
+  name: "GamePlayer",
 
-    data() {
+  data() {
+    return {
+      idle,
+      walk1,
+      walk2,
+
+      player: {
+        x: 100,
+        y: 100,
+        speed: 4,
+        dir: "right",
+      },
+
+      moving: {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+      },
+
+      animLoop: null,
+
+      gameArea: {
+        width: 0,
+        height: 0,
+        scale: 1,
+        baseWidth: 1280,
+        baseHeight: 720,
+      },
+    };
+  },
+
+  computed: {
+    playerClasses() {
       return {
-        idle,
-        walk1,
-        walk2,
-
-        player: {
-          x: 100,
-          y: 100,
-          speed: 4,
-          dir: "right",
-        },
-
-        moving: {
-          left: false,
-          right: false,
-          up: false,
-          down: false,
-        },
-
-        animLoop: null,
-
-        gameArea: {
-          width: 0,
-          height: 0,
-          scale: 1,
-          baseWidth: 1280,
-          baseHeight: 720,
-        },
+        walking: this.isWalking,
+        left: this.player.dir === "left",
+        right: this.player.dir === "right",
       };
     },
 
-    computed: {
-      playerClasses() {
-        return {
-          walking: this.isWalking,
-          left: this.player.dir === "left",
-          right: this.player.dir === "right",
-        };
-      },
-
-      isWalking() {
-        return (
-          this.moving.left ||
-          this.moving.right ||
-          this.moving.up ||
-          this.moving.down
-        );
-      },
-
-      basePlayerSize() {
-        return {
-          width: 50,
-          height: 80,
-        };
-      },
-
-      playerSize() {
-        return {
-          width: this.basePlayerSize.width * this.gameArea.scale,
-          height: this.basePlayerSize.height * this.gameArea.scale,
-        };
-      },
-
-      actualSpeed() {
-        return this.player.speed * this.gameArea.scale;
-      },
-
-      playerStyle() {
-        return {
-          left: this.player.x + "px",
-          top: this.player.y + "px",
-          width: this.playerSize.width + "px",
-          height: this.playerSize.height + "px",
-        };
-      },
+    isWalking() {
+      return (
+        this.moving.left ||
+        this.moving.right ||
+        this.moving.up ||
+        this.moving.down
+      );
     },
+
+    basePlayerSize() {
+      return {
+        width: 50,
+        height: 80,
+      };
+    },
+
+    playerSize() {
+      return {
+        width: this.basePlayerSize.width * this.gameArea.scale,
+        height: this.basePlayerSize.height * this.gameArea.scale,
+      };
+    },
+
+    actualSpeed() {
+      return this.player.speed * this.gameArea.scale;
+    },
+
+    playerStyle() {
+      return {
+        left: this.player.x + "px",
+        top: this.player.y + "px",
+        width: this.playerSize.width + "px",
+        height: this.playerSize.height + "px",
+      };
+    },
+  },
 
   mounted() {
     window.addEventListener("keydown", this.keyDown);
@@ -145,7 +141,7 @@
       // fallback
       this.updateParentBounds();
     },
-    
+
     keyDown(e) {
       const k = e.key.toLowerCase();
       if (k === "a") this.moving.left = true;
@@ -167,7 +163,7 @@
 
     startLoop() {
       const step = () => {
-        let speed = this.actualSpeed;
+        const speed = this.actualSpeed;
 
         if (this.moving.left) this.player.x -= speed;
         if (this.moving.right) this.player.x += speed;
@@ -197,7 +193,7 @@
       if (this.player.x > W - pw) this.player.x = W - pw;
       if (this.player.y > H - ph) this.player.y = H - ph;
     },
-    
+
     //--------------------------------------
     // fallback auto-resolution of bounds
     //--------------------------------------
@@ -220,11 +216,10 @@
     },
   },
 };
-
 </script>
 
 <style>
-  .game-field {
+.game-field {
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -254,9 +249,14 @@
 }
 
 @keyframes walkAnim {
-  0%   { background-image: url("@/assets/images/players/1/bp1.png"); }
-  50%  { background-image: url("@/assets/images/players/1/bp2.png"); }
-  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
+  0% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+  50% {
+    background-image: url("@/assets/images/players/1/bp2.png");
+  }
+  100% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
 }
-
 </style>

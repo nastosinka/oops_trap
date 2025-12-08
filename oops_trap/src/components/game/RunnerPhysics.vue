@@ -1,7 +1,7 @@
 <template>
   <div
-    class="player"
     v-if="gameArea"
+    class="player"
     :class="playerClasses"
     :style="playerStyle"
   ></div>
@@ -16,16 +16,16 @@ export default {
   name: "TestPhysics",
 
   props: {
-  gameArea: {
-    type: Object,
-    required: true,
-        default: () => ({
-      scale: 1,
-      baseWidth: 1920,
-      baseHeight: 1080
-    })
-  }
-},
+    gameArea: {
+      type: Object,
+      required: true,
+      default: () => ({
+        scale: 1,
+        baseWidth: 1920,
+        baseHeight: 1080,
+      }),
+    },
+  },
 
   data() {
     return {
@@ -40,7 +40,7 @@ export default {
 
       idle,
       walk1,
-      walk2
+      walk2,
     };
   },
 
@@ -53,21 +53,21 @@ export default {
       return {
         walking: this.isWalking,
         left: this.dir === "left",
-        right: this.dir === "right"
+        right: this.dir === "right",
       };
     },
 
     playerStyle() {
-        const flip = this.dir === "left" ? -1 : 1;
+      const flip = this.dir === "left" ? -1 : 1;
 
-        return {
-            left: this.pos.x * this.gameArea.scale + "px",
-            top: this.pos.y * this.gameArea.scale + "px",
-            transform: `scaleX(${flip})`,
-            width: 64 * this.gameArea.scale + "px",
-            height: 64 * this.gameArea.scale + "px",
-        };
-    }
+      return {
+        left: this.pos.x * this.gameArea.scale + "px",
+        top: this.pos.y * this.gameArea.scale + "px",
+        transform: `scaleX(${flip})`,
+        width: 64 * this.gameArea.scale + "px",
+        height: 64 * this.gameArea.scale + "px",
+      };
+    },
   },
 
   mounted() {
@@ -96,9 +96,8 @@ export default {
       this.keys.delete(e.key.toLowerCase());
     },
 
-
     loop() {
-    //gorizont
+      //gorizont
       if (this.keys.has("a")) {
         this.velocity.x = -this.speed;
       } else if (this.keys.has("d")) {
@@ -107,7 +106,7 @@ export default {
         this.velocity.x = 0;
       }
 
-     //jump
+      //jump
       if (this.keys.has("w") && this.isOnGround) {
         this.velocity.y = -10;
         this.isOnGround = false;
@@ -120,33 +119,33 @@ export default {
       this.pos.y += this.velocity.y;
 
       //left boundary
-  if (this.pos.x < 0) {
-    this.pos.x = 0;
-  }
+      if (this.pos.x < 0) {
+        this.pos.x = 0;
+      }
 
-  //right
-  const maxX = this.gameArea?.baseWidth - 64; // 64 = sprite width
-  if (this.pos.x > maxX) {
-    this.pos.x = maxX;
-  }
+      //right
+      const maxX = this.gameArea?.baseWidth - 64; // 64 = sprite width
+      if (this.pos.x > maxX) {
+        this.pos.x = maxX;
+      }
 
-  //top
-  if (this.pos.y < 0) {
-    this.pos.y = 0;
-    this.velocity.y = 0;
-  }
+      //top
+      if (this.pos.y < 0) {
+        this.pos.y = 0;
+        this.velocity.y = 0;
+      }
 
-  //bottom
-  const floorY = this.gameArea?.baseHeight - 100;
-  if (this.pos.y > floorY) {
-    this.pos.y = floorY;
-    this.velocity.y = 0;
-    this.isOnGround = true;
-  }
+      //bottom
+      const floorY = this.gameArea?.baseHeight - 100;
+      if (this.pos.y > floorY) {
+        this.pos.y = floorY;
+        this.velocity.y = 0;
+        this.isOnGround = true;
+      }
 
       this.animationFrame = requestAnimationFrame(this.loop);
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -168,8 +167,14 @@ export default {
 }
 
 @keyframes walkAnim {
-  0%   { background-image: url("@/assets/images/players/1/bp1.png"); }
-  50%  { background-image: url("@/assets/images/players/1/bp2.png"); }
-  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
+  0% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+  50% {
+    background-image: url("@/assets/images/players/1/bp2.png");
+  }
+  100% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
 }
 </style>

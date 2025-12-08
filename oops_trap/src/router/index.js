@@ -38,7 +38,7 @@ const routes = [
     path: "/physics-runner",
     name: "TestPhysics",
     component: () => import("@/components/game/RunnerPhysics.vue"),
-  }
+  },
 ];
 
 const router = createRouter({

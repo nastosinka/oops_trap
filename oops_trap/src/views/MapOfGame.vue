@@ -4,7 +4,7 @@
       <!-- <GameMap1 /> -->
       <GameMap2 />
       <!-- <RunnerTest ref="runnerTestRef" /> -->
-      <RunnerPhysics ref="physicsPlayerRef" :gameArea="gameArea" />
+      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" />
     </div>
   </div>
 </template>
