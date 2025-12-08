@@ -117,11 +117,8 @@ function setupGameWebSocket(server) {
                     case 'chat_message':
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
-                    //case 'died':
-                    //    writeTiLox();
-                    //case 'win':
-                    //    writeTiNeLox();
-
+                    case 'player_move':
+                        handlePlayerMove(ws, message.gameId, message.playerId, message.position);
                 }
             } catch (error) {
                 console.error('❌ Ошибка в игре:', error);

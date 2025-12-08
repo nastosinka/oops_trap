@@ -26,6 +26,7 @@
     "@sentry/vue": "^10.25.0",
     "@vkontakte/vk-bridge": "^2.13.0",
     "ant-design-vue": "^4.2.6",
+    "matter-js": "^0.20.0",
     "pinia": "^2.1.0",
     "vue": "^3.5.22",
     "vue-router": "^4.2.0"
