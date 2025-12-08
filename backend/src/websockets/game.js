@@ -136,7 +136,9 @@ function setupGameWebSocket(server) {
                     case 'coord_message': // поменять координаты игрока (проверено работает)
                         handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
-
+                    case 'player_move':
+                        handlePlayerMove(ws, message.gameId, message.playerId, message.position);
+                        break;
                 }
             } catch (error) {
                 console.error('❌ Ошибка в игре:', error);

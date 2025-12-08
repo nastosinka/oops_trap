@@ -25,6 +25,21 @@ const routes = [
     component: () => import("@/views/GamePage.vue"),
   },
   {
+    path: "/test-run",
+    name: "TestRunnerr",
+    component: () => import("@/components/game/RunnerTest.vue"),
+  },
+  {
+    path: "/map",
+    name: "MapOfGame",
+    component: () => import("@/views/MapOfGame.vue"),
+  },
+  {
+    path: "/physics-runner",
+    name: "TestPhysics",
+    component: () => import("@/components/game/RunnerPhysics.vue"),
+  },
+  {
     path: "/map-edit",
     name: "MapEdit",
     component: () => import("@/views/MapEditPage.vue"),
