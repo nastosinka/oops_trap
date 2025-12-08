@@ -4,7 +4,7 @@
       <GameMap2 />
 
       <!-- RunnerPhysics с ref для управления спавном -->
-      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" />
+      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"/>
 
       <!-- Canvas для отображения полигонов -->
       <canvas ref="polygonCanvas" class="polygon-canvas"></canvas>

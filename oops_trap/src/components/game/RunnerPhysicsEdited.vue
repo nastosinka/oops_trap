@@ -22,6 +22,10 @@ export default {
       required: true,
       default: () => ({ scale: 1, baseWidth: 1920, baseHeight: 1080 }),
     },
+    polygons: {
+      type: Array,
+      default: () => [],
+    },
   },
 
   data() {
@@ -64,6 +68,7 @@ export default {
         transform: `scaleX(${flip})`,
         width: 64 * this.gameArea.scale + "px",
         height: 64 * this.gameArea.scale + "px",
+        border: "2px solid yellow", // Для отладки
       };
     },
   },
@@ -90,6 +95,54 @@ export default {
 
     handleKeyUp(e) {
       this.keys.delete(e.key.toLowerCase());
+    },
+
+    // Проверка точки внутри полигона
+    pointInPolygon(x, y, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
+
+        const intersect =
+          ((yi > y) !== (yj > y)) &&
+          (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    },
+
+    // Проверка столкновений
+    checkCollisions() {
+      if (!this.polygons || this.polygons.length === 0) return;
+
+      const playerPoints = [
+        { x: this.pos.x, y: this.pos.y }, // верхний левый
+        { x: this.pos.x + 64, y: this.pos.y }, // верхний правый
+        { x: this.pos.x, y: this.pos.y + 64 }, // нижний левый
+        { x: this.pos.x + 64, y: this.pos.y + 64 }, // нижний правый
+        { x: this.pos.x + 32, y: this.pos.y + 32 }, // центр
+      ];
+
+      this.polygons.forEach(poly => {
+        if (poly.type !== "boundary") return;
+
+        for (const pt of playerPoints) {
+          if (this.pointInPolygon(pt.x, pt.y, poly.points)) {
+            // Откат позиции игрока на предыдущий шаг движения
+            this.pos.x -= this.velocity.x;
+            this.pos.y -= this.velocity.y;
+
+            // Обнуляем скорость в этом направлении
+            this.velocity.x = 0;
+            this.velocity.y = 0;
+
+            // Если игрок упал на полигон снизу, ставим на землю
+            this.isOnGround = true;
+            return;
+          }
+        }
+      });
     },
 
     loop() {
@@ -123,6 +176,8 @@ export default {
         this.isOnGround = true;
       }
 
+      this.checkCollisions();
+
       this.animationFrame = requestAnimationFrame(this.loop);
     },
 
@@ -143,6 +198,7 @@ export default {
   background-size: contain;
   background-repeat: no-repeat;
   background-image: url("@/assets/images/players/1/bp1.png");
+  border: 2px solid yellow; /* для отладки */
 }
 
 .player.walking {
