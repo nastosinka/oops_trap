@@ -141,7 +141,11 @@ const checkIfUserIsHost = async () => {
 
   try {
     const response = await fetch(
-      `/api/lobby/lobbies/${lobbyId.value}/settings`
+      `/api/lobby/lobbies/${lobbyId.value}/settings`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -192,14 +196,27 @@ const returnToLobby = async () => {
 };
 
 const updateLobbyStatus = async (newStatus) => {
-  const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerId: userId.value, newStatus }),
-  });
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        newStatus,
+      }),
+      credentials: "include",
+    });
 
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return await response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    throw error;
+  }
 };
 
 // Веб-сокеты - используем сохраненный сокет из хранилища

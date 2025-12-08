@@ -142,7 +142,11 @@ export default {
 
       try {
         const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/settings`
+          `/api/lobby/lobbies/${this.lobbyId}/settings`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
         );
 
         if (!response.ok) {
@@ -188,7 +192,10 @@ export default {
       try {
         // Получаем статус лобби
         const statusUrl = `/api/lobby/lobbies/${this.lobbyId}/status`;
-        const statusResponse = await fetch(statusUrl);
+        const statusResponse = await fetch(statusUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!statusResponse.ok) {
           throw new Error(
@@ -206,7 +213,10 @@ export default {
 
         // Получаем настройки лобби для актуальной информации о владельце
         const settingsUrl = `/api/lobby/lobbies/${this.lobbyId}/settings`;
-        const settingsResponse = await fetch(settingsUrl);
+        const settingsResponse = await fetch(settingsUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
@@ -225,7 +235,10 @@ export default {
 
         // Получаем список игроков
         const playersUrl = `/api/lobby/lobbies/${this.lobbyId}/users`;
-        const playersResponse = await fetch(playersUrl);
+        const playersResponse = await fetch(playersUrl, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!playersResponse.ok) {
           throw new Error(
@@ -368,45 +381,19 @@ export default {
 
     async exitLobby() {
       console.log("🚪 Exiting lobby...");
-      const currentUserId = this.userStore.userId;
 
       try {
-        if (this.isHost) {
-          console.log("🗑️ Host - deleting lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/leave`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                userId: currentUserId,
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        console.log("👋 Player - leaving lobby");
+        const response = await fetch(
+          `/api/lobby/lobbies/${this.lobbyId}/leave`,
+          {
+            method: "POST",
+            credentials: "include",
           }
-        } else {
-          console.log("👋 Player - leaving lobby");
-          const response = await fetch(
-            `/api/lobby/lobbies/${this.lobbyId}/leave`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                userId: currentUserId,
-              }),
-            }
-          );
+        );
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
         this.stopPolling();
@@ -516,9 +503,9 @@ export default {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ownerId: this.userStore.userId,
             newStatus: "in-progress",
           }),
+          credentials: "include",
         }
       );
 

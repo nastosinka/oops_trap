@@ -3,10 +3,8 @@ const prisma = require('../db/prismaClient');
 
 const router = express.Router();
 
-/*
-* GET /api/maps
-* Получить список всех карт
-*/
+/*GET /api/maps
+Получить список всех карт*/
 router.get('/', async (req, res) => {
   try {
     const maps = await prisma.maps.findMany({
@@ -15,6 +13,9 @@ router.get('/', async (req, res) => {
         name: true,
         description: true,
         hp: true,
+        time_1: true,
+        time_2: true,
+        time_3: true,
         max_players: true,
         picture_url: true,
       },
@@ -38,10 +39,8 @@ router.get('/', async (req, res) => {
 });
 
 
-/* 
-* GET /api/maps/:id_map
-* Получить информацию по конкретной карте
-*/
+/* GET /api/maps/:id_map
+Получить информацию по конкретной карте*/
 router.get('/:id_map', async (req, res) => {
   const { id_map } = req.params;
 
@@ -53,6 +52,9 @@ router.get('/:id_map', async (req, res) => {
         name: true,
         description: true,
         hp: true,
+        time_1: true,
+        time_2: true,
+        time_3: true,
         max_players: true,
         picture_url: true,
       },
