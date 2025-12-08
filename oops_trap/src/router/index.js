@@ -25,11 +25,6 @@ const routes = [
     component: () => import("@/views/GamePage.vue"),
   },
   {
-    path: "/test-player",
-    name: "TestPlayer",
-    component: () => import("@/components/game/CurrentPlayer.vue"),
-  },
-  {
     path: "/test-run",
     name: "TestRunnerr",
     component: () => import("@/components/game/RunnerTest.vue"),
@@ -39,6 +34,11 @@ const routes = [
     name: "MapOfGame",
     component: () => import("@/views/MapOfGame.vue"),
   },
+  {
+    path: "/physics-runner",
+    name: "TestPhysics",
+    component: () => import("@/components/game/RunnerPhysics.vue"),
+  }
 ];
 
 const router = createRouter({

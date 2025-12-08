@@ -3,7 +3,8 @@
     <div ref="gameContentRef" class="game-content">
       <!-- <GameMap1 /> -->
       <GameMap2 />
-      <RunnerTest ref="runnerTestRef" />
+      <!-- <RunnerTest ref="runnerTestRef" /> -->
+      <RunnerPhysics ref="physicsPlayerRef" :gameArea="gameArea" />
     </div>
   </div>
 </template>
@@ -12,11 +13,14 @@
 import { ref, onMounted, onUnmounted, provide } from "vue";
 // import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
-import RunnerTest from "@/components/game/RunnerTest.vue";
+//import RunnerTest from "@/components/game/RunnerTest.vue";
+
+import RunnerPhysics from "../components/game/RunnerPhysics.vue";
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
-const runnerTestRef = ref(null);
+//const runnerTestRef = ref(null);
+const physicsPlayerRef = ref(null);
 
 // Базовое (референсное) разрешение игры
 const BASE_WIDTH = 1920;
@@ -81,11 +85,17 @@ const updateScreenSize = () => {
   };
 
   // Передаем данные в RunnerTest
+  // if (
+  //   runnerTestRef.value &&
+  //   typeof runnerTestRef.value.updateGameArea === "function"
+  // ) {
+  //   runnerTestRef.value.updateGameArea(gameArea.value);
+  // }
   if (
-    runnerTestRef.value &&
-    typeof runnerTestRef.value.updateGameArea === "function"
+    physicsPlayerRef.value &&
+    typeof physicsPlayerRef.value.updateGameArea === "function"
   ) {
-    runnerTestRef.value.updateGameArea(gameArea.value);
+    physicsPlayerRef.value.updateGameArea(gameArea.value);
   }
 };
 

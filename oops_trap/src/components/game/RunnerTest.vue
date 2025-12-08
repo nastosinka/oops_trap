@@ -125,6 +125,7 @@
 
       this.keepInsideParent();
     },
+
     findAndConnectToParent() {
       let parent = this.$parent;
       let attempts = 0;
