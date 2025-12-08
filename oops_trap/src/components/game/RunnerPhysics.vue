@@ -11,6 +11,7 @@
 import idle from "@/assets/images/players/1/bp1.png";
 import walk1 from "@/assets/images/players/1/bp1.png";
 import walk2 from "@/assets/images/players/1/bp2.png";
+import walk3 from "@/assets/images/players/1/bp3.png";
 
 export default {
   name: "TestPhysics",
@@ -41,6 +42,7 @@ export default {
       idle,
       walk1,
       walk2,
+      walk3,
     };
   },
 
@@ -170,8 +172,11 @@ export default {
   0% {
     background-image: url("@/assets/images/players/1/bp1.png");
   }
-  50% {
+  33% {
     background-image: url("@/assets/images/players/1/bp2.png");
+  }
+  66% {
+    background-image: url("@/assets/images/players/1/bp3.png");
   }
   100% {
     background-image: url("@/assets/images/players/1/bp1.png");
