@@ -46,15 +46,15 @@ const routes = [
     //meta: { devOnly: true }
   },
   {
-    path: '/map-physics-test',
-    name: 'MapPhysicsTest',
+    path: "/map-physics-test",
+    name: "MapPhysicsTest",
     component: () => import("@/views/MapPhysicsTest.vue"),
   },
   {
-  path: "/test-move",
-  name: "test-move",
-  component: () => import("@/views/ServerMovement.vue")
- },
+    path: "/test-move",
+    name: "test-move",
+    component: () => import("@/views/ServerMovement.vue"),
+  },
 ];
 
 const router = createRouter({

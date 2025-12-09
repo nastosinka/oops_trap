@@ -28,6 +28,8 @@ export default {
     },
   },
 
+  emits: ["update:gameArea"],
+
   data() {
     return {
       pos: { x: 200, y: 200 },
@@ -101,12 +103,13 @@ export default {
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i].x, yi = polygon[i].y;
-        const xj = polygon[j].x, yj = polygon[j].y;
+        const xi = polygon[i].x,
+          yi = polygon[i].y;
+        const xj = polygon[j].x,
+          yj = polygon[j].y;
 
         const intersect =
-          ((yi > y) !== (yj > y)) &&
-          (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+          yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
         if (intersect) inside = !inside;
       }
       return inside;
@@ -124,7 +127,7 @@ export default {
         { x: this.pos.x + 32, y: this.pos.y + 32 }, // центр
       ];
 
-      this.polygons.forEach(poly => {
+      this.polygons.forEach((poly) => {
         if (poly.type !== "boundary") return;
 
         for (const pt of playerPoints) {
@@ -144,18 +147,18 @@ export default {
         }
       });
     },
-    sendCoordsToServer() {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    // sendCoordsToServer() {
+    //     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-        this.ws.send(JSON.stringify({
-        type: "coord_message",
-        position: {
-            x: this.pos.x,
-            y: this.pos.y,
-        },
-        lastImage: this.currentSpriteFrame
-        }));
-    },
+    //     this.ws.send(JSON.stringify({
+    //     type: "coord_message",
+    //     position: {
+    //         x: this.pos.x,
+    //         y: this.pos.y,
+    //     },
+    //     lastImage: this.currentSpriteFrame
+    //     }));
+    // },
     loop() {
       if (this.keys.has("a")) this.velocity.x = -this.speed;
       else if (this.keys.has("d")) this.velocity.x = this.speed;
@@ -190,11 +193,11 @@ export default {
       this.checkCollisions();
 
       this.animationFrame = requestAnimationFrame(this.loop);
-      this.sendCoordsToServer();
+      // this.sendCoordsToServer();
     },
 
     updateGameArea(newGameArea) {
-      this.gameArea = newGameArea;
+      this.$emit("update:gameArea", newGameArea);
     },
   },
 };
@@ -218,9 +221,17 @@ export default {
 }
 
 @keyframes walkAnim {
-  0% { background-image: url("@/assets/images/players/1/bp1.png"); }
-  33% { background-image: url("@/assets/images/players/1/bp2.png"); }
-  66% { background-image: url("@/assets/images/players/1/bp3.png"); }
-  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
+  0% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+  33% {
+    background-image: url("@/assets/images/players/1/bp2.png");
+  }
+  66% {
+    background-image: url("@/assets/images/players/1/bp3.png");
+  }
+  100% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
 }
 </style>

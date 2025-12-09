@@ -62,7 +62,7 @@
             Отправить
           </button>
         </div>
-        <div class="coord-controls" v-if="isConnected">
+        <div v-if="isConnected" class="coord-controls">
           <h4>Test Controls</h4>
           <button @click="movePlayer(-1, 0)">Left</button>
           <button @click="movePlayer(1, 0)">Right</button>
@@ -140,13 +140,18 @@ onMounted(async () => {
   playerCoords.y = 100;
 
   // Отправляем серверу начальные координаты
-  if (getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
-    getGameSocket.value.send(JSON.stringify({
-      type: "player_move",
-      gameId: gameId.value,
-      playerId: userId.value,
-      position: { x: 100, y: 100 },
-    }));
+  if (
+    getGameSocket.value &&
+    getGameSocket.value.readyState === WebSocket.OPEN
+  ) {
+    getGameSocket.value.send(
+      JSON.stringify({
+        type: "player_move",
+        gameId: gameId.value,
+        playerId: userId.value,
+        position: { x: 100, y: 100 },
+      })
+    );
   }
 });
 
@@ -325,8 +330,8 @@ const handleGameMessage = (message) => {
         isHost: message.isHost,
       });
       break;
-    case "coord_message":
-      const me = message.coords.find(p => p.id === userId.value);
+    case "coord_message": {
+      const me = message.coords.find((p) => p.id === userId.value);
       if (me) {
         playerCoords.x = me.x;
         playerCoords.y = me.y;
@@ -337,14 +342,15 @@ const handleGameMessage = (message) => {
         text: JSON.stringify(message.coords),
         timestamp: message.timestamp,
         isHost: message.isHost,
-      });      
-      break;  
+      });
+      break;
+    }
     case "rollback":
       if (message.playerId === userId.value) {
         playerCoords.x = message.x;
         playerCoords.y = message.y;
       }
-      break;  
+      break;
     case "player_move":
       if (message.position && message.playerId === userId.value) {
         playerCoords.x = message.position.x;
@@ -368,28 +374,34 @@ const movePlayer = (dx, dy) => {
   const newX = playerCoords.x + dx;
   const newY = playerCoords.y + dy;
 
-  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN) return;
+  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
+    return;
 
-  getGameSocket.value.send(JSON.stringify({
-    type: "player_move",
-    gameId: gameId.value,
-    playerId: userId.value,
-    position: { x: newX, y: newY },
-  }));
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      position: { x: newX, y: newY },
+    })
+  );
 };
 
 const setRandomCoords = () => {
   const newX = 100;
   const newY = 100;
 
-  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN) return;
+  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
+    return;
 
-  getGameSocket.value.send(JSON.stringify({
-    type: "player_move",
-    gameId: gameId.value,
-    playerId: userId.value,
-    position: { x: newX, y: newY },
-  }));
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      position: { x: newX, y: newY },
+    })
+  );
 };
 
 const addChatMessage = (message) => {
@@ -436,13 +448,19 @@ const handleKeyPress = (event) => {
 const sendMessage = () => {
   const text = messageInput.value.trim();
 
-  if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
-    getGameSocket.value.send(JSON.stringify({
-      type: "chat_message",
-      gameId: gameId.value,
-      playerId: userId.value,
-      text
-    }));
+  if (
+    text &&
+    getGameSocket.value &&
+    getGameSocket.value.readyState === WebSocket.OPEN
+  ) {
+    getGameSocket.value.send(
+      JSON.stringify({
+        type: "chat_message",
+        gameId: gameId.value,
+        playerId: userId.value,
+        text,
+      })
+    );
     messageInput.value = "";
   }
 };

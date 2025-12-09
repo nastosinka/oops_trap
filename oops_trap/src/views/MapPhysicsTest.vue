@@ -4,7 +4,11 @@
       <GameMap2 />
 
       <!-- RunnerPhysics с ref для управления спавном -->
-      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"/>
+      <RunnerPhysics
+        ref="physicsPlayerRef"
+        :game-area="gameArea"
+        :polygons="polygons"
+      />
 
       <!-- Canvas для отображения полигонов -->
       <canvas ref="polygonCanvas" class="polygon-canvas"></canvas>
@@ -55,7 +59,7 @@ async function fetchPolygons() {
 }
 
 function spawnPlayerAtSpawn() {
-  const spawnPoly = polygons.value.find(p => p.type === "spawn");
+  const spawnPoly = polygons.value.find((p) => p.type === "spawn");
   if (!spawnPoly || !spawnPoly.points.length) return;
 
   const pts = spawnPoly.points;
@@ -84,11 +88,14 @@ function drawPolygons() {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  polygons.value.forEach(poly => {
+  polygons.value.forEach((poly) => {
     if (!poly.points.length) return;
 
     ctx.beginPath();
-    ctx.moveTo(poly.points[0].x * gameArea.value.scale, poly.points[0].y * gameArea.value.scale);
+    ctx.moveTo(
+      poly.points[0].x * gameArea.value.scale,
+      poly.points[0].y * gameArea.value.scale
+    );
     for (let i = 1; i < poly.points.length; i++) {
       const p = poly.points[i];
       ctx.lineTo(p.x * gameArea.value.scale, p.y * gameArea.value.scale);
@@ -108,10 +115,18 @@ function drawPolygons() {
 
     // Красная точка в центре полигона spawn
     if (poly.type === "spawn") {
-      const cX = poly.points.reduce((acc, p) => acc + p.x, 0) / poly.points.length;
-      const cY = poly.points.reduce((acc, p) => acc + p.y, 0) / poly.points.length;
+      const cX =
+        poly.points.reduce((acc, p) => acc + p.x, 0) / poly.points.length;
+      const cY =
+        poly.points.reduce((acc, p) => acc + p.y, 0) / poly.points.length;
       ctx.beginPath();
-      ctx.arc(cX * gameArea.value.scale, cY * gameArea.value.scale, 10, 0, Math.PI * 2);
+      ctx.arc(
+        cX * gameArea.value.scale,
+        cY * gameArea.value.scale,
+        10,
+        0,
+        Math.PI * 2
+      );
       ctx.fillStyle = "red";
       ctx.fill();
     }
