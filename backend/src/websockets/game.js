@@ -35,20 +35,20 @@ function isInsideBoundaries(x, y, polygons) {
 
 const gameRooms = new Map();
 //для проверки, главное потом удалить:
-gameRooms.set(1, {
-    players: new Map(),
-    hostId: null,
-    timer: {
-        active: false,
-        timeLeft: 120,
-        interval: null,
-        totalTime: 120,
-        startTimeout: null
-    },
-    hasFirstPlayer: false,
-    playersWithSettings: new Map(),
-    mapName: "map_test"
-});
+// gameRooms.set(1, {
+//     players: new Map(),
+//     hostId: null,
+//     timer: {
+//         active: false,
+//         timeLeft: 120,
+//         interval: null,
+//         totalTime: 120,
+//         startTimeout: null
+//     },
+//     hasFirstPlayer: false,
+//     playersWithSettings: new Map(),
+//     mapName: "map_test"
+// });
 
 const { lobbies, games } = require('./../routes/lobby');
 
@@ -225,28 +225,29 @@ function setupGameWebSocket(server) {
             gameRooms.set(gameId, gameRoom);
         }
         //добавление "пустых" объектов игроков при создании игры
-        if (!gameRoom.playersWithSettings.has(playerId)) {
-            gameRoom.playersWithSettings.set(playerId, {
-                name: "Unknown",
-                x: 100,
-                y: 100,
-                trapper: false,
-                alive: true,
-                time: null,
-                lastImage: null,
-            });
-            console.log(`Добавили игрока ${playerId} в playersWithSettings`);
-        }
+        // if (!gameRoom.playersWithSettings.has(playerId)) {
+        //     gameRoom.playersWithSettings.set(playerId, {
+        //         name: "Unknown",
+        //         x: 100,
+        //         y: 100,
+        //         trapper: false,
+        //         alive: true,
+        //         time: null,
+        //         lastImage: null,
+        //     });
+        //     console.log(`Добавили игрока ${playerId} в playersWithSettings`);
+        // }
         
         if (!gameRoom.polygons) {
             try {
-                const mapName = gameRoom.mapName || "map_test";
+                const mapName = "map_test"
+                //const mapName = gameRoom.mapName || "map_test";
                 const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
 
                 const polygonsData = JSON.parse(fs.readFileSync(filePath));
                 gameRoom.polygons = polygonsData.polygons;
 
-                console.log(`🗺️ Полигоны карты "${mapName}" загружены ОДИН РАЗ`);
+                console.log(`🗺️ Полигоны карты "${mapName}"`);
             } catch (e) {
                 console.error("❌ Ошибка загрузки полигона:", e);
             }
@@ -287,8 +288,8 @@ function setupGameWebSocket(server) {
                     console.log(player);
                     gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: null,
-                        y: null,
+                        x: 100,
+                        y: 100,
                         trapper: false,
                         alive: true,
                         time: null,
@@ -491,14 +492,14 @@ function setupGameWebSocket(server) {
     setInterval(() => {
         for (const [gameId, gameRoom] of gameRooms.entries()) {
             const connectedPlayers = Array.from(gameRoom.players.values()).filter(p => p.connected);
-            // if (connectedPlayers.length === 0) {
-            //     stopGameTimer(gameId);
-            //     if (gameRoom.timer.startTimeout) {
-            //         clearTimeout(gameRoom.timer.startTimeout);
-            //     }
-            //     gameRooms.delete(gameId);
-            //     console.log(`🧹 Очищена пустая игровая комната ${gameId}`);
-            // }
+            if (connectedPlayers.length === 0) {
+                stopGameTimer(gameId);
+                if (gameRoom.timer.startTimeout) {
+                    clearTimeout(gameRoom.timer.startTimeout);
+                }
+                gameRooms.delete(gameId);
+                console.log(`🧹 Очищена пустая игровая комната ${gameId}`);
+            }
         }
     }, 60000);
 }
