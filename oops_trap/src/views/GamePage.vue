@@ -145,7 +145,7 @@ onMounted(async () => {
       type: "player_move",
       gameId: gameId.value,
       playerId: userId.value,
-      settings: { x: 100, y: 100, lastImage: null },
+      position: { x: 100, y: 100 },
     }));
   }
 });
@@ -376,12 +376,6 @@ const movePlayer = (dx, dy) => {
     playerId: userId.value,
     position: { x: newX, y: newY },
   }));
-  // getGameSocket.value.send(JSON.stringify({
-  //   type: "coord_message",
-  //   gameId: gameId.value,
-  //   playerId: userId.value,
-  //   settings: { x: newX, y: newY, lastImage: null },
-  // }));
 };
 
 const setRandomCoords = () => {
@@ -396,12 +390,6 @@ const setRandomCoords = () => {
     playerId: userId.value,
     position: { x: newX, y: newY },
   }));
-  // getGameSocket.value.send(JSON.stringify({
-  //   type: "coord_message",
-  //   gameId: gameId.value,
-  //   playerId: userId.value,
-  //   settings: { x: newX, y: newY, lastImage: null },
-  // }));
 };
 
 const addChatMessage = (message) => {
@@ -448,19 +436,13 @@ const handleKeyPress = (event) => {
 const sendMessage = () => {
   const text = messageInput.value.trim();
 
-  if (
-    text &&
-    getGameSocket.value &&
-    getGameSocket.value.readyState === WebSocket.OPEN
-  ) {
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "coord_message",
-        gameId: gameId.value,
-        playerId: userId.value,
-        settings: { x: 1, y: 2, lastImage: 3 }, // пример как надо с коордами
-      })
-    );
+  if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
+    getGameSocket.value.send(JSON.stringify({
+      type: "chat_message",
+      gameId: gameId.value,
+      playerId: userId.value,
+      text
+    }));
     messageInput.value = "";
   }
 };

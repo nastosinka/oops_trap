@@ -347,15 +347,22 @@ function setupGameWebSocket(server) {
 
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
-        if (validateCoord(gameRoom.playersWithSettings, settings) == true) {
-            player.x = settings.x;
-            player.y = settings.y;
-            player.lastImage = settings.lastImage;
-        };
+
+        // Только если координаты корректны — применяем в playersWithSettings
+        if (settings && typeof settings.x === 'number' && typeof settings.y === 'number') {
+            if (validateCoord(gameRoom.playersWithSettings, settings) === true) {
+                player.x = settings.x;
+                player.y = settings.y;
+                player.lastImage = settings.lastImage;
+            }
+        } else {
+            // Если settings некорректен, просто логируем, но не портишь данные
+            console.log(`handleCoordMessage: invalid settings from player ${playerId}`, settings);
+        }
 
         const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, player]) => ({
-        id: id,
-        ...player
+            id: id,
+            ...player
         }));
 
         broadcastToGame(gameId, {
@@ -387,7 +394,8 @@ function setupGameWebSocket(server) {
             ws.send(JSON.stringify({
                 type: "rollback",
                 x: player.x,
-                y: player.y
+                y: player.y,
+                playerId
             }));
             return;
         }
