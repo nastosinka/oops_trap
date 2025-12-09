@@ -144,7 +144,18 @@ export default {
         }
       });
     },
+    sendCoordsToServer() {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
+        this.ws.send(JSON.stringify({
+        type: "coord_message",
+        position: {
+            x: this.pos.x,
+            y: this.pos.y,
+        },
+        lastImage: this.currentSpriteFrame
+        }));
+    },
     loop() {
       if (this.keys.has("a")) this.velocity.x = -this.speed;
       else if (this.keys.has("d")) this.velocity.x = this.speed;
@@ -179,6 +190,7 @@ export default {
       this.checkCollisions();
 
       this.animationFrame = requestAnimationFrame(this.loop);
+      this.sendCoordsToServer();
     },
 
     updateGameArea(newGameArea) {
