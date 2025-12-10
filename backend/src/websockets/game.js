@@ -413,6 +413,7 @@ function setupGameWebSocket(server) {
         broadcastToGame(gameId, {
             type: "coord_message",
             playerId,
+            timestamp: new Date().toISOString(),
             coords: playersArray
         });
     }
