@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+git checkout main
 echo "Pulling the latest main-branch version..."
 git pull origin main
 
