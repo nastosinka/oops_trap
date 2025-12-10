@@ -303,6 +303,15 @@ const handleGameMessage = (message) => {
         isHost: message.isHost,
       });
       break;
+    case "coord_message":
+      addChatMessage({
+        id: Date.now() + Math.random(),
+        playerId: message.playerId,
+        text: JSON.stringify(message.coords),
+        timestamp: message.timestamp,
+        isHost: message.isHost,
+      });
+      break;
 
     case "player_joined":
       addSystemMessage(message.message);
@@ -368,10 +377,10 @@ const sendMessage = () => {
   ) {
     getGameSocket.value.send(
       JSON.stringify({
-        type: "chat_message",
+        type: "coord_message",
         gameId: gameId.value,
         playerId: userId.value,
-        text,
+        settings: { x: 1, y: 2, lastImage: 3 }, // пример как надо с коордами
       })
     );
     messageInput.value = "";

@@ -2,6 +2,13 @@ const WebSocket = require('ws');
 
 const gameRooms = new Map();
 
+const { lobbies, games } = require('./../routes/lobby');
+
+function validateCoord(lastSettings, settings){
+    //+ логика
+    return true;
+}
+
 function setupGameWebSocket(server) {
     const wss = new WebSocket.Server({ noServer: true });
 
@@ -111,14 +118,27 @@ function setupGameWebSocket(server) {
                 console.log('📨 Сообщение в игре:', message);
 
                 switch (message.type) {
-                    case 'init':
+                    case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    case 'chat_message':
+                    case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'died': // игрок умер (готово)
+                        handlePlayerDied(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'win': // игрок победил (не готово)
+                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'stats': // получить статистику по игре (не готово)
+                        handleStats(ws, message.gameId);
+                        break;
+                    case 'coord_message': // поменять координаты игрока (проверено работает)
+                        handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
                     case 'player_move':
                         handlePlayerMove(ws, message.gameId, message.playerId, message.position);
+                        break;
                 }
             } catch (error) {
                 console.error('❌ Ошибка в игре:', error);
@@ -148,7 +168,8 @@ function setupGameWebSocket(server) {
                     totalTime: 120,
                     startTimeout: null
                 },
-                hasFirstPlayer: false
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
             };
             gameRooms.set(gameId, gameRoom);
         }
@@ -163,7 +184,7 @@ function setupGameWebSocket(server) {
             playerId,
             isHost: playerId === gameRoom.hostId,
             ready: false,
-            connected: true
+            connected: true,
         });
 
         // Сохраняем данные в соединении
@@ -177,6 +198,27 @@ function setupGameWebSocket(server) {
 
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
+                const game = games.get(parseInt(gameId));
+                if (!game) {
+                    //+ логика, игра не найдена
+                    return;
+                }
+
+                for (let i = 0; i < game.players.length; i++) {
+                    const player = game.players[i];
+                    console.log(player);
+                    gameRoom.playersWithSettings.set(player['id'], {
+                        name: player['name'], 
+                        x: null,
+                        y: null,
+                        trapper: false,
+                        alive: true,
+                        time: null,
+                        lastImage: null,
+                    });
+            }
+            console.log(`Хранение координат инициализировано`);
+            console.log(gameRoom.playersWithSettings);
             }, 10000);
         }
 
@@ -209,7 +251,6 @@ function setupGameWebSocket(server) {
         const player = gameRoom.players.get(playerId);
         if (!player) return;
 
-        // Отправляем сообщение чата всем в игре
         broadcastToGame(gameId, {
             type: 'chat_message',
             playerId,
@@ -221,16 +262,81 @@ function setupGameWebSocket(server) {
         console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
     }
 
-    // function activeGame(gameId) {
-    //  const stats = game.players.map((player) => ({
-    //      userId: player.id,
-    //      role: true,
-    //         time: 12, 
-    //         result: Math.random() > 0.5 ? 1 : 0, // пример результата
-    //         map: game.map
-    //     }));
-    //     return stats;
-    // }
+    function handleCoordMessage(ws, gameId, playerId, settings) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom) return;
+
+        const player = gameRoom.playersWithSettings.get(playerId);
+        if (!player) return;
+        if (validateCoord(gameRoom.playersWithSettings, settings) == true) {
+            player.x = settings.x;
+            player.y = settings.y;
+            player.lastImage = settings.lastImage;
+        };
+
+        const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, player]) => ({
+        id: id,
+        ...player
+        }));
+
+        broadcastToGame(gameId, {
+            type: 'coord_message',
+            playerId,
+            coords: playersArray,
+            timestamp: new Date().toISOString(),
+            isHost: player.isHost,
+        });
+
+        console.log(`Координаты отправлены`);
+        console.log(playersArray);
+    }
+
+    function handlePlayerDied(ws, gameId, playerId, text) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom) return;
+
+        const player = gameRoom.playersWithSettings.get(playerId);
+        if (!player) return;
+
+        player.alive = false;
+
+        broadcastToGame(gameId, {
+            type: 'died',
+            playerId,
+            text,
+            timestamp: new Date().toISOString(),
+            isHost: player.isHost,
+        });
+        console.log(gameRoom);
+        console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
+    }
+
+
+    function handleStats(gameId) {
+     const stats = game.players.map((player) => ({
+         userId: player.id,
+         role: true,
+            time: 12, 
+            result: Math.random() > 0.5 ? 1 : 0, // пример результата
+            map: game.map
+        }));
+        // + логика получения статистики из gameRoom
+        
+        
+        const game = games.get(parseInt(gameId));
+        if (!game) {
+                    //+ логика, игра не найдена
+            return;
+        }
+        game.stats = stats;
+
+
+        broadcastToGame(gameId, {
+            type: 'stats',
+            stats: stats,
+            timestamp: new Date().toISOString()
+        });
+    }
 
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
