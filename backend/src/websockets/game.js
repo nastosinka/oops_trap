@@ -152,24 +152,10 @@ function setupGameWebSocket(server) {
 
                 switch (message.type) {
                     case 'init': // важное наследие
-                    case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
                     case 'chat_message': // наследие чата
-                    case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'died': // игрок умер (готово)
-                        handlePlayerDied(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'win': // игрок победил (не готово)
-                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'stats': // получить статистику по игре (не готово)
-                        handleStats(ws, message.gameId);
-                        break;
-                    case 'coord_message': // поменять координаты игрока (проверено работает)
-                        handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
                     case 'died': // игрок умер (готово)
                         handlePlayerDied(ws, message.gameId, message.playerId, message.text);
@@ -264,7 +250,6 @@ function setupGameWebSocket(server) {
             playerId,
             isHost: playerId === gameRoom.hostId,
             ready: false,
-            connected: true,
             connected: true,
         });
 
