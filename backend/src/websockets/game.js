@@ -34,21 +34,6 @@ function isInsideBoundaries(x, y, polygons) {
 }
 
 const gameRooms = new Map();
-//для проверки, главное потом удалить:
-// gameRooms.set(1, {
-//     players: new Map(),
-//     hostId: null,
-//     timer: {
-//         active: false,
-//         timeLeft: 120,
-//         interval: null,
-//         totalTime: 120,
-//         startTimeout: null
-//     },
-//     hasFirstPlayer: false,
-//     playersWithSettings: new Map(),
-//     mapName: "map_test"
-// });
 
 const { lobbies, games } = require('./../routes/lobby');
 
@@ -167,10 +152,24 @@ function setupGameWebSocket(server) {
 
                 switch (message.type) {
                     case 'init': // важное наследие
+                    case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
                     case 'chat_message': // наследие чата
+                    case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'died': // игрок умер (готово)
+                        handlePlayerDied(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'win': // игрок победил (не готово)
+                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
+                        break;
+                    case 'stats': // получить статистику по игре (не готово)
+                        handleStats(ws, message.gameId);
+                        break;
+                    case 'coord_message': // поменять координаты игрока (проверено работает)
+                        handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
                     case 'died': // игрок умер (готово)
                         handlePlayerDied(ws, message.gameId, message.playerId, message.text);
@@ -221,6 +220,8 @@ function setupGameWebSocket(server) {
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
             };
             gameRooms.set(gameId, gameRoom);
         }
@@ -263,6 +264,7 @@ function setupGameWebSocket(server) {
             playerId,
             isHost: playerId === gameRoom.hostId,
             ready: false,
+            connected: true,
             connected: true,
         });
 
@@ -356,7 +358,7 @@ function setupGameWebSocket(server) {
                 player.lastImage = settings.lastImage;
             }
         } else {
-            // Если settings некорректен, просто логируем, но не портишь данные
+            // Если settings некорректен, просто логируем
             console.log(`handleCoordMessage: invalid settings from player ${playerId}`, settings);
         }
 
