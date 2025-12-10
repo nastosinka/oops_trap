@@ -1,4 +1,37 @@
 const WebSocket = require('ws');
+const fs = require("fs");
+const path = require("path");
+
+function pointInPolygon(x, y, points) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const xi = points[i].x, yi = points[i].y;
+        const xj = points[j].x, yj = points[j].y;
+
+        // Проверка пересечения луча с ребром
+        const intersect = ((yi > y) !== (yj > y)) &&
+                          (x < (xj - xi) * (y - yi) / (yj - yi + 0.0000001) + xi); 
+        // + маленькая поправка чтобы не делить на ноль
+
+        if (intersect) inside = !inside;
+    }
+    console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
+    return inside;
+}
+
+// Проверка всех boundary полигонов
+function isInsideBoundaries(x, y, polygons) {
+    for (const poly of polygons) {
+        if (poly.type === "boundary") {
+            console.log("Checking boundary polygon:", poly.points);
+            if (pointInPolygon(x, y, poly.points)) {
+                console.log(`❌ Point ${x},${y} is inside polygon`);
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 const gameRooms = new Map();
 
@@ -137,7 +170,10 @@ function setupGameWebSocket(server) {
                         handleCoordMessage(ws, message.gameId, message.playerId, message.settings); 
                         break;
                     case 'player_move':
-                        handlePlayerMove(ws, message.gameId, message.playerId, message.position);
+                        handlePlayerMove(ws, message.gameId, message.playerId, { 
+                                                                x: message.position?.x, 
+                                                                y: message.position?.y 
+                                                            });
                         break;
                 }
             } catch (error) {
@@ -170,8 +206,38 @@ function setupGameWebSocket(server) {
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
             };
             gameRooms.set(gameId, gameRoom);
+        }
+        //добавление "пустых" объектов игроков при создании игры
+        // if (!gameRoom.playersWithSettings.has(playerId)) {
+        //     gameRoom.playersWithSettings.set(playerId, {
+        //         name: "Unknown",
+        //         x: 100,
+        //         y: 100,
+        //         trapper: false,
+        //         alive: true,
+        //         time: null,
+        //         lastImage: null,
+        //     });
+        //     console.log(`Добавили игрока ${playerId} в playersWithSettings`);
+        // }
+        
+        if (!gameRoom.polygons) {
+            try {
+                const mapName = "map_test"
+                //const mapName = gameRoom.mapName || "map_test";
+                const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
+
+                const polygonsData = JSON.parse(fs.readFileSync(filePath));
+                gameRoom.polygons = polygonsData.polygons;
+
+                console.log(`🗺️ Полигоны карты "${mapName}"`);
+            } catch (e) {
+                console.error("❌ Ошибка загрузки полигона:", e);
+            }
         }
 
         if (isHost && !gameRoom.hostId) {
@@ -209,8 +275,8 @@ function setupGameWebSocket(server) {
                     console.log(player);
                     gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: null,
-                        y: null,
+                        x: 100,
+                        y: 100,
                         trapper: false,
                         alive: true,
                         time: null,
@@ -268,15 +334,22 @@ function setupGameWebSocket(server) {
 
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
-        if (validateCoord(gameRoom.playersWithSettings, settings) == true) {
-            player.x = settings.x;
-            player.y = settings.y;
-            player.lastImage = settings.lastImage;
-        };
+
+        // Только если координаты корректны — применяем в playersWithSettings
+        if (settings && typeof settings.x === 'number' && typeof settings.y === 'number') {
+            if (validateCoord(gameRoom.playersWithSettings, settings) === true) {
+                player.x = settings.x;
+                player.y = settings.y;
+                player.lastImage = settings.lastImage;
+            }
+        } else {
+            // Если settings некорректен, просто логируем
+            console.log(`handleCoordMessage: invalid settings from player ${playerId}`, settings);
+        }
 
         const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, player]) => ({
-        id: id,
-        ...player
+            id: id,
+            ...player
         }));
 
         broadcastToGame(gameId, {
@@ -289,6 +362,47 @@ function setupGameWebSocket(server) {
 
         console.log(`Координаты отправлены`);
         console.log(playersArray);
+    }
+
+    function handlePlayerMove(ws, gameId, playerId, position) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom) return;
+
+        const player = gameRoom.playersWithSettings.get(playerId);
+        //console.log("Проверяем player:", player);
+        if (!player) return;
+
+        const polygons = gameRoom.polygons;
+        console.log("Player trying to move to:", position.x, position.y);
+
+        // Проверка границы
+        if (isInsideBoundaries(position.x, position.y, polygons)) {
+            console.log(`❌ Игрок ${playerId} ударился о стену`);
+            ws.send(JSON.stringify({
+                type: "rollback",
+                x: player.x,
+                y: player.y,
+                playerId
+            }));
+            return;
+        }
+
+        // Обновляем позиции
+        player.x = position.x;
+        player.y = position.y;
+
+        // Отправляем всем
+        const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, p]) => ({
+            id,
+            ...p
+        }));
+
+        broadcastToGame(gameId, {
+            type: "coord_message",
+            playerId,
+            timestamp: new Date().toISOString(),
+            coords: playersArray
+        });
     }
 
     function handlePlayerDied(ws, gameId, playerId, text) {

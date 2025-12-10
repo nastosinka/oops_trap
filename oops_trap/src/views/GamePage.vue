@@ -62,6 +62,14 @@
             Отправить
           </button>
         </div>
+        <div v-if="isConnected" class="coord-controls">
+          <h4>Test Controls</h4>
+          <button @click="movePlayer(-1, 0)">Left</button>
+          <button @click="movePlayer(1, 0)">Right</button>
+          <button @click="movePlayer(0, -1)">Up</button>
+          <button @click="movePlayer(0, 1)">Down</button>
+          <button @click="setRandomCoords()">Random</button>
+        </div>
       </div>
     </div>
   </div>
@@ -73,6 +81,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { Modal } from "ant-design-vue";
+import { reactive } from "vue";
 // import MapOfGame from "@/views/MapOfGame.vue";
 
 const route = useRoute();
@@ -90,7 +99,7 @@ const userId = computed(() => storeUserId.value);
 const lobbyId = computed(() => route.query.lobbyId);
 const isHost = ref(false);
 const showSplash = ref(true);
-
+const playerCoords = reactive({ x: 0, y: 0 });
 // игровые данные
 const timeLeft = ref(0);
 const isConnected = ref(false);
@@ -126,6 +135,24 @@ onMounted(async () => {
   userStore.initializeUser();
   await checkIfUserIsHost();
   setupGameWebSocket();
+
+  playerCoords.x = 100;
+  playerCoords.y = 100;
+
+  // Отправляем серверу начальные координаты
+  if (
+    getGameSocket.value &&
+    getGameSocket.value.readyState === WebSocket.OPEN
+  ) {
+    getGameSocket.value.send(
+      JSON.stringify({
+        type: "player_move",
+        gameId: gameId.value,
+        playerId: userId.value,
+        position: { x: 100, y: 100 },
+      })
+    );
+  }
 });
 
 onUnmounted(() => {
@@ -303,7 +330,12 @@ const handleGameMessage = (message) => {
         isHost: message.isHost,
       });
       break;
-    case "coord_message":
+    case "coord_message": {
+      const me = message.coords.find((p) => p.id === userId.value);
+      if (me) {
+        playerCoords.x = me.x;
+        playerCoords.y = me.y;
+      }
       addChatMessage({
         id: Date.now() + Math.random(),
         playerId: message.playerId,
@@ -312,7 +344,19 @@ const handleGameMessage = (message) => {
         isHost: message.isHost,
       });
       break;
-
+    }
+    case "rollback":
+      if (message.playerId === userId.value) {
+        playerCoords.x = message.x;
+        playerCoords.y = message.y;
+      }
+      break;
+    case "player_move":
+      if (message.position && message.playerId === userId.value) {
+        playerCoords.x = message.position.x;
+        playerCoords.y = message.position.y;
+      }
+      break;
     case "player_joined":
       addSystemMessage(message.message);
       break;
@@ -324,6 +368,40 @@ const handleGameMessage = (message) => {
     default:
       console.log("Unknown message type:", message.type);
   }
+};
+
+const movePlayer = (dx, dy) => {
+  const newX = playerCoords.x + dx;
+  const newY = playerCoords.y + dy;
+
+  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
+    return;
+
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      position: { x: newX, y: newY },
+    })
+  );
+};
+
+const setRandomCoords = () => {
+  const newX = 100;
+  const newY = 100;
+
+  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
+    return;
+
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      position: { x: newX, y: newY },
+    })
+  );
 };
 
 const addChatMessage = (message) => {
@@ -377,10 +455,10 @@ const sendMessage = () => {
   ) {
     getGameSocket.value.send(
       JSON.stringify({
-        type: "coord_message",
+        type: "chat_message",
         gameId: gameId.value,
         playerId: userId.value,
-        settings: { x: 1, y: 2, lastImage: 3 }, // пример как надо с коордами
+        text,
       })
     );
     messageInput.value = "";
@@ -716,6 +794,19 @@ button {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 20px auto;
+}
+
+.coord-controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.coord-controls button {
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 @keyframes spin {

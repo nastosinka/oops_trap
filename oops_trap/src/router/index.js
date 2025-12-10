@@ -45,6 +45,11 @@ const routes = [
     component: () => import("@/views/MapEditPage.vue"),
     //meta: { devOnly: true }
   },
+  {
+    path: "/map-physics-test",
+    name: "MapPhysicsTest",
+    component: () => import("@/views/MapPhysicsTest.vue"),
+  },
 ];
 
 const router = createRouter({
