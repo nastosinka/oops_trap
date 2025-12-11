@@ -7,6 +7,8 @@ git pull origin main
 
 echo "Rebuilding containers and clearing cache..."
 docker compose down --rmi all --volumes --remove-orphans
+docker system prune -f
+
 docker compose -f docker-compose.prod.yml up --build -d
 
 echo "Deployment complete."
