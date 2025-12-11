@@ -69,6 +69,7 @@
           <button @click="movePlayer(0, -1)">Up</button>
           <button @click="movePlayer(0, 1)">Down</button>
           <button @click="setRandomCoords()">Random</button>
+          <button @click="beginGetCoords()">Homuncul</button>
         </div>
       </div>
     </div>
@@ -149,7 +150,7 @@ onMounted(async () => {
         type: "player_move",
         gameId: gameId.value,
         playerId: userId.value,
-        position: { x: 100, y: 100 },
+        settings: { x: 100, y: 100, lastImage: 1 },
       })
     );
   }
@@ -336,12 +337,21 @@ const handleGameMessage = (message) => {
         playerCoords.x = me.x;
         playerCoords.y = me.y;
       }
+      addSystemMessage(message.coords);
+      break;
+    }
+    case "player_move": {
+      const me = message.coords.find((p) => p.id === userId.value);
+      if (me) {
+        playerCoords.x = me.x;
+        playerCoords.y = me.y;
+      }
       addChatMessage({
         id: Date.now() + Math.random(),
-        playerId: message.playerId,
+        playerId: "Coord",
         text: JSON.stringify(message.coords),
         timestamp: message.timestamp,
-        isHost: message.isHost,
+        isHost: false,
       });
       break;
     }
@@ -351,12 +361,12 @@ const handleGameMessage = (message) => {
         playerCoords.y = message.y;
       }
       break;
-    case "player_move":
-      if (message.position && message.playerId === userId.value) {
-        playerCoords.x = message.position.x;
-        playerCoords.y = message.position.y;
-      }
-      break;
+    // case "player_move":
+    //   if (message.position && message.playerId === userId.value) {
+    //     playerCoords.x = message.position.x;
+    //     playerCoords.y = message.position.y;
+    //   }
+    //   break;
     case "player_joined":
       addSystemMessage(message.message);
       break;
@@ -373,6 +383,7 @@ const handleGameMessage = (message) => {
 const movePlayer = (dx, dy) => {
   const newX = playerCoords.x + dx;
   const newY = playerCoords.y + dy;
+  const newImage = 1;
 
   if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
     return;
@@ -382,7 +393,7 @@ const movePlayer = (dx, dy) => {
       type: "player_move",
       gameId: gameId.value,
       playerId: userId.value,
-      position: { x: newX, y: newY },
+      settings: { x: newX, y: newY, lastImage: newImage },
     })
   );
 };
@@ -390,6 +401,7 @@ const movePlayer = (dx, dy) => {
 const setRandomCoords = () => {
   const newX = 100;
   const newY = 100;
+  const newImage = 1;
 
   if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
     return;
@@ -399,7 +411,16 @@ const setRandomCoords = () => {
       type: "player_move",
       gameId: gameId.value,
       playerId: userId.value,
-      position: { x: newX, y: newY },
+      settings: { x: newX, y: newY, lastImage: newImage },
+    })
+  );
+};
+
+const beginGetCoords = () => {
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "coord_message",
+      gameId: gameId.value,
     })
   );
 };
