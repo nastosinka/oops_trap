@@ -68,7 +68,7 @@ export default {
         left: this.pos.x * this.gameArea.scale + "px",
         top: this.pos.y * this.gameArea.scale + "px",
         transform: `scaleX(${flip})`,
-        width: 64 * this.gameArea.scale + "px",
+        width: 32 * this.gameArea.scale + "px",
         height: 64 * this.gameArea.scale + "px",
         border: "2px solid yellow", // Для отладки
       };
@@ -121,10 +121,10 @@ export default {
 
       const playerPoints = [
         { x: this.pos.x, y: this.pos.y }, // верхний левый
-        { x: this.pos.x + 64, y: this.pos.y }, // верхний правый
+        { x: this.pos.x + 32, y: this.pos.y }, // верхний правый
         { x: this.pos.x, y: this.pos.y + 64 }, // нижний левый
-        { x: this.pos.x + 64, y: this.pos.y + 64 }, // нижний правый
-        { x: this.pos.x + 32, y: this.pos.y + 32 }, // центр
+        { x: this.pos.x + 32, y: this.pos.y + 64 }, // нижний правый
+        { x: this.pos.x + 16, y: this.pos.y + 32 }, // центр
       ];
 
       this.polygons.forEach((poly) => {
@@ -206,7 +206,7 @@ export default {
 <style scoped>
 .player {
   position: absolute;
-  width: 64px;
+  width: 32px;
   height: 64px;
   z-index: 10;
   image-rendering: pixelated;
