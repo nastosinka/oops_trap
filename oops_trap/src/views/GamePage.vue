@@ -145,7 +145,6 @@ onMounted(async () => {
     getGameSocket.value &&
     getGameSocket.value.readyState === WebSocket.OPEN
   ) {
-
     getGameSocket.value.send(
       JSON.stringify({
         type: "player_move",
@@ -394,7 +393,7 @@ const movePlayer = (dx, dy) => {
       type: "player_move",
       gameId: gameId.value,
       playerId: userId.value,
-      settings: { x: newX, y: newY, lastImage: newImage},
+      settings: { x: newX, y: newY, lastImage: newImage },
     })
   );
 };
@@ -412,13 +411,13 @@ const setRandomCoords = () => {
       type: "player_move",
       gameId: gameId.value,
       playerId: userId.value,
-      settings: { x: newX, y: newY, lastImage: newImage},
+      settings: { x: newX, y: newY, lastImage: newImage },
     })
   );
 };
 
 const beginGetCoords = () => {
-    getGameSocket.value.send(
+  getGameSocket.value.send(
     JSON.stringify({
       type: "coord_message",
       gameId: gameId.value,
