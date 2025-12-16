@@ -68,8 +68,8 @@ function spawnPlayerAtSpawn() {
 
   if (physicsPlayerRef.value) {
     // Привязываем центр спрайта игрока к центру полигона
-    physicsPlayerRef.value.pos.x = centerX - 32; // 32 = половина ширины спрайта
-    physicsPlayerRef.value.pos.y = centerY - 64; // 64 = высота спрайта
+    physicsPlayerRef.value.pos.x = centerX - 24; // 32 = половина ширины спрайта
+    physicsPlayerRef.value.pos.y = centerY - 48; // 64 = высота спрайта
   }
 }
 

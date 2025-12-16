@@ -68,8 +68,8 @@ export default {
         left: this.pos.x * this.gameArea.scale + "px",
         top: this.pos.y * this.gameArea.scale + "px",
         transform: `scaleX(${flip})`,
-        width: 32 * this.gameArea.scale + "px",
-        height: 64 * this.gameArea.scale + "px",
+        width: 24 * this.gameArea.scale + "px",
+        height: 48 * this.gameArea.scale + "px",
         border: "2px solid yellow", // Для отладки
       };
     },
@@ -206,8 +206,8 @@ export default {
 <style scoped>
 .player {
   position: absolute;
-  width: 32px;
-  height: 64px;
+  width: 24px;
+  height: 48px;
   z-index: 10;
   image-rendering: pixelated;
   background-size: contain;
