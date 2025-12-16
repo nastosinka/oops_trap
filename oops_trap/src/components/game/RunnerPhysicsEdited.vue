@@ -32,10 +32,10 @@ export default {
 
   data() {
     return {
-      pos: { x: 200, y: 200 },
+      pos: { x: 201, y: 200 },
       velocity: { x: 0, y: 0 },
       speed: 3,
-      gravity: 0.4,
+      gravity: 0.9,
       isOnGround: false,
       dir: "right",
       keys: new Set(),
@@ -99,7 +99,6 @@ export default {
       this.keys.delete(e.key.toLowerCase());
     },
 
-    // Проверка точки внутри полигона
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -115,37 +114,27 @@ export default {
       return inside;
     },
 
-    // Проверка столкновений
-    checkCollisions() {
-      if (!this.polygons || this.polygons.length === 0) return;
+    checkHitbox() {
+      const w = 24;
+      const h = 48;
 
-      const playerPoints = [
-        { x: this.pos.x, y: this.pos.y }, // верхний левый
-        { x: this.pos.x + 32, y: this.pos.y }, // верхний правый
-        { x: this.pos.x, y: this.pos.y + 64 }, // нижний левый
-        { x: this.pos.x + 32, y: this.pos.y + 64 }, // нижний правый
-        { x: this.pos.x + 16, y: this.pos.y + 32 }, // центр
+      const points = [
+        { x: this.pos.x, y: this.pos.y },
+        { x: this.pos.x + w, y: this.pos.y },
+        { x: this.pos.x, y: this.pos.y + h },
+        { x: this.pos.x + w, y: this.pos.y + h },
       ];
 
-      this.polygons.forEach((poly) => {
-        if (poly.type !== "boundary") return;
+      for (const poly of this.polygons) {
+        if (poly.type !== "boundary") continue;
 
-        for (const pt of playerPoints) {
-          if (this.pointInPolygon(pt.x, pt.y, poly.points)) {
-            // Откат позиции игрока на предыдущий шаг движения
-            this.pos.x -= this.velocity.x;
-            this.pos.y -= this.velocity.y;
-
-            // Обнуляем скорость в этом направлении
-            this.velocity.x = 0;
-            this.velocity.y = 0;
-
-            // Если игрок упал на полигон снизу, ставим на землю
-            this.isOnGround = true;
-            return;
+        for (const p of points) {
+          if (this.pointInPolygon(p.x, p.y, poly.points)) {
+            return true;
           }
         }
-      });
+      }
+      return false;
     },
     // sendCoordsToServer() {
     //     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
@@ -160,44 +149,55 @@ export default {
     //     }));
     // },
     loop() {
+      // ===== X =====
       if (this.keys.has("a")) this.velocity.x = -this.speed;
       else if (this.keys.has("d")) this.velocity.x = this.speed;
       else this.velocity.x = 0;
 
+      this.pos.x += this.velocity.x;
+
+      if (this.checkHitbox()) {
+        const MAX_STEP = 6;
+        const MAX_SLOPE = 0.7;
+        let climbed = false;
+
+        for (let step = 1; step <= MAX_STEP; step++) {
+          const slope = step / Math.abs(this.velocity.x || 1);
+
+          if (slope > MAX_SLOPE) break;
+
+          this.pos.y -= step;
+
+          if (!this.checkHitbox()) {
+            climbed = true;
+            break;
+          }
+
+          this.pos.y += step;
+        }
+
+        if (!climbed) {
+          this.pos.x -= this.velocity.x;
+          this.velocity.x = 0;
+        }
+      }
+
+      // ===== Y =====
       if (this.keys.has("w") && this.isOnGround) {
         this.velocity.y = -10;
         this.isOnGround = false;
       }
 
       this.velocity.y += this.gravity;
-      this.pos.x += this.velocity.x;
       this.pos.y += this.velocity.y;
 
-      // Ограничения по карте
-      if (this.pos.x < 0) this.pos.x = 0;
-      const maxX = this.gameArea.baseWidth - 64;
-      if (this.pos.x > maxX) this.pos.x = maxX;
-
-      if (this.pos.y < 0) {
-        this.pos.y = 0;
+      if (this.checkHitbox()) {
+        if (this.velocity.y > 0) this.isOnGround = true;
+        this.pos.y -= this.velocity.y;
         this.velocity.y = 0;
       }
-
-      const floorY = this.gameArea.baseHeight - 100;
-      if (this.pos.y > floorY) {
-        this.pos.y = floorY;
-        this.velocity.y = 0;
-        this.isOnGround = true;
-      }
-
-      this.checkCollisions();
 
       this.animationFrame = requestAnimationFrame(this.loop);
-      // this.sendCoordsToServer();
-    },
-
-    updateGameArea(newGameArea) {
-      this.$emit("update:gameArea", newGameArea);
     },
   },
 };
