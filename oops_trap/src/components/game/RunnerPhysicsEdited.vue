@@ -32,10 +32,10 @@ export default {
 
   data() {
     return {
-      pos: { x: 201, y: 200 },
+      pos: { x: 200, y: 200 },
       velocity: { x: 0, y: 0 },
       speed: 3,
-      gravity: 0.9,
+      gravity: 0.4,
       isOnGround: false,
       dir: "right",
       keys: new Set(),
@@ -184,7 +184,7 @@ export default {
 
       // ===== Y =====
       if (this.keys.has("w") && this.isOnGround) {
-        this.velocity.y = -10;
+        this.velocity.y = -6.7;
         this.isOnGround = false;
       }
 
