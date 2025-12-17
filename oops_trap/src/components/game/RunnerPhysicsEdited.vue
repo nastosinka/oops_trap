@@ -13,7 +13,7 @@ import walk1 from "@/assets/images/players/1/bp1.png";
 import walk2 from "@/assets/images/players/1/bp2.png";
 import walk3 from "@/assets/images/players/1/bp3.png";
 
-// 🔥 ФИЗИЧЕСКИЙ ХИТБОКС (НЕ СПРАЙТ)
+// Хитбокс игрока (физика)
 const HITBOX = {
   offsetX: 6,
   offsetY: 10,
@@ -21,27 +21,22 @@ const HITBOX = {
   height: 32,
 };
 
+const STEP_HEIGHT = 6;
+
 export default {
   name: "RunnerPhysics",
-
   props: {
-    gameArea: {
-      type: Object,
-      required: true,
-    },
-    polygons: {
-      type: Array,
-      default: () => [],
-    },
+    gameArea: { type: Object, required: true },
+    polygons: { type: Array, default: () => [] },
   },
-
   data() {
     return {
-      pos: { x: 1600, y: 150 },
+      pos: { x: 105, y: 150 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
       isOnGround: false,
+      onVine: false,
       dir: "right",
       keys: new Set(),
       animationFrame: null,
@@ -52,12 +47,10 @@ export default {
       walk3,
     };
   },
-
   computed: {
     isWalking() {
-      return this.keys.has("a") || this.keys.has("d");
+      return this.keys.has("a") || this.keys.has("d") || this.keys.has("w") || this.keys.has("s");
     },
-
     playerClasses() {
       return {
         walking: this.isWalking,
@@ -65,7 +58,6 @@ export default {
         right: this.dir === "right",
       };
     },
-
     playerStyle() {
       return {
         left: this.pos.x * this.gameArea.scale + "px",
@@ -76,45 +68,78 @@ export default {
       };
     },
   },
-
   mounted() {
     this.loop = this.loop.bind(this);
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
   },
-
   beforeUnmount() {
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
     cancelAnimationFrame(this.animationFrame);
   },
-
   methods: {
     handleKeyDown(e) {
-      const k = e.key.toLowerCase();
-      this.keys.add(k);
-      if (k === "a") this.dir = "left";
-      if (k === "d") this.dir = "right";
-    },
+  const key = e.key.toLowerCase();
 
-    handleKeyUp(e) {
-      this.keys.delete(e.key.toLowerCase());
-    },
+  // Поддержка русской и английской раскладки
+  const mapping = {
+    w: ["w", "ц"],
+    a: ["a", "ф"],
+    s: ["s", "ы"],
+    d: ["d", "в"],
+  };
+
+  for (const [action, keys] of Object.entries(mapping)) {
+    if (keys.includes(key)) {
+      this.keys.add(action); // добавляем английский символ в Set
+      if (action === "a") this.dir = "left";
+      if (action === "d") this.dir = "right";
+    }
+  }
+},
+
+handleKeyUp(e) {
+  const key = e.key.toLowerCase();
+  const mapping = {
+    w: ["w", "ц"],
+    a: ["a", "ф"],
+    s: ["s", "ы"],
+    d: ["d", "в"],
+  };
+
+  for (const [action, keys] of Object.entries(mapping)) {
+    if (keys.includes(key)) {
+      this.keys.delete(action);
+    }
+  }
+},
+
 
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
         const xi = polygon[i].x, yi = polygon[i].y;
         const xj = polygon[j].x, yj = polygon[j].y;
-
         const intersect =
           yi > y !== yj > y &&
           x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-
         if (intersect) inside = !inside;
       }
       return inside;
+    },
+
+    polygonUnderPlayer(type) {
+      // Возвращает true, если игрок внутри полигона типа type
+      return this.polygons.some((poly) =>
+        poly.type === type &&
+        this.pointInPolygon(
+          this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+          this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
+          poly.points
+        )
+      );
     },
 
     checkGround() {
@@ -124,7 +149,6 @@ export default {
         this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
         this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
       ];
-
       return this.polygons.some(
         (poly) =>
           poly.type === "boundary" &&
@@ -137,13 +161,11 @@ export default {
         dir === "left"
           ? this.pos.x + HITBOX.offsetX - 1
           : this.pos.x + HITBOX.offsetX + HITBOX.width + 1;
-
       const ys = [
         this.pos.y + HITBOX.offsetY + 4,
         this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
         this.pos.y + HITBOX.offsetY + HITBOX.height - 4,
       ];
-
       return this.polygons.some(
         (poly) =>
           poly.type === "boundary" &&
@@ -158,7 +180,6 @@ export default {
         this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
         this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
       ];
-
       return this.polygons.some(
         (poly) =>
           poly.type === "boundary" &&
@@ -173,39 +194,80 @@ export default {
       if (this.keys.has("d")) moveX = this.speed;
 
       if (moveX !== 0) {
+        const dir = moveX < 0 ? "left" : "right";
         this.pos.x += moveX;
-        if (this.checkWall(moveX < 0 ? "left" : "right")) {
-          this.pos.x -= moveX;
+
+        if (this.checkWall(dir)) {
+          // пробуем "ступеньку"
+          let climbed = false;
+          let climbedPixels = 0;
+          for (let i = 1; i <= STEP_HEIGHT; i++) {
+            this.pos.y -= 1;
+            climbedPixels++;
+            if (!this.checkWall(dir) && !this.checkCeiling()) {
+              climbed = true;
+              break;
+            }
+          }
+          if (!climbed) {
+            this.pos.y += climbedPixels;
+            this.pos.x -= moveX;
+          }
         }
       }
 
       // ===== Y =====
-      if (this.keys.has("w") && this.isOnGround) {
-        this.velocity.y = -6.7;
-        this.isOnGround = false;
+      // ===== Y =====
+const inWater = this.polygonUnderPlayer("water");
+const onVine = this.polygonUnderPlayer("vine");
+
+this.onVine = onVine;
+
+if (onVine) {
+  // Лиана: вертикальное движение
+  if (this.keys.has("w")) this.pos.y -= this.speed;
+  if (this.keys.has("s")) this.pos.y += this.speed;
+  this.velocity.y = 0;
+  this.isOnGround = false;
+} else if (inWater) {
+  // Вода: вертикальное движение и отсутствие падения
+  if (this.keys.has("w")) this.pos.y -= this.speed / 2;
+  if (this.keys.has("s")) this.pos.y += this.speed / 2;
+  
+  // Гравитацию не применяем, чтобы игрок "плавал"
+  this.velocity.y = 0;
+  this.isOnGround = false;
+} else {
+  // Обычная физика
+  if (this.keys.has("w") && this.isOnGround) {
+    this.velocity.y = -6.7;
+    this.isOnGround = false;
+  }
+
+  this.velocity.y += this.gravity;
+  this.pos.y += this.velocity.y;
+
+  if (this.velocity.y < 0 && this.checkCeiling()) {
+    this.pos.y -= this.velocity.y;
+    this.velocity.y = 0;
+  }
+
+  if (this.velocity.y >= 0) {
+    if (this.checkGround()) {
+      this.isOnGround = true;
+      this.velocity.y = 0;
+
+      // прилипание к полу
+      let snap = 0;
+      while (this.checkGround() && snap++ < 10) {
+        this.pos.y -= 0.5;
       }
+    } else {
+      this.isOnGround = false;
+    }
+  }
+}
 
-      this.velocity.y += this.gravity;
-      this.pos.y += this.velocity.y;
-
-      if (this.velocity.y < 0 && this.checkCeiling()) {
-        this.pos.y -= this.velocity.y;
-        this.velocity.y = 0;
-      }
-
-      if (this.velocity.y >= 0) {
-        if (this.checkGround()) {
-          this.isOnGround = true;
-          this.velocity.y = 0;
-
-          let snap = 0;
-          while (this.checkGround() && snap++ < 10) {
-            this.pos.y -= 0.5;
-          }
-        } else {
-          this.isOnGround = false;
-        }
-      }
 
       this.animationFrame = requestAnimationFrame(this.loop);
     },
