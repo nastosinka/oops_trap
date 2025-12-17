@@ -25,30 +25,36 @@ const routes = [
     component: () => import("@/views/GamePage.vue"),
   },
   {
-    path: "/test-run",
+    path: "/test-run", // только движение ;(
     name: "TestRunnerr",
     component: () => import("@/components/game/RunnerTest.vue"),
   },
   {
-    path: "/map",
+    path: "/map", // нет полигонов, спавн по таймеру, шикшакшок
     name: "MapOfGame",
     component: () => import("@/views/MapOfGame.vue"),
   },
   {
-    path: "/physics-runner",
+    path: "/physics-runner", // только падение
     name: "TestPhysics",
-    component: () => import("@/components/game/RunnerPhysics.vue"),
+    component: () => import("@/components/game/RunnerPhysicsEdited.vue"),
   },
   {
-    path: "/map-edit",
+    path: "/map-edit", // редактура полигонов
     name: "MapEdit",
-    component: () => import("@/views/MapEditPage.vue"),
+    component: () => import("@/tools/MapEditPage.vue"),
     //meta: { devOnly: true }
   },
   {
-    path: "/map-physics-test",
+    path: "/map-physics-test", // не всю карту можно бегать, но видны полигоны
     name: "MapPhysicsTest",
-    component: () => import("@/views/MapPhysicsTest.vue"),
+    component: () => import("@/test/MapPhysicsTest.vue"),
+  },
+  {
+    path: "/hui", 
+    name: "Hui",
+    component: () => import("@/test/MapPhysicsTest.vue"),
+    //meta: { devOnly: true }
   },
 ];
 
