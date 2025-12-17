@@ -273,27 +273,27 @@ export default {
 
       this.animationFrame = requestAnimationFrame(this.loop);
       if (this.polygonUnderPlayer("spike") || this.polygonUnderPlayer("lava")) {
-  // Находим полигон spawn
-  const spawnPoly = this.polygons.find(p => p.type === "spawn");
-  if (spawnPoly) {
-    // Находим центр полигона
-    const sum = spawnPoly.points.reduce((acc, p) => {
-      acc.x += p.x;
-      acc.y += p.y;
-      return acc;
-    }, { x: 0, y: 0 });
+        // Находим полигон spawn
+        const spawnPoly = this.polygons.find(p => p.type === "spawn");
+        if (spawnPoly) {
+          // Находим центр полигона
+          const sum = spawnPoly.points.reduce((acc, p) => {
+            acc.x += p.x;
+            acc.y += p.y;
+            return acc;
+          }, { x: 0, y: 0 });
 
-    const center = {
-      x: sum.x / spawnPoly.points.length,
-      y: sum.y / spawnPoly.points.length,
-    };
+          const center = {
+            x: sum.x / spawnPoly.points.length,
+            y: sum.y / spawnPoly.points.length,
+          };
 
-    // Перемещаем игрока в центр полигона spawn
-    this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
-    this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
-    this.velocity.y = 0;
-  }
-}
+          // Перемещаем игрока в центр полигона spawn
+          this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
+          this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
+          this.velocity.y = 0;
+        }
+      }
 
     },
 
@@ -333,4 +333,5 @@ export default {
   100% {
     background-image: url("@/assets/images/players/1/bp1.png");
   }
-}</style>
+}
+</style>
