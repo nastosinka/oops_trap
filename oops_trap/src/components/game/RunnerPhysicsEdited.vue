@@ -13,6 +13,14 @@ import walk1 from "@/assets/images/players/1/bp1.png";
 import walk2 from "@/assets/images/players/1/bp2.png";
 import walk3 from "@/assets/images/players/1/bp3.png";
 
+// 🔥 ФИЗИЧЕСКИЙ ХИТБОКС (НЕ СПРАЙТ)
+const HITBOX = {
+  offsetX: 6,
+  offsetY: 10,
+  width: 12,
+  height: 32,
+};
+
 export default {
   name: "RunnerPhysics",
 
@@ -20,7 +28,6 @@ export default {
     gameArea: {
       type: Object,
       required: true,
-      default: () => ({ scale: 1, baseWidth: 1920, baseHeight: 1080 }),
     },
     polygons: {
       type: Array,
@@ -28,11 +35,9 @@ export default {
     },
   },
 
-  emits: ["update:gameArea"],
-
   data() {
     return {
-      pos: { x: 200, y: 200 },
+      pos: { x: 1600, y: 150 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -62,20 +67,18 @@ export default {
     },
 
     playerStyle() {
-      const flip = this.dir === "left" ? -1 : 1;
-
       return {
         left: this.pos.x * this.gameArea.scale + "px",
         top: this.pos.y * this.gameArea.scale + "px",
-        transform: `scaleX(${flip})`,
         width: 24 * this.gameArea.scale + "px",
         height: 48 * this.gameArea.scale + "px",
-        border: "2px solid yellow", // Для отладки
+        transform: `scaleX(${this.dir === "left" ? -1 : 1})`,
       };
     },
   },
 
   mounted() {
+    this.loop = this.loop.bind(this);
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
@@ -102,83 +105,77 @@ export default {
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i].x,
-          yi = polygon[i].y;
-        const xj = polygon[j].x,
-          yj = polygon[j].y;
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
 
         const intersect =
-          yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+          yi > y !== yj > y &&
+          x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+
         if (intersect) inside = !inside;
       }
       return inside;
     },
 
-    checkHitbox() {
-      const w = 24;
-      const h = 48;
-
-      const points = [
-        { x: this.pos.x, y: this.pos.y },
-        { x: this.pos.x + w, y: this.pos.y },
-        { x: this.pos.x, y: this.pos.y + h },
-        { x: this.pos.x + w, y: this.pos.y + h },
+    checkGround() {
+      const y = this.pos.y + HITBOX.offsetY + HITBOX.height + 1;
+      const xs = [
+        this.pos.x + HITBOX.offsetX + 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
       ];
 
-      for (const poly of this.polygons) {
-        if (poly.type !== "boundary") continue;
-
-        for (const p of points) {
-          if (this.pointInPolygon(p.x, p.y, poly.points)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          xs.some((x) => this.pointInPolygon(x, y, poly.points))
+      );
     },
-    // sendCoordsToServer() {
-    //     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-    //     this.ws.send(JSON.stringify({
-    //     type: "coord_message",
-    //     position: {
-    //         x: this.pos.x,
-    //         y: this.pos.y,
-    //     },
-    //     lastImage: this.currentSpriteFrame
-    //     }));
-    // },
+    checkWall(dir) {
+      const x =
+        dir === "left"
+          ? this.pos.x + HITBOX.offsetX - 1
+          : this.pos.x + HITBOX.offsetX + HITBOX.width + 1;
+
+      const ys = [
+        this.pos.y + HITBOX.offsetY + 4,
+        this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
+        this.pos.y + HITBOX.offsetY + HITBOX.height - 4,
+      ];
+
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          ys.some((y) => this.pointInPolygon(x, y, poly.points))
+      );
+    },
+
+    checkCeiling() {
+      const y = this.pos.y + HITBOX.offsetY - 1;
+      const xs = [
+        this.pos.x + HITBOX.offsetX + 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
+      ];
+
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          xs.some((x) => this.pointInPolygon(x, y, poly.points))
+      );
+    },
+
     loop() {
       // ===== X =====
-      if (this.keys.has("a")) this.velocity.x = -this.speed;
-      else if (this.keys.has("d")) this.velocity.x = this.speed;
-      else this.velocity.x = 0;
+      let moveX = 0;
+      if (this.keys.has("a")) moveX = -this.speed;
+      if (this.keys.has("d")) moveX = this.speed;
 
-      this.pos.x += this.velocity.x;
-
-      if (this.checkHitbox()) {
-        const MAX_STEP = 6;
-        const MAX_SLOPE = 0.7;
-        let climbed = false;
-
-        for (let step = 1; step <= MAX_STEP; step++) {
-          const slope = step / Math.abs(this.velocity.x || 1);
-
-          if (slope > MAX_SLOPE) break;
-
-          this.pos.y -= step;
-
-          if (!this.checkHitbox()) {
-            climbed = true;
-            break;
-          }
-
-          this.pos.y += step;
-        }
-
-        if (!climbed) {
-          this.pos.x -= this.velocity.x;
-          this.velocity.x = 0;
+      if (moveX !== 0) {
+        this.pos.x += moveX;
+        if (this.checkWall(moveX < 0 ? "left" : "right")) {
+          this.pos.x -= moveX;
         }
       }
 
@@ -191,10 +188,23 @@ export default {
       this.velocity.y += this.gravity;
       this.pos.y += this.velocity.y;
 
-      if (this.checkHitbox()) {
-        if (this.velocity.y > 0) this.isOnGround = true;
+      if (this.velocity.y < 0 && this.checkCeiling()) {
         this.pos.y -= this.velocity.y;
         this.velocity.y = 0;
+      }
+
+      if (this.velocity.y >= 0) {
+        if (this.checkGround()) {
+          this.isOnGround = true;
+          this.velocity.y = 0;
+
+          let snap = 0;
+          while (this.checkGround() && snap++ < 10) {
+            this.pos.y -= 0.5;
+          }
+        } else {
+          this.isOnGround = false;
+        }
       }
 
       this.animationFrame = requestAnimationFrame(this.loop);
@@ -208,12 +218,11 @@ export default {
   position: absolute;
   width: 24px;
   height: 48px;
-  z-index: 10;
   image-rendering: pixelated;
+  background-image: url("@/assets/images/players/1/bp1.png");
   background-size: contain;
   background-repeat: no-repeat;
-  background-image: url("@/assets/images/players/1/bp1.png");
-  border: 2px solid yellow; /* для отладки */
+  z-index: 100;
 }
 
 .player.walking {
@@ -221,17 +230,9 @@ export default {
 }
 
 @keyframes walkAnim {
-  0% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
-  33% {
-    background-image: url("@/assets/images/players/1/bp2.png");
-  }
-  66% {
-    background-image: url("@/assets/images/players/1/bp3.png");
-  }
-  100% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
+  0% { background-image: url("@/assets/images/players/1/bp1.png"); }
+  33% { background-image: url("@/assets/images/players/1/bp2.png"); }
+  66% { background-image: url("@/assets/images/players/1/bp3.png"); }
+  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
 }
 </style>

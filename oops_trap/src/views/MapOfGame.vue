@@ -15,7 +15,7 @@ import { ref, onMounted, onUnmounted, provide } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 //import RunnerTest from "@/components/game/RunnerTest.vue";
 
-import RunnerPhysics from "../components/game/RunnerPhysics.vue";
+import RunnerPhysics from "@/components/game/RunnerPhysics.vue";
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
