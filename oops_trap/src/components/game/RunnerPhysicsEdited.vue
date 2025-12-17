@@ -1,10 +1,5 @@
 <template>
-  <div
-    v-if="gameArea"
-    class="player"
-    :class="playerClasses"
-    :style="playerStyle"
-  ></div>
+  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
 </template>
 
 <script>
@@ -31,7 +26,7 @@ export default {
   },
   data() {
     return {
-      pos: { x: 1605, y: 150 },
+      pos: { x: 105, y: 150 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -81,40 +76,40 @@ export default {
   },
   methods: {
     handleKeyDown(e) {
-  const key = e.key.toLowerCase();
+      const key = e.key.toLowerCase();
 
-  // Поддержка русской и английской раскладки
-  const mapping = {
-    w: ["w", "ц"],
-    a: ["a", "ф"],
-    s: ["s", "ы"],
-    d: ["d", "в"],
-  };
+      // Поддержка русской и английской раскладки
+      const mapping = {
+        w: ["w", "ц"],
+        a: ["a", "ф"],
+        s: ["s", "ы"],
+        d: ["d", "в"],
+      };
 
-  for (const [action, keys] of Object.entries(mapping)) {
-    if (keys.includes(key)) {
-      this.keys.add(action); // добавляем английский символ в Set
-      if (action === "a") this.dir = "left";
-      if (action === "d") this.dir = "right";
-    }
-  }
-},
+      for (const [action, keys] of Object.entries(mapping)) {
+        if (keys.includes(key)) {
+          this.keys.add(action); // добавляем английский символ в Set
+          if (action === "a") this.dir = "left";
+          if (action === "d") this.dir = "right";
+        }
+      }
+    },
 
-handleKeyUp(e) {
-  const key = e.key.toLowerCase();
-  const mapping = {
-    w: ["w", "ц"],
-    a: ["a", "ф"],
-    s: ["s", "ы"],
-    d: ["d", "в"],
-  };
+    handleKeyUp(e) {
+      const key = e.key.toLowerCase();
+      const mapping = {
+        w: ["w", "ц"],
+        a: ["a", "ф"],
+        s: ["s", "ы"],
+        d: ["d", "в"],
+      };
 
-  for (const [action, keys] of Object.entries(mapping)) {
-    if (keys.includes(key)) {
-      this.keys.delete(action);
-    }
-  }
-},
+      for (const [action, keys] of Object.entries(mapping)) {
+        if (keys.includes(key)) {
+          this.keys.delete(action);
+        }
+      }
+    },
 
 
     pointInPolygon(x, y, polygon) {
@@ -188,95 +183,95 @@ handleKeyUp(e) {
     },
 
     loop() {
-  // ===== X =====
-  let moveX = 0;
-  if (this.keys.has("a")) moveX = -this.speed;
-  if (this.keys.has("d")) moveX = this.speed;
+      // ===== X =====
+      let moveX = 0;
+      if (this.keys.has("a")) moveX = -this.speed;
+      if (this.keys.has("d")) moveX = this.speed;
 
-  if (moveX !== 0) {
-    const dir = moveX < 0 ? "left" : "right";
-    this.pos.x += moveX;
+      if (moveX !== 0) {
+        const dir = moveX < 0 ? "left" : "right";
+        this.pos.x += moveX;
 
-    if (this.checkWall(dir)) {
-      // пробуем "ступеньку"
-      let climbed = false;
-      let climbedPixels = 0;
-      for (let i = 1; i <= STEP_HEIGHT; i++) {
-        this.pos.y -= 1;
-        climbedPixels++;
-        if (!this.checkWall(dir) && !this.checkCeiling()) {
-          climbed = true;
-          break;
+        if (this.checkWall(dir)) {
+          // пробуем "ступеньку"
+          let climbed = false;
+          let climbedPixels = 0;
+          for (let i = 1; i <= STEP_HEIGHT; i++) {
+            this.pos.y -= 1;
+            climbedPixels++;
+            if (!this.checkWall(dir) && !this.checkCeiling()) {
+              climbed = true;
+              break;
+            }
+          }
+          if (!climbed) {
+            this.pos.y += climbedPixels;
+            this.pos.x -= moveX;
+          }
         }
       }
-      if (!climbed) {
-        this.pos.y += climbedPixels;
-        this.pos.x -= moveX;
-      }
-    }
-  }
 
-  // ===== Y =====
-  const inWater = this.polygonUnderPlayer("water");
-  const onVine = this.polygonUnderPlayer("vine");
+      // ===== Y =====
+      const inWater = this.polygonUnderPlayer("water");
+      const onVine = this.polygonUnderPlayer("vine");
 
-  this.onVine = onVine;
+      this.onVine = onVine;
 
-  // Проверка на границы сверху/снизу имеет приоритет
-  const hittingCeiling = this.checkCeiling();
-  const hittingGround = this.checkGround();
+      // Проверка на границы сверху/снизу имеет приоритет
+      const hittingCeiling = this.checkCeiling();
+      const hittingGround = this.checkGround();
 
-  if (onVine) {
-    // Лиана: вертикальное движение
-    if (this.keys.has("w")) this.pos.y -= this.speed;
-    if (this.keys.has("s")) this.pos.y += this.speed;
-    this.velocity.y = 0;
-    this.isOnGround = false;
-  } else if (inWater && !hittingGround) {
-    // Вода: вертикальное движение и отсутствие падения
-    if (this.keys.has("w")) this.pos.y -= this.speed / 2;
-    if (this.keys.has("s")) this.pos.y += this.speed / 2;
-
-    // Прыжок из воды по Space
-    if (this.keys.has(" ") || this.keys.has("Spacebar")) {
-      this.velocity.y = -6.7; // сила прыжка
-      this.isOnGround = false;
-    } else {
-      this.velocity.y = 0;
-    }
-  } else {
-    // Обычная физика
-    if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
-      this.velocity.y = -6.7;
-      this.isOnGround = false;
-    }
-
-    this.velocity.y += this.gravity;
-    this.pos.y += this.velocity.y;
-
-    if (this.velocity.y < 0 && hittingCeiling) {
-      this.pos.y -= this.velocity.y;
-      this.velocity.y = 0;
-    }
-
-    if (this.velocity.y >= 0) {
-      if (hittingGround) {
-        this.isOnGround = true;
+      if (onVine) {
+        // Лиана: вертикальное движение
+        if (this.keys.has("w")) this.pos.y -= this.speed;
+        if (this.keys.has("s")) this.pos.y += this.speed;
         this.velocity.y = 0;
+        this.isOnGround = false;
+      } else if (inWater && !hittingGround) {
+        // Вода: вертикальное движение и отсутствие падения
+        if (this.keys.has("w")) this.pos.y -= this.speed / 2;
+        if (this.keys.has("s")) this.pos.y += this.speed / 2;
 
-        // прилипание к полу
-        let snap = 0;
-        while (this.checkGround() && snap++ < 10) {
-          this.pos.y -= 0.5;
+        // Прыжок из воды по Space
+        if (this.keys.has(" ") || this.keys.has("Spacebar")) {
+          this.velocity.y = -6.7; // сила прыжка
+          this.isOnGround = false;
+        } else {
+          this.velocity.y = 0;
         }
       } else {
-        this.isOnGround = false;
-      }
-    }
-  }
+        // Обычная физика
+        if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
+          this.velocity.y = -6.7;
+          this.isOnGround = false;
+        }
 
-  this.animationFrame = requestAnimationFrame(this.loop);
-},
+        this.velocity.y += this.gravity;
+        this.pos.y += this.velocity.y;
+
+        if (this.velocity.y < 0 && hittingCeiling) {
+          this.pos.y -= this.velocity.y;
+          this.velocity.y = 0;
+        }
+
+        if (this.velocity.y >= 0) {
+          if (hittingGround) {
+            this.isOnGround = true;
+            this.velocity.y = 0;
+
+            // прилипание к полу
+            let snap = 0;
+            while (this.checkGround() && snap++ < 10) {
+              this.pos.y -= 0.5;
+            }
+          } else {
+            this.isOnGround = false;
+          }
+        }
+      }
+
+      this.animationFrame = requestAnimationFrame(this.loop);
+    },
 
   },
 };
@@ -299,9 +294,19 @@ handleKeyUp(e) {
 }
 
 @keyframes walkAnim {
-  0% { background-image: url("@/assets/images/players/1/bp1.png"); }
-  33% { background-image: url("@/assets/images/players/1/bp2.png"); }
-  66% { background-image: url("@/assets/images/players/1/bp3.png"); }
-  100% { background-image: url("@/assets/images/players/1/bp1.png"); }
-}
-</style>
+  0% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+
+  33% {
+    background-image: url("@/assets/images/players/1/bp2.png");
+  }
+
+  66% {
+    background-image: url("@/assets/images/players/1/bp3.png");
+  }
+
+  100% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+}</style>
