@@ -31,7 +31,7 @@ export default {
   },
   data() {
     return {
-      pos: { x: 105, y: 150 },
+      pos: { x: 1605, y: 150 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -188,89 +188,96 @@ handleKeyUp(e) {
     },
 
     loop() {
-      // ===== X =====
-      let moveX = 0;
-      if (this.keys.has("a")) moveX = -this.speed;
-      if (this.keys.has("d")) moveX = this.speed;
+  // ===== X =====
+  let moveX = 0;
+  if (this.keys.has("a")) moveX = -this.speed;
+  if (this.keys.has("d")) moveX = this.speed;
 
-      if (moveX !== 0) {
-        const dir = moveX < 0 ? "left" : "right";
-        this.pos.x += moveX;
+  if (moveX !== 0) {
+    const dir = moveX < 0 ? "left" : "right";
+    this.pos.x += moveX;
 
-        if (this.checkWall(dir)) {
-          // пробуем "ступеньку"
-          let climbed = false;
-          let climbedPixels = 0;
-          for (let i = 1; i <= STEP_HEIGHT; i++) {
-            this.pos.y -= 1;
-            climbedPixels++;
-            if (!this.checkWall(dir) && !this.checkCeiling()) {
-              climbed = true;
-              break;
-            }
-          }
-          if (!climbed) {
-            this.pos.y += climbedPixels;
-            this.pos.x -= moveX;
-          }
+    if (this.checkWall(dir)) {
+      // пробуем "ступеньку"
+      let climbed = false;
+      let climbedPixels = 0;
+      for (let i = 1; i <= STEP_HEIGHT; i++) {
+        this.pos.y -= 1;
+        climbedPixels++;
+        if (!this.checkWall(dir) && !this.checkCeiling()) {
+          climbed = true;
+          break;
         }
       }
-
-      // ===== Y =====
-      // ===== Y =====
-const inWater = this.polygonUnderPlayer("water");
-const onVine = this.polygonUnderPlayer("vine");
-
-this.onVine = onVine;
-
-if (onVine) {
-  // Лиана: вертикальное движение
-  if (this.keys.has("w")) this.pos.y -= this.speed;
-  if (this.keys.has("s")) this.pos.y += this.speed;
-  this.velocity.y = 0;
-  this.isOnGround = false;
-} else if (inWater) {
-  // Вода: вертикальное движение и отсутствие падения
-  if (this.keys.has("w")) this.pos.y -= this.speed / 2;
-  if (this.keys.has("s")) this.pos.y += this.speed / 2;
-  
-  // Гравитацию не применяем, чтобы игрок "плавал"
-  this.velocity.y = 0;
-  this.isOnGround = false;
-} else {
-  // Обычная физика
-  if (this.keys.has("w") && this.isOnGround) {
-    this.velocity.y = -6.7;
-    this.isOnGround = false;
-  }
-
-  this.velocity.y += this.gravity;
-  this.pos.y += this.velocity.y;
-
-  if (this.velocity.y < 0 && this.checkCeiling()) {
-    this.pos.y -= this.velocity.y;
-    this.velocity.y = 0;
-  }
-
-  if (this.velocity.y >= 0) {
-    if (this.checkGround()) {
-      this.isOnGround = true;
-      this.velocity.y = 0;
-
-      // прилипание к полу
-      let snap = 0;
-      while (this.checkGround() && snap++ < 10) {
-        this.pos.y -= 0.5;
+      if (!climbed) {
+        this.pos.y += climbedPixels;
+        this.pos.x -= moveX;
       }
-    } else {
-      this.isOnGround = false;
     }
   }
-}
 
+  // ===== Y =====
+  const inWater = this.polygonUnderPlayer("water");
+  const onVine = this.polygonUnderPlayer("vine");
 
-      this.animationFrame = requestAnimationFrame(this.loop);
-    },
+  this.onVine = onVine;
+
+  // Проверка на границы сверху/снизу имеет приоритет
+  const hittingCeiling = this.checkCeiling();
+  const hittingGround = this.checkGround();
+
+  if (onVine) {
+    // Лиана: вертикальное движение
+    if (this.keys.has("w")) this.pos.y -= this.speed;
+    if (this.keys.has("s")) this.pos.y += this.speed;
+    this.velocity.y = 0;
+    this.isOnGround = false;
+  } else if (inWater && !hittingGround) {
+    // Вода: вертикальное движение и отсутствие падения
+    if (this.keys.has("w")) this.pos.y -= this.speed / 2;
+    if (this.keys.has("s")) this.pos.y += this.speed / 2;
+
+    // Прыжок из воды по Space
+    if (this.keys.has(" ") || this.keys.has("Spacebar")) {
+      this.velocity.y = -6.7; // сила прыжка
+      this.isOnGround = false;
+    } else {
+      this.velocity.y = 0;
+    }
+  } else {
+    // Обычная физика
+    if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
+      this.velocity.y = -6.7;
+      this.isOnGround = false;
+    }
+
+    this.velocity.y += this.gravity;
+    this.pos.y += this.velocity.y;
+
+    if (this.velocity.y < 0 && hittingCeiling) {
+      this.pos.y -= this.velocity.y;
+      this.velocity.y = 0;
+    }
+
+    if (this.velocity.y >= 0) {
+      if (hittingGround) {
+        this.isOnGround = true;
+        this.velocity.y = 0;
+
+        // прилипание к полу
+        let snap = 0;
+        while (this.checkGround() && snap++ < 10) {
+          this.pos.y -= 0.5;
+        }
+      } else {
+        this.isOnGround = false;
+      }
+    }
+  }
+
+  this.animationFrame = requestAnimationFrame(this.loop);
+},
+
   },
 };
 </script>
