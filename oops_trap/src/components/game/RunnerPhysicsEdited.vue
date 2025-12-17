@@ -26,7 +26,7 @@ export default {
   },
   data() {
     return {
-      pos: { x: 105, y: 150 },
+      pos: { x: 1800, y: 800 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -294,9 +294,7 @@ export default {
           this.velocity.y = 0;
         }
       }
-
     },
-
   },
 };
 </script>
