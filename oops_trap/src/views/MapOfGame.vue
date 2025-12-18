@@ -16,7 +16,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
-import RunnerPhysics from "@/components/game/RunnerPhysicsEdited.vue";
+import RunnerPhysics from "@/components/game/player/general/RunnerPlayer.vue";
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
