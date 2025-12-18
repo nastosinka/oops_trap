@@ -516,12 +516,6 @@ export default {
 
       const result = await response.json();
       console.log("✅ Lobby status updated:", result);
-
-      Modal.success({
-        title: "Success",
-        content: "Game started successfully! Redirecting to game...",
-        okText: "OK",
-      });
     },
 
     async createGameSocketConnection() {
