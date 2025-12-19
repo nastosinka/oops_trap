@@ -25,6 +25,11 @@ const routes = [
     component: () => import("@/views/GamePage.vue"),
   },
   {
+    path: "/gametest",
+    name: "GameTest",
+    component: () => import("@/test/GameTest.vue"),
+  },
+  {
     path: "/test-run", // только движение ;(
     name: "TestRunnerr",
     component: () => import("@/components/game/RunnerTest.vue"),

@@ -6,7 +6,7 @@
       </div>
       <div class="select-wrapper">
         <select v-model="selectedMap" class="setting-select">
-          <option value="" disabled>select map type</option>
+          <option disabled value="">select map type</option>
           <option v-for="map in mapTypes" :key="map.value" :value="map.value">
             {{ map.label }}
           </option>
@@ -19,9 +19,9 @@
         <span class="setting-title">mafia</span>
       </div>
       <div class="select-wrapper">
-        <select v-model="selectedMafia" class="setting-select">
-          <option value="" disabled>select mafia</option>
-          <option v-for="player in players" :key="player.id" :value="player.id">
+        <select v-model="selectedMafiaId" class="setting-select">
+          <option disabled value="">select mafia</option>
+          <option v-for="player in players" :key="player.id" :value="player.id.toString()">
             {{ player.name }}
           </option>
         </select>
@@ -34,13 +34,9 @@
       </div>
       <div class="select-wrapper">
         <select v-model="selectedTime" class="setting-select">
-          <option value="" disabled>select time</option>
-          <option
-            v-for="timeOption in timeOptions"
-            :key="timeOption.value"
-            :value="timeOption.value"
-          >
-            {{ timeOption.label }}
+          <option disabled value="">select time</option>
+          <option v-for="time in timeOptions" :key="time.value" :value="time.value">
+            {{ time.label }}
           </option>
         </select>
       </div>
@@ -49,6 +45,7 @@
     <div class="settings-actions">
       <BaseButton label="Apply" @click="handleApply" />
     </div>
+
   </div>
 </template>
 
@@ -57,17 +54,20 @@ import BaseButton from "@/components/base/BaseButton.vue";
 
 export default {
   name: "SettingsModal",
+
   components: {
     BaseButton,
   },
+
   props: {
     players: {
       type: Array,
-      default: () => [],
+      required: true,
     },
     initialSettings: {
       type: Object,
-      default: () => ({}),
+      required: true,
+      // { map: number, mafia: object|null, time: string }
     },
   },
 
@@ -76,8 +76,9 @@ export default {
   data() {
     return {
       selectedMap: "",
-      selectedMafia: "",
+      selectedMafiaId: "",
       selectedTime: "",
+
       mapTypes: [
         { value: 1, label: "city" },
         { value: 2, label: "village" },
@@ -89,29 +90,36 @@ export default {
       ],
     };
   },
-  created() {
-    if (this.initialSettings.map) {
-      this.selectedMap = this.initialSettings.map;
-    }
-    if (this.initialSettings.mafia) {
-      this.selectedMafia = this.initialSettings.mafia;
-    }
-    if (this.initialSettings.time) {
-      this.selectedTime = this.initialSettings.time;
-    }
+
+  computed: {
+    selectedMafia() {
+      return this.players.find(p => p.id === Number(this.selectedMafiaId)) || null;
+    },
   },
+
+  watch: {
+    initialSettings: {
+      immediate: true,
+      handler(settings) {
+        this.selectedMap = settings.map ?? "";
+        this.selectedTime = settings.time ?? "";
+        this.selectedMafiaId = settings.mafia?.id ?? "";
+      },
+    },
+  },
+
   methods: {
     handleApply() {
-      const settings = {
+      this.$emit("apply", {
         map: this.selectedMap,
         mafia: this.selectedMafia,
         time: this.selectedTime,
-      };
-      this.$emit("apply", settings);
+      });
     },
   },
 };
 </script>
+
 
 <style scoped>
 .settings-modal {

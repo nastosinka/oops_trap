@@ -1,6 +1,6 @@
 <template>
   <!-- загрузочный экран -->
-  <div v-if="false" class="splash-screen"> 
+  <div v-if="showSplash" class="splash-screen"> 
     <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
   </div>
   <!-- часть игры -->
