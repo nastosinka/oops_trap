@@ -18,7 +18,9 @@ import st2 from "@/assets/images/maps/Map2/st/st2.png";
 
 <style scoped>
 .game-map {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
 }
@@ -32,15 +34,16 @@ import st2 from "@/assets/images/maps/Map2/st/st2.png";
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  pointer-events: none; /* Добавляем чтобы не мешали */
 }
 
 .st1-layer {
   background-size: cover;
-  z-index: 1;
+  z-index: 2;
 }
 
 .st2-layer {
   background-size: contain;
-  z-index: 2;
+  z-index: 3;
 }
 </style>
