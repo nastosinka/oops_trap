@@ -1,464 +1,376 @@
 <template>
-    <!-- загрузочный экран -->
-    <!-- <div v-if="showSplash" class="splash-screen"> -->
-    <div v-if="false" class="splash-screen">
-      <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
-    </div>
-    <!-- часть игры -->
-    <div v-else class="game-container">
-      <div class="game-container">
-        <div class="hud">
-          <div class="hud-info">
-            <p>Time left: {{ timeLeft }}s</p>
-            <p>Game ID: {{ gameId }}</p>
-            <p>User ID: {{ userId }}</p>
-            <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-            <p>Role: {{ isHost ? "Host" : "Player" }}</p>
-            <p>
-              Connection:
-              <span :class="connectionStatusClass">{{ connectionStatus }}</span>
-            </p>
-          </div>
-          <div class="hud-buttons">
-            <button
-              v-if="lobbyId"
-              class="lobby-btn"
-              :disabled="isGameActive"
-              :title="
-                isGameActive
-                  ? 'Cannot return to lobby during active game'
-                  : 'Return to lobby'
-              "
-              @click="returnToLobby"
-            >
-              {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
-            </button>
-          </div>
+  <!-- загрузочный экран -->
+  <div v-if="false" class="splash-screen">
+    <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
+  </div>
+  <!-- часть игры -->
+  <div v-else class="game-container">
+    <div class="game-container">
+      <div class="hud">
+        <div class="hud-info">
+          <p>Time left: {{ timeLeft }}s</p>
+          <p>Game ID: {{ gameId }}</p>
+          <p>User ID: {{ userId }}</p>
+          <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
+          <p>Role: {{ isHost ? "Host" : "Player" }}</p>
+          <p>
+            Connection:
+            <span :class="connectionStatusClass">{{ connectionStatus }}</span>
+          </p>
         </div>
-        <div class="container">
-            <MapOfGame ref="mapRef" />
+        <div class="hud-buttons">
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
+            {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
+          </button>
         </div>
       </div>
+      <div class="container">
+        <MapOfGame ref="mapRef" />
+      </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
-  import { useRoute, useRouter } from "vue-router";
-  import { useUserStore } from "@/stores/user";
-  import { storeToRefs } from "pinia";
-  import { Modal } from "ant-design-vue";
-  import { reactive } from "vue";
-  import MapOfGame from "@/views/MapOfGame.vue";
-  
-  const route = useRoute();
-  const router = useRouter();
-  const userStore = useUserStore();
-  const {
-    userId: storeUserId,
-    getGameSocket,
-    currentGameId,
-  } = storeToRefs(userStore);
-  
-  // реактивные данные
-  const gameId = computed(() => route.params.id || currentGameId.value || 1);
-  const userId = computed(() => storeUserId.value);
-  const lobbyId = computed(() => route.query.lobbyId);
-  const isHost = ref(false);
-  const showSplash = ref(true);
-  const playerCoords = reactive({ x: 0, y: 0 });
-  // игровые данные
-  const timeLeft = ref(0);
-  const isConnected = ref(false);
-  const gameEnded = ref(false);
-  const connectionError = ref(null);
-  const timerActive = ref(false);
-  const messageInput = ref("");
-  const chatMessages = ref([]);
-  
-  // Computed property для проверки активности игры
-  const isGameActive = computed(() => {
-    return timerActive.value && timeLeft.value > 0 && !gameEnded.value;
-  });
-  
-  // Connection status
-  const connectionStatus = computed(() => {
-    if (connectionError.value) return "Disconnected";
-    return isConnected.value ? "Connected" : "Connecting...";
-  });
-  
-  const connectionStatusClass = computed(() => {
-    return {
-      "status-connected": isConnected.value,
-      "status-disconnected": connectionError.value,
-    };
-  });
-  
-  onMounted(async () => {
-    setTimeout(() => {
-      showSplash.value = false;
-    }, 10000);
-  
-    userStore.initializeUser();
-    await checkIfUserIsHost();
-    setupGameWebSocket();
-  
-    playerCoords.x = 100;
-    playerCoords.y = 100;
-  
-    // Отправляем серверу начальные координаты
-    if (
-      getGameSocket.value &&
-      getGameSocket.value.readyState === WebSocket.OPEN
-    ) {
-      getGameSocket.value.send(
-        JSON.stringify({
-          type: "player_move",
-          gameId: gameId.value,
-          playerId: userId.value,
-          settings: { x: 100, y: 100, lastImage: 1 },
-        })
-      );
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted, computed, nextTick, watch, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { Modal } from "ant-design-vue";
+import MapOfGame from "@/views/MapOfGame.vue";
+
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
+const { userId: storeUserId, getGameSocket, currentGameId } = storeToRefs(userStore);
+
+// реактивные данные
+const gameId = computed(() => route.params.id || currentGameId.value || 1);
+const userId = computed(() => storeUserId.value);
+const lobbyId = computed(() => route.query.lobbyId);
+const isHost = ref(false);
+const showSplash = ref(true);
+const playerCoords = reactive({ x: 0, y: 0 });
+// игровые данные
+const timeLeft = ref(0);
+const isConnected = ref(false);
+const gameEnded = ref(false);
+const connectionError = ref(null);
+const timerActive = ref(false);
+const messageInput = ref("");
+const chatMessages = ref([]);
+
+// Computed property для проверки активности игры
+const isGameActive = computed(() => timerActive.value && timeLeft.value > 0 && !gameEnded.value);
+
+// Connection status
+const connectionStatus = computed(() => {
+  if (connectionError.value) return "Disconnected";
+  return isConnected.value ? "Connected" : "Connecting...";
+});
+
+const connectionStatusClass = computed(() => {
+  return {
+    "status-connected": isConnected.value,
+    "status-disconnected": connectionError.value,
+  };
+});
+
+// Отправка координат игрока на сервер
+const sendPlayerMove = (x, y, lastImage = 1) => {
+  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN) return;
+  console.log(`📍 Sending player coords -> x: ${x}, y: ${y}, lastImage: ${lastImage}`);
+
+  getGameSocket.value.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      settings: { x, y, lastImage },
+    })
+  );
+};
+
+onMounted(async () => {
+  setTimeout(() => {
+    showSplash.value = false;
+  }, 10000);
+
+  userStore.initializeUser();
+  await checkIfUserIsHost();
+  setupGameWebSocket();
+
+  playerCoords.x = 100;
+  playerCoords.y = 100;
+  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+});
+
+onUnmounted(() => {
+  cleanupWebSocket();
+});
+
+// Проверяем, является ли пользователь хостом лобби
+const checkIfUserIsHost = async () => {
+  if (!lobbyId.value) {
+    isHost.value = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (data.success && data.data) {
+      isHost.value = data.data.ownerId === userId.value;
+      console.log(`🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${lobbyId.value}`);
     }
-  });
-  
-  onUnmounted(() => {
-    cleanupWebSocket();
-  });
-  
-  // Проверяем, является ли пользователь хостом лобби
-  const checkIfUserIsHost = async () => {
-    if (!lobbyId.value) {
-      isHost.value = false;
-      return;
+  } catch (error) {
+    console.error("❌ Error checking host status:", error);
+    isHost.value = false;
+  }
+};
+
+const returnToLobby = async () => {
+  if (isGameActive.value) {
+    Modal.warning({
+      title: "Game in Progress",
+      content: "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+      okText: "OK",
+    });
+    return;
+  }
+
+  if (!lobbyId.value) {
+    Modal.error({
+      title: "Cannot Return to Lobby",
+      content: "Lobby information is not available",
+    });
+    return;
+  }
+
+  try {
+    if (isHost.value) {
+      await updateLobbyStatus("waiting");
+      console.log("🎮 Host returned to lobby, status set to waiting");
     }
-  
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+  }
+  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+};
+
+const updateLobbyStatus = async (newStatus) => {
+  try {
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newStatus }),
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("❌ Error updating lobby status:", error);
+    throw error;
+  }
+};
+
+// Веб-сокеты
+const setupGameWebSocket = () => {
+  const socket = getGameSocket.value;
+
+  if (!socket) {
+    console.error("❌ No game socket found in store");
+    connectionError.value = "No game connection";
+    return;
+  }
+
+  isConnected.value = socket.readyState === WebSocket.OPEN;
+
+  socket.onmessage = (event) => {
     try {
-      const response = await fetch(
-        `/api/lobby/lobbies/${lobbyId.value}/settings`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  
-      const data = await response.json();
-      if (data.success && data.data) {
-        isHost.value = data.data.ownerId === userId.value;
-        console.log(
-          `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
-            lobbyId.value
-          }`
-        );
-      }
+      const message = JSON.parse(event.data);
+      handleGameMessage(message);
     } catch (error) {
-      console.error("❌ Error checking host status:", error);
-      isHost.value = false;
+      console.error("❌ Error parsing WebSocket message:", error);
     }
   };
-  
-  const returnToLobby = async () => {
-    // Проверяем, активна ли игра
-    if (isGameActive.value) {
-      Modal.warning({
-        title: "Game in Progress",
-        content:
-          "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-        okText: "OK",
-      });
-      return;
-    }
-  
-    if (!lobbyId.value) {
-      Modal.error({
-        title: "Cannot Return to Lobby",
-        content: "Lobby information is not available",
-      });
-      return;
-    }
-  
-    try {
-      if (isHost.value) {
-        await updateLobbyStatus("waiting");
-        console.log("🎮 Host returned to lobby, status set to waiting");
-      }
-    } catch (error) {
-      console.error("❌ Error updating lobby status:", error);
-    }
-    router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-  };
-  
-  const updateLobbyStatus = async (newStatus) => {
-    try {
-      const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          newStatus,
-        }),
-        credentials: "include",
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-  
-      return await response.json();
-    } catch (error) {
-      console.error("❌ Error updating lobby status:", error);
-      throw error;
-    }
-  };
-  
-  // Веб-сокеты - используем сохраненный сокет из хранилища
-  const setupGameWebSocket = () => {
-    const socket = getGameSocket.value;
-  
-    if (!socket) {
-      console.error("❌ No game socket found in store");
-      connectionError.value = "No game connection";
-      return;
-    }
-  
-    isConnected.value = socket.readyState === WebSocket.OPEN;
-  
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        handleGameMessage(message);
-      } catch (error) {
-        console.error("❌ Error parsing WebSocket message:", error);
-      }
-    };
-  
-    socket.onclose = (event) => {
-      console.log("🔌 Game WebSocket disconnected");
-      isConnected.value = false;
-  
-      if (!event.wasClean) {
-        connectionError.value = `Connection lost: ${
-          event.reason || "Unknown error"
-        }`;
-      }
-    };
-  
-    socket.onerror = (error) => {
-      console.error("💥 Game WebSocket error:", error);
-      connectionError.value = "Connection error";
-    };
-  
-    // Если сокет уже открыт, отправляем init сообщение
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(
-        JSON.stringify({
-          type: "init",
-          gameId: gameId.value,
-          playerId: userId.value,
-          isHost: isHost.value,
-        })
-      );
-    }
-  };
-  
-  const cleanupWebSocket = () => {
-    // Не закрываем сокет, так как он управляется хранилищем
-    // Просто сбрасываем локальное состояние
+
+  socket.onclose = (event) => {
+    console.log("🔌 Game WebSocket disconnected");
     isConnected.value = false;
-  };
-  
-  const handleGameMessage = (message) => {
-    console.log("📨 Received game message:", message);
-  
-    switch (message.type) {
-      case "timer_started":
-        timerActive.value = true;
-        timeLeft.value = message.timeLeft;
-        addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
-        break;
-  
-      case "timer_update":
-        timerActive.value = message.active;
-        timeLeft.value = message.timeLeft;
-        if (message.timeLeft <= 0 && isHost.value) {
-          updateLobbyStatus("finished");
-          gameEnded.value = true;
-        }
-        break;
-  
-      case "chat_message":
-        addChatMessage({
-          id: Date.now() + Math.random(),
-          playerId: message.playerId,
-          text: message.text,
-          timestamp: message.timestamp,
-          isHost: message.isHost,
-        });
-        break;
-      case "coord_message": {
-        const me = message.coords.find((p) => p.id === userId.value);
-        if (me) {
-          playerCoords.x = me.x;
-          playerCoords.y = me.y;
-        }
-        addSystemMessage(message.coords);
-        break;
-      }
-      case "player_move": {
-        const me = message.coords.find((p) => p.id === userId.value);
-        if (me) {
-          playerCoords.x = me.x;
-          playerCoords.y = me.y;
-        }
-        addChatMessage({
-          id: Date.now() + Math.random(),
-          playerId: "Coord",
-          text: JSON.stringify(message.coords),
-          timestamp: message.timestamp,
-          isHost: false,
-        });
-        break;
-      }
-      case "rollback":
-        if (message.playerId === userId.value) {
-          playerCoords.x = message.x;
-          playerCoords.y = message.y;
-        }
-        break;
-      // case "player_move":
-      //   if (message.position && message.playerId === userId.value) {
-      //     playerCoords.x = message.position.x;
-      //     playerCoords.y = message.position.y;
-      //   }
-      //   break;
-      case "player_joined":
-        addSystemMessage(message.message);
-        break;
-  
-      case "player_disconnected":
-        addSystemMessage(message.message);
-        break;
-  
-      default:
-        console.log("Unknown message type:", message.type);
+    if (!event.wasClean) {
+      connectionError.value = `Connection lost: ${event.reason || "Unknown error"}`;
     }
   };
-  
-  const movePlayer = (dx, dy) => {
-    const newX = playerCoords.x + dx;
-    const newY = playerCoords.y + dy;
-    const newImage = 1;
-  
-    if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
-      return;
-  
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "player_move",
-        gameId: gameId.value,
-        playerId: userId.value,
-        settings: { x: newX, y: newY, lastImage: newImage },
-      })
+
+  socket.onerror = (error) => {
+    console.error("💥 Game WebSocket error:", error);
+    connectionError.value = "Connection error";
+  };
+
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(
+      JSON.stringify({ type: "init", gameId: gameId.value, playerId: userId.value, isHost: isHost.value })
     );
-  };
-  
-  const setRandomCoords = () => {
-    const newX = 100;
-    const newY = 100;
-    const newImage = 1;
-  
-    if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
-      return;
-  
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "player_move",
-        gameId: gameId.value,
-        playerId: userId.value,
-        settings: { x: newX, y: newY, lastImage: newImage },
-      })
-    );
-  };
-  
-  const beginGetCoords = () => {
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "coord_message",
-        gameId: gameId.value,
-      })
-    );
-  };
-  
-  const addChatMessage = (message) => {
-    chatMessages.value.push(message);
-    scrollChatToBottom();
-  };
-  
-  const addSystemMessage = (text) => {
-    chatMessages.value.push({
-      id: Date.now() + Math.random(),
-      playerId: "System",
-      text,
-      timestamp: new Date().toISOString(),
-      isHost: false,
-      isSystem: true,
-    });
-    scrollChatToBottom();
-  };
-  
-  const scrollChatToBottom = () => {
-    nextTick(() => {
-      const chatContainer = document.getElementById("chat");
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+};
+
+const cleanupWebSocket = () => {
+  isConnected.value = false;
+};
+
+const handleGameMessage = (message) => {
+  console.log("📨 Received game message:", message);
+
+  switch (message.type) {
+    case "timer_started":
+      timerActive.value = true;
+      timeLeft.value = message.timeLeft;
+      addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
+      break;
+
+    case "timer_update":
+      timerActive.value = message.active;
+      timeLeft.value = message.timeLeft;
+      if (message.timeLeft <= 0 && isHost.value) {
+        updateLobbyStatus("finished");
+        gameEnded.value = true;
       }
-    });
-  };
-  
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString("ru-RU", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  };
-  
-  const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      sendMessage();
+      break;
+
+    case "chat_message":
+      addChatMessage({
+        id: Date.now() + Math.random(),
+        playerId: message.playerId,
+        text: message.text,
+        timestamp: message.timestamp,
+        isHost: message.isHost,
+      });
+      break;
+
+    case "coord_message": {
+      const me = message.coords.find((p) => p.id === userId.value);
+      if (me) {
+        playerCoords.x = me.x;
+        playerCoords.y = me.y;
+        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+      }
+      addSystemMessage(message.coords);
+      break;
     }
-  };
-  
-  const sendMessage = () => {
-    const text = messageInput.value.trim();
-  
-    if (
-      text &&
-      getGameSocket.value &&
-      getGameSocket.value.readyState === WebSocket.OPEN
-    ) {
-      getGameSocket.value.send(
-        JSON.stringify({
-          type: "chat_message",
-          gameId: gameId.value,
-          playerId: userId.value,
-          text,
-        })
-      );
-      messageInput.value = "";
+
+    case "player_move": {
+      const me = message.coords.find((p) => p.id === userId.value);
+      if (me) {
+        playerCoords.x = me.x;
+        playerCoords.y = me.y;
+        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+      }
+      addChatMessage({
+        id: Date.now() + Math.random(),
+        playerId: "Coord",
+        text: JSON.stringify(message.coords),
+        timestamp: message.timestamp,
+        isHost: false,
+      });
+      break;
     }
-  };
-  
-  // Следим за изменениями сокета в хранилище
-  watch(getGameSocket, (newSocket, oldSocket) => {
-    if (newSocket !== oldSocket) {
-      setupGameWebSocket();
-    }
+
+    case "rollback":
+      if (message.playerId === userId.value) {
+        playerCoords.x = message.x;
+        playerCoords.y = message.y;
+        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+      }
+      break;
+
+    case "player_joined":
+    case "player_disconnected":
+      addSystemMessage(message.message);
+      break;
+
+    default:
+      console.log("Unknown message type:", message.type);
+  }
+};
+
+const movePlayer = (dx, dy) => {
+  playerCoords.x += dx;
+  playerCoords.y += dy;
+  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+};
+
+const setRandomCoords = () => {
+  playerCoords.x = 100;
+  playerCoords.y = 100;
+  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+};
+
+const beginGetCoords = () => {
+  getGameSocket.value.send(JSON.stringify({ type: "coord_message", gameId: gameId.value }));
+};
+
+const addChatMessage = (message) => {
+  chatMessages.value.push(message);
+  scrollChatToBottom();
+};
+
+const addSystemMessage = (text) => {
+  chatMessages.value.push({
+    id: Date.now() + Math.random(),
+    playerId: "System",
+    text,
+    timestamp: new Date().toISOString(),
+    isHost: false,
+    isSystem: true,
   });
-  </script>
+  scrollChatToBottom();
+};
+
+const scrollChatToBottom = () => {
+  nextTick(() => {
+    const chatContainer = document.getElementById("chat");
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+  });
+};
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+};
+
+const handleKeyPress = (event) => {
+  if (event.key === "Enter") sendMessage();
+};
+
+const sendMessage = () => {
+  const text = messageInput.value.trim();
+  if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
+    getGameSocket.value.send(JSON.stringify({ type: "chat_message", gameId: gameId.value, playerId: userId.value, text }));
+    messageInput.value = "";
+  }
+};
+
+// Следим за изменениями сокета в хранилище
+watch(getGameSocket, (newSocket, oldSocket) => {
+  if (newSocket !== oldSocket) setupGameWebSocket();
+});
+</script>
   
   <style scoped>
   .splash-screen img {

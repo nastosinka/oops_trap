@@ -337,6 +337,7 @@ const handleGameMessage = (message) => {
         playerCoords.x = me.x;
         playerCoords.y = me.y;
       }
+      console.log(message.coords);
       addSystemMessage(message.coords);
       break;
     }
@@ -581,9 +582,6 @@ button:disabled {
   color: red;
   font-weight: bold;
 }
-</style>
-
-<style scoped>
 .input-group {
   display: flex;
   gap: 10px;
