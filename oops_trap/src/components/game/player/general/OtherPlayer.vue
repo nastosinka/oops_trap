@@ -132,19 +132,19 @@ function playerClasses(player) {
 
 /* Спрайты по кадрам */
 .other-player.player-1 .player-sprite {
-  background-image: url("/src/assets/images/1_R.png");
+  background-image: url("@/assets/images/players/1/bp1.png");
 }
 
 .other-player.player-2 .player-sprite {
-  background-image: url("/src/assets/images/2_L.png");
+  background-image: url("@/assets/images/players/1/bp1.png");
 }
 
 .other-player.player-3 .player-sprite {
-  background-image: url("/src/assets/images/3_R.png");
+  background-image: url("@/assets/images/players/1/bp2.png");
 }
 
 .other-player.player-4 .player-sprite {
-  background-image: url("/src/assets/images/4_L.png");
+  background-image: url("@/assets/images/players/1/bp3.png");
 }
 
 /* ------------------------------------------------------------------
