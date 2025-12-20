@@ -27,7 +27,7 @@ export default {
   emits: ['player-move'],
   data() {
     return {
-      pos: { x: 105, y: 150 },
+      pos: { x: 1850, y: 910 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -36,12 +36,11 @@ export default {
       dir: "right",
       keys: new Set(),
       animationFrame: null,
-      SPAWN_POINT: { x: 105, y: 150 },
+      SPAWN_POINT: { x: 1850, y: 910 },
       respawnTimeout: null,
       currentFrame: 0,
       
-      // ✅ ДОБАВЛЕНО: для троттлинга отправки координат
-      lastSentPos: { x: 1800, y: 200 },
+      lastSentPos: { x: 1850, y: 910 },
       lastSendTime: 0,
       sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
       

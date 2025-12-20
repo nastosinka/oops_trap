@@ -58,7 +58,7 @@ const routes = [
   {
     path: "/hui", 
     name: "Hui",
-    component: () => import("/Users/amoremore/Downloads/web/oops_trap/src/components/game/traps/map2/TrapNum3.vue"),
+    component: () => import("@/components/game/traps/map2/TrapNum3.vue"),
     //meta: { devOnly: true }
   },
 ];

@@ -1,11 +1,13 @@
 <template>
-  <!-- загрузочный экран -->
+  <!-- Загрузочный экран -->
   <div v-if="false" class="splash-screen">
     <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
   </div>
-  <!-- часть игры -->
+
+  <!-- Основная часть игры -->
   <div v-else class="game-container">
     <div class="game-container">
+      <!-- HUD с информацией об игре -->
       <div class="hud">
         <div class="hud-info">
           <p>Time left: {{ timeLeft }}s</p>
@@ -18,17 +20,25 @@
             <span :class="connectionStatusClass">{{ connectionStatus }}</span>
           </p>
         </div>
+
+        <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="isGameActive
               ? 'Cannot return to lobby during active game'
-              : 'Return to lobby'
-            " @click="returnToLobby">
+              : 'Return to lobby'"
+            @click="returnToLobby"
+          >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
       </div>
+
+      <!-- Игровая карта -->
       <div class="container">
-        <!-- ✅ ИСПРАВЛЕНО: Передаем данные в MapOfGame -->
         <MapOfGame ref="mapRef" :other-players="otherPlayers" />
       </div>
     </div>
@@ -46,48 +56,75 @@ import MapOfGame from "@/views/MapOfGame.vue";
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const { userId: storeUserId, getGameSocket, currentGameId } = storeToRefs(userStore);
+const { userId: storeUserId, getGameSocket, currentGameId } =
+  storeToRefs(userStore);
 
-// реактивные данные
+/* ------------------------------------------------------------------
+   Реактивные данные и computed значения
+-------------------------------------------------------------------*/
+
+// Идентификатор текущей игры
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
+
+// Идентификатор пользователя
 const userId = computed(() => storeUserId.value);
+
+// Идентификатор лобби (если есть)
 const lobbyId = computed(() => route.query.lobbyId);
+
+// Флаг: является ли пользователь хостом
 const isHost = ref(false);
-const showSplash = ref(true);
+
+// Координаты текущего игрока
 const playerCoords = reactive({ x: 0, y: 0 });
 
-// ✅ ДОБАВЛЕНО: Список других игроков
+// Список других игроков на карте
 const otherPlayers = ref([]);
 
-// игровые данные
+// Состояние таймера
 const timeLeft = ref(0);
-const isConnected = ref(false);
-const gameEnded = ref(false);
-const connectionError = ref(null);
 const timerActive = ref(false);
 
-// Computed property для проверки активности игры
-const isGameActive = computed(() => timerActive.value && timeLeft.value > 0 && !gameEnded.value);
+// Состояние соединения
+const isConnected = ref(false);
+const connectionError = ref(null);
 
-// Connection status
+// Флаг завершения игры
+const gameEnded = ref(false);
+
+// Активна ли сейчас игра
+const isGameActive = computed(
+  () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
+);
+
+// Текстовое состояние соединения
 const connectionStatus = computed(() => {
   if (connectionError.value) return "Disconnected";
   return isConnected.value ? "Connected" : "Connecting...";
 });
 
-const connectionStatusClass = computed(() => {
-  return {
-    "status-connected": isConnected.value,
-    "status-disconnected": connectionError.value,
-  };
-});
+// CSS-классы для статуса соединения
+const connectionStatusClass = computed(() => ({
+  "status-connected": isConnected.value,
+  "status-disconnected": connectionError.value,
+}));
 
-// ✅ ИСПРАВЛЕНО: Отправка координат игрока на сервер
+/* ------------------------------------------------------------------
+   Работа с координатами игрока
+-------------------------------------------------------------------*/
+
+/**
+ * Отправляет текущие координаты игрока на сервер по WebSocket.
+ *
+ * @param {number} x - координата X
+ * @param {number} y - координата Y
+ * @param {number} lastImage - идентификатор последнего спрайта
+ */
 const sendPlayerMove = (x, y, lastImage = 1) => {
-  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN) return;
-  console.log(`📍 Sending player coords -> x: ${x}, y: ${y}, lastImage: ${lastImage}`);
+  const socket = getGameSocket.value;
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-  getGameSocket.value.send(
+  socket.send(
     JSON.stringify({
       type: "player_move",
       gameId: gameId.value,
@@ -97,26 +134,36 @@ const sendPlayerMove = (x, y, lastImage = 1) => {
   );
 };
 
-// ✅ ДОБАВЛЕНО: Слушаем координаты от карты
+/**
+ * Подписывается на глобальное событие обновления координат игрока,
+ * которое отправляется из компонента карты.
+ */
 function setupCoordsListener() {
-  window.addEventListener('player-coords-update', (event) => {
+  window.addEventListener("player-coords-update", (event) => {
     const newCoords = event.detail;
     playerCoords.x = newCoords.x;
     playerCoords.y = newCoords.y;
-    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+
+    sendPlayerMove(
+      playerCoords.x,
+      playerCoords.y,
+      newCoords.lastImage || 1
+    );
   });
 }
 
-onMounted(async () => {
-  setTimeout(() => {
-    showSplash.value = false;
-  }, 10000);
+/* ------------------------------------------------------------------
+   Жизненный цикл компонента
+-------------------------------------------------------------------*/
 
+onMounted(async () => {
   userStore.initializeUser();
+
   await checkIfUserIsHost();
   setupGameWebSocket();
-  setupCoordsListener(); // ✅ ДОБАВЛЕНО
+  setupCoordsListener();
 
+  // Начальная позиция игрока
   playerCoords.x = 100;
   playerCoords.y = 100;
   sendPlayerMove(playerCoords.x, playerCoords.y, 1);
@@ -124,10 +171,16 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupWebSocket();
-  window.removeEventListener('player-coords-update', setupCoordsListener); // ✅ ДОБАВЛЕНО
+  window.removeEventListener("player-coords-update", setupCoordsListener);
 });
 
-// Проверяем, является ли пользователь хостом лобби
+/* ------------------------------------------------------------------
+   Лобби и навигация
+-------------------------------------------------------------------*/
+
+/**
+ * Проверяет, является ли текущий пользователь хостом лобби.
+ */
 const checkIfUserIsHost = async () => {
   if (!lobbyId.value) {
     isHost.value = false;
@@ -135,28 +188,36 @@ const checkIfUserIsHost = async () => {
   }
 
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/settings`, {
-      method: "GET",
-      credentials: "include",
-    });
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/settings`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
     if (data.success && data.data) {
       isHost.value = data.data.ownerId === userId.value;
-      console.log(`🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${lobbyId.value}`);
     }
   } catch (error) {
-    console.error("❌ Error checking host status:", error);
+    console.error("Error checking host status:", error);
     isHost.value = false;
   }
 };
 
+/**
+ * Возвращает пользователя в лобби.
+ * Хост дополнительно переводит лобби в состояние ожидания.
+ */
 const returnToLobby = async () => {
   if (isGameActive.value) {
     Modal.warning({
       title: "Game in Progress",
-      content: "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+      content:
+        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
       okText: "OK",
     });
     return;
@@ -173,36 +234,50 @@ const returnToLobby = async () => {
   try {
     if (isHost.value) {
       await updateLobbyStatus("waiting");
-      console.log("🎮 Host returned to lobby, status set to waiting");
     }
   } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
+    console.error("Error updating lobby status:", error);
   }
+
   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
 };
 
+/**
+ * Обновляет статус лобби на сервере.
+ *
+ * @param {string} newStatus - новый статус лобби
+ */
 const updateLobbyStatus = async (newStatus) => {
   try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newStatus }),
-      credentials: "include",
-    });
+    const response = await fetch(
+      `/api/lobby/lobbies/${lobbyId.value}/status`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newStatus }),
+        credentials: "include",
+      }
+    );
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
+    console.error("Error updating lobby status:", error);
     throw error;
   }
 };
 
-// Веб-сокеты
+/* ------------------------------------------------------------------
+   WebSocket и обработка сообщений игры
+-------------------------------------------------------------------*/
+
+/**
+ * Инициализирует WebSocket для игры и навешивает обработчики событий.
+ */
 const setupGameWebSocket = () => {
   const socket = getGameSocket.value;
 
   if (!socket) {
-    console.error("❌ No game socket found in store");
     connectionError.value = "No game connection";
     return;
   }
@@ -214,38 +289,47 @@ const setupGameWebSocket = () => {
       const message = JSON.parse(event.data);
       handleGameMessage(message);
     } catch (error) {
-      console.error("❌ Error parsing WebSocket message:", error);
+      console.error("Error parsing WebSocket message:", error);
     }
   };
 
   socket.onclose = (event) => {
-    console.log("🔌 Game WebSocket disconnected");
     isConnected.value = false;
     if (!event.wasClean) {
-      connectionError.value = `Connection lost: ${event.reason || "Unknown error"}`;
+      connectionError.value =
+        event.reason || "Connection was lost unexpectedly";
     }
   };
 
-  socket.onerror = (error) => {
-    console.error("💥 Game WebSocket error:", error);
+  socket.onerror = () => {
     connectionError.value = "Connection error";
   };
 
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(
-      JSON.stringify({ type: "init", gameId: gameId.value, playerId: userId.value, isHost: isHost.value })
+      JSON.stringify({
+        type: "init",
+        gameId: gameId.value,
+        playerId: userId.value,
+        isHost: isHost.value,
+      })
     );
   }
 };
 
+/**
+ * Сбрасывает состояние соединения при уничтожении компонента.
+ */
 const cleanupWebSocket = () => {
   isConnected.value = false;
 };
 
-// ✅ ОБНОВЛЕНО: Обработка сообщений от сервера
+/**
+ * Обрабатывает входящие сообщения от игрового сервера.
+ *
+ * @param {Object} message - сообщение WebSocket
+ */
 const handleGameMessage = (message) => {
-  console.log("📨 Received game message:", message);
-
   switch (message.type) {
     case "timer_started":
       timerActive.value = true;
@@ -255,6 +339,7 @@ const handleGameMessage = (message) => {
     case "timer_update":
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
+
       if (message.timeLeft <= 0 && isHost.value) {
         updateLobbyStatus("finished");
         gameEnded.value = true;
@@ -263,24 +348,25 @@ const handleGameMessage = (message) => {
 
     case "coord_message":
     case "player_move":
-      // ✅ ОБНОВЛЕНО: Обрабатываем координаты всех игроков
-      if (message.coords && Array.isArray(message.coords)) {
-        // Фильтруем себя из списка других игроков
-        otherPlayers.value = message.coords
-          .filter(player => player.id !== userId.value)
-          .map(player => ({
-            id: player.id,
-            name: player.name || `Player ${player.id}`,
-            x: player.x,
-            y: player.y,
-            lastImage: player.lastImage || 1,
-            isHost: player.isHost || false
-          }));
-        // В handleGameMessage добавь после обработки:
-        console.log('🎮 Updated otherPlayers:', otherPlayers.value);
-        console.log('🎮 Player IDs:', otherPlayers.value.map(p => p.id || p.fid));
-        // Обновляем свои координаты если они изменились
-        const me = message.coords.find(p => p.id === userId.value);
+      if (Array.isArray(message.coords)) {
+        const normalized = message.coords.map((player) => ({
+          id: String(player.fid || player.id),
+          name: player.name || `Player ${player.fid || player.id}`,
+          x: Number(player.x) || 100,
+          y: Number(player.y) || 100,
+          lastImage: Number(player.lastImage) || 1,
+          isHost: Boolean(player.isHost),
+          trapper: Boolean(player.trapper),
+        }));
+
+        otherPlayers.value = normalized.filter(
+          (p) => p.id !== String(userId.value)
+        );
+
+        const me = normalized.find(
+          (p) => p.id === String(userId.value)
+        );
+
         if (me) {
           playerCoords.x = me.x;
           playerCoords.y = me.y;
@@ -296,24 +382,20 @@ const handleGameMessage = (message) => {
       }
       break;
 
-    case "player_joined":
-      console.log('👤 Player joined:', message.playerId);
-      break;
-
     case "player_disconnected":
-      // Удаляем отключившегося игрока
-      otherPlayers.value = otherPlayers.value.filter(p => p.id !== message.playerId);
-      console.log('🚪 Player disconnected:', message.playerId);
+      otherPlayers.value = otherPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
       break;
 
     default:
-      console.log("Unknown message type:", message.type);
+      break;
   }
 };
 </script>
 
+
 <style scoped>
-/* Все стили остаются без изменений */
 .splash-screen img {
   height: 100vh;
   width: 100vw;

@@ -1,95 +1,197 @@
 <template>
-    <div class="other-players-layer">
-      <div 
-        v-for="player in props.players" 
-        :key="player.id"
-        class="other-player"
-        :style="getPlayerStyle(player)"
-      >
-        <!-- Тестовый элемент - виден всегда -->
-        <div class="debug-marker"></div>
-        <div class="player-name">{{ player.name || `Player ${player.id}` }}</div>
+  <div class="other-players-container">
+    <div
+      v-for="player in processedPlayers"
+      :key="player.id"
+      class="other-player"
+      :class="playerClasses(player)"
+      :style="playerStyle(player)"
+    >
+      <div class="player-sprite"></div>
+
+      <div v-if="showNames" class="player-name">
+        {{ player.name }}
+        <span v-if="player.isHost" class="host-badge">Host</span>
+        <span v-if="player.trapper" class="trapper-badge">Trapper</span>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { computed, inject, onMounted } from "vue";
-  
-  const props = defineProps({
-    players: { 
-      type: Array, 
-      default: () => [],
-      required: true 
-    }
-  });
-  
-  const gameArea = inject('gameArea', { scale: 1 });
-  
-  onMounted(() => {
-    console.log('🎮 OtherPlayers mounted. Players:', props.players);
-  });
-  
-  const getPlayerStyle = (player) => {
-    const scale = gameArea?.scale || 1;
-    const x = player.x || 100;
-    const y = player.y || 100;
-    
-    console.log(`🎯 Player ${player.id} at (${x}, ${y}) scale ${scale}`);
-    
-    return {
-      position: 'absolute',
-      left: `${Math.round(x * scale)}px`,
-      top: `${Math.round(y * scale)}px`,
-      transform: 'translate(-50%, -50%)',
-      zIndex: '99'
-    };
+  </div>
+</template>
+
+<script setup>
+import { computed, inject, ref } from "vue";
+
+/* ----------------------------------
+   Props
+---------------------------------- */
+
+const props = defineProps({
+  players: {
+    type: Array,
+    default: () => [],
+  },
+  showNames: {
+    type: Boolean,
+    default: true,
+  },
+});
+
+/* ----------------------------------
+   Inject (🔥 РЕАКТИВНО)
+---------------------------------- */
+
+const gameArea = inject("gameArea", ref({ scale: 1 }));
+
+/* ----------------------------------
+   Constants
+---------------------------------- */
+
+const SPRITE_WIDTH = 24;
+const SPRITE_HEIGHT = 48;
+
+/* ----------------------------------
+   Normalization
+---------------------------------- */
+
+const processedPlayers = computed(() =>
+  Array.isArray(props.players)
+    ? props.players.map((p) => ({
+        id: String(p.id),
+        name: p.name ?? `Player ${p.id}`,
+        x: Number(p.x) || 0,
+        y: Number(p.y) || 0,
+        lastImage: Number(p.lastImage) || 1,
+        isHost: !!p.isHost,
+        trapper: !!p.trapper,
+      }))
+    : []
+);
+
+/* ----------------------------------
+   Styles
+---------------------------------- */
+
+function playerStyle(player) {
+  const scale = gameArea.value.scale || 1;
+
+  return {
+    position: "absolute",
+    left: Math.round(player.x * scale) + "px",
+    top: Math.round(player.y * scale) + "px",
+    width: Math.round(SPRITE_WIDTH * scale) + "px",
+    height: Math.round(SPRITE_HEIGHT * scale) + "px",
+    zIndex: player.trapper ? 15 : 10,
+    pointerEvents: "none",
   };
-  </script>
-  
-  <style scoped>
-  .other-players-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 99;
-  }
-  
-  .other-player {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* 🔥 ЯРКИЙ ТЕСТОВЫЙ МАРКЕР - ДОЛЖЕН БЫТЬ ВИДЕН! */
-  .debug-marker {
-    width: 40px;
-    height: 40px;
-    background-color: #ff0000;
-    border: 3px solid #ffff00;
-    border-radius: 50%;
-    box-shadow: 0 0 15px #ff0000;
-    animation: pulse 1s infinite;
-  }
-  
-  .player-name {
-    margin-top: 5px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 3px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  </style>
+}
+
+/* ----------------------------------
+   Classes
+---------------------------------- */
+
+function playerClasses(player) {
+  return {
+    "is-host": player.isHost,
+    "is-trapper": player.trapper,
+    [`player-${player.lastImage}`]: true,
+  };
+}
+</script>
+
+<style scoped>
+/* ------------------------------------------------------------------
+   Контейнер
+-------------------------------------------------------------------*/
+
+.other-players-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   Игрок
+-------------------------------------------------------------------*/
+
+.other-player {
+  position: absolute;
+  image-rendering: pixelated;
+}
+
+/* ------------------------------------------------------------------
+   Спрайт
+-------------------------------------------------------------------*/
+
+.player-sprite {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Спрайты по кадрам */
+.other-player.player-1 .player-sprite {
+  background-image: url("/src/assets/images/1_R.png");
+}
+
+.other-player.player-2 .player-sprite {
+  background-image: url("/src/assets/images/2_L.png");
+}
+
+.other-player.player-3 .player-sprite {
+  background-image: url("/src/assets/images/3_R.png");
+}
+
+.other-player.player-4 .player-sprite {
+  background-image: url("/src/assets/images/4_L.png");
+}
+
+/* ------------------------------------------------------------------
+   Хост и траппер
+-------------------------------------------------------------------*/
+
+.other-player.is-host .player-sprite {
+  filter: drop-shadow(0 0 5px gold);
+}
+
+.other-player.is-trapper .player-sprite {
+  filter: drop-shadow(0 0 5px red);
+}
+
+/* ------------------------------------------------------------------
+   Имя игрока
+-------------------------------------------------------------------*/
+
+.player-name {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: auto;
+  font-weight: bold;
+}
+
+/* ------------------------------------------------------------------
+   Отладка
+-------------------------------------------------------------------*/
+
+.debug-coords {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: monospace;
+}
+</style>
