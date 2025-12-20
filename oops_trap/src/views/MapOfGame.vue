@@ -14,7 +14,12 @@
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons" @player-move="handlePlayerMove" />
+      <RunnerPhysics
+        ref="physicsPlayerRef"
+        :game-area="gameArea"
+        :polygons="polygons"
+        @player-move="handlePlayerMove"
+      />
     </div>
   </div>
 </template>
@@ -24,9 +29,9 @@ import { ref, onMounted, onUnmounted, provide } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
-import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue"; 
-import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue"; 
-import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue"; 
+import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue";
+import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue";
+import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue";
 import TrapNum8 from "@/components/game/traps/map2/TrapNum8.vue";
 
 /* ----------------------------------
@@ -103,7 +108,10 @@ function updateScreenSize() {
   const ww = window.innerWidth;
   const wh = window.innerHeight;
 
-  let width, height, mt = 0, ml = 0;
+  let width,
+    height,
+    mt = 0,
+    ml = 0;
 
   if (ww / wh < 16 / 9) {
     width = ww;

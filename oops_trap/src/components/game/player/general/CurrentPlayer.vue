@@ -1,7 +1,12 @@
 <template>
-  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
+  <div
+    v-if="gameArea"
+    class="player"
+    :class="playerClasses"
+    :style="playerStyle"
+  ></div>
 </template>
-  
+
 <script>
 import idle from "@/assets/images/players/1/bp1.png";
 import walk1 from "@/assets/images/players/1/bp1.png";
@@ -24,7 +29,7 @@ export default {
     gameArea: { type: Object, required: true },
     polygons: { type: Array, default: () => [] },
   },
-  emits: ['player-move'],
+  emits: ["player-move"],
   data() {
     return {
       pos: { x: 1850, y: 910 },
@@ -39,11 +44,11 @@ export default {
       SPAWN_POINT: { x: 1850, y: 910 },
       respawnTimeout: null,
       currentFrame: 0,
-      
+
       lastSentPos: { x: 1850, y: 910 },
       lastSendTime: 0,
       sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
-      
+
       idle,
       walk1,
       walk2,
@@ -52,7 +57,12 @@ export default {
   },
   computed: {
     isWalking() {
-      return this.keys.has("a") || this.keys.has("d") || this.keys.has("w") || this.keys.has("s");
+      return (
+        this.keys.has("a") ||
+        this.keys.has("d") ||
+        this.keys.has("w") ||
+        this.keys.has("s")
+      );
     },
     playerClasses() {
       return {
@@ -76,7 +86,7 @@ export default {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
-    
+
     // Отправляем начальные координаты
     this.sendCoords();
   },
@@ -125,24 +135,26 @@ export default {
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i].x, yi = polygon[i].y;
-        const xj = polygon[j].x, yj = polygon[j].y;
+        const xi = polygon[i].x,
+          yi = polygon[i].y;
+        const xj = polygon[j].x,
+          yj = polygon[j].y;
         const intersect =
-          yi > y !== yj > y &&
-          x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+          yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
         if (intersect) inside = !inside;
       }
       return inside;
     },
 
     polygonUnderPlayer(type) {
-      return this.polygons.some((poly) =>
-        poly.type === type &&
-        this.pointInPolygon(
-          this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
-          this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
-          poly.points
-        )
+      return this.polygons.some(
+        (poly) =>
+          poly.type === type &&
+          this.pointInPolygon(
+            this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+            this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
+            poly.points
+          )
       );
     },
 
@@ -195,21 +207,20 @@ export default {
     sendCoords(force = false) {
       const now = Date.now();
       const timePassed = now - this.lastSendTime;
-      
+
       // Проверяем, изменилась ли позиция
-      const posChanged = 
-        this.lastSentPos.x !== this.pos.x || 
-        this.lastSentPos.y !== this.pos.y;
-      
+      const posChanged =
+        this.lastSentPos.x !== this.pos.x || this.lastSentPos.y !== this.pos.y;
+
       // Отправляем если: форсированно ИЛИ (прошло время И позиция изменилась)
       if (force || (timePassed >= this.sendInterval && posChanged)) {
         this.lastSentPos = { x: this.pos.x, y: this.pos.y };
         this.lastSendTime = now;
-        
-        this.$emit('player-move', {
+
+        this.$emit("player-move", {
           x: this.pos.x,
           y: this.pos.y,
-          lastImage: this.isWalking ? this.currentFrame % 3 + 1 : 1
+          lastImage: this.isWalking ? (this.currentFrame % 3) + 1 : 1,
         });
       }
     },
@@ -264,8 +275,7 @@ export default {
         }
 
         this.isOnGround = false;
-      }
-      else if (inWater && !hittingGround) {
+      } else if (inWater && !hittingGround) {
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
 
@@ -298,35 +308,40 @@ export default {
             while (this.checkGround() && snap++ < 10) {
               this.pos.y -= 1;
             }
-
           } else {
             this.isOnGround = false;
           }
         }
       }
-      
+
       this.pos.x = Math.round(this.pos.x);
       this.pos.y = Math.round(this.pos.y);
 
       // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
       this.sendCoords();
-      
+
       // Обновляем кадр анимации
       if (this.isWalking) {
         this.currentFrame = (this.currentFrame + 1) % 3;
       }
 
       this.animationFrame = requestAnimationFrame(this.loop);
-      
-      if ((this.polygonUnderPlayer("spike") || this.polygonUnderPlayer("lava")) && !this.respawnTimeout) {
+
+      if (
+        (this.polygonUnderPlayer("spike") || this.polygonUnderPlayer("lava")) &&
+        !this.respawnTimeout
+      ) {
         this.respawnTimeout = setTimeout(() => {
-          const spawnPoly = this.polygons.find(p => p.type === "spawn");
+          const spawnPoly = this.polygons.find((p) => p.type === "spawn");
           if (spawnPoly && spawnPoly.points.length) {
-            const sum = spawnPoly.points.reduce((acc, p) => {
-              acc.x += p.x;
-              acc.y += p.y;
-              return acc;
-            }, { x: 0, y: 0 });
+            const sum = spawnPoly.points.reduce(
+              (acc, p) => {
+                acc.x += p.x;
+                acc.y += p.y;
+                return acc;
+              },
+              { x: 0, y: 0 }
+            );
 
             const center = {
               x: sum.x / spawnPoly.points.length,
@@ -336,7 +351,7 @@ export default {
             this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
             this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
             this.velocity.y = 0;
-            
+
             // ✅ ИСПРАВЛЕНО: отправляем координаты после респавна с форсированием
             this.sendCoords(true);
           }
@@ -344,11 +359,11 @@ export default {
           this.respawnTimeout = null;
         }, 500);
       }
-    }
+    },
   },
 };
 </script>
-  
+
 <style scoped>
 .player {
   position: absolute;

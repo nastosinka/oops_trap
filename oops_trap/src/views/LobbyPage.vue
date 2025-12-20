@@ -11,8 +11,16 @@
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
-            <div class="player-color" :style="{ backgroundColor: player.color }"></div>
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="player"
+            :class="{ 'player-host': player.isHost }"
+          >
+            <div
+              class="player-color"
+              :style="{ backgroundColor: player.color }"
+            ></div>
             <span class="player-name">{{ player.name }}</span>
             <span v-if="player.id === userId" class="player-you">(You) </span>
             <span v-if="player.isHost" class="player-host-badge">👑</span>
@@ -20,15 +28,32 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton v-if="isHost" label="Settings" size="large" @click="showSettings = true" />
-        <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
-          @click="handleStart" />
+        <BaseButton
+          v-if="isHost"
+          label="Settings"
+          size="large"
+          @click="showSettings = true"
+        />
+        <BaseButton
+          v-if="isHost && lobbyStatus === 'waiting'"
+          label="Start"
+          size="large"
+          :disabled="players.length < 2"
+          @click="handleStart"
+        />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
     </div>
   </div>
-  <UniversalModal v-if="showSettings" title="Game Settings" type="settings" :players="players"
-    :initial-settings="currentSettings" @close="showSettings = false" @settings-apply="handleSettingsApply" />
+  <UniversalModal
+    v-if="showSettings"
+    title="Game Settings"
+    type="settings"
+    :players="players"
+    :initial-settings="currentSettings"
+    @close="showSettings = false"
+    @settings-apply="handleSettingsApply"
+  />
 </template>
 
 <script>
@@ -64,7 +89,7 @@ export default {
       isHost: false, // Будет установлено после проверки
       showSettings: false,
       currentSettings: {
-        mafia: null,   // сюда потом подставим players[0]
+        mafia: null, // сюда потом подставим players[0]
         map: 1,
         time: "normal",
       },
@@ -139,7 +164,8 @@ export default {
           this.lobbyOwnerId = data.data.ownerId;
           this.isHost = data.data.ownerId === this.userId;
           console.log(
-            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${this.lobbyId
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
+              this.lobbyId
             }`
           );
           console.log(
@@ -211,7 +237,6 @@ export default {
               mafia: null || this.players[0], // позже подставим объект
               time: settingsData.data.time || "normal",
             };
-
           }
         }
 
@@ -262,7 +287,7 @@ export default {
 
       if (this.pendingTrapperId) {
         const mafiaPlayer = updatedPlayers.find(
-          p => p.id === this.pendingTrapperId
+          (p) => p.id === this.pendingTrapperId
         );
 
         if (mafiaPlayer) {
@@ -275,7 +300,7 @@ export default {
 
       if (!this.currentSettings.mafia && this.players.length > 0) {
         this.currentSettings.mafia = this.players[0];
-      };
+      }
 
       console.log("👥 Updated players list:", this.players);
     },

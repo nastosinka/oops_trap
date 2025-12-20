@@ -27,9 +27,11 @@
             v-if="lobbyId"
             class="lobby-btn"
             :disabled="isGameActive"
-            :title="isGameActive
-              ? 'Cannot return to lobby during active game'
-              : 'Return to lobby'"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
             @click="returnToLobby"
           >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
@@ -56,8 +58,11 @@ import MapOfGame from "@/views/MapOfGame.vue";
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const { userId: storeUserId, getGameSocket, currentGameId } =
-  storeToRefs(userStore);
+const {
+  userId: storeUserId,
+  getGameSocket,
+  currentGameId,
+} = storeToRefs(userStore);
 
 /* ------------------------------------------------------------------
    Реактивные данные и computed значения
@@ -144,11 +149,7 @@ function setupCoordsListener() {
     playerCoords.x = newCoords.x;
     playerCoords.y = newCoords.y;
 
-    sendPlayerMove(
-      playerCoords.x,
-      playerCoords.y,
-      newCoords.lastImage || 1
-    );
+    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
   });
 }
 
@@ -249,15 +250,12 @@ const returnToLobby = async () => {
  */
 const updateLobbyStatus = async (newStatus) => {
   try {
-    const response = await fetch(
-      `/api/lobby/lobbies/${lobbyId.value}/status`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newStatus }),
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newStatus }),
+      credentials: "include",
+    });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
@@ -363,9 +361,7 @@ const handleGameMessage = (message) => {
           (p) => p.id !== String(userId.value)
         );
 
-        const me = normalized.find(
-          (p) => p.id === String(userId.value)
-        );
+        const me = normalized.find((p) => p.id === String(userId.value));
 
         if (me) {
           playerCoords.x = me.x;
@@ -393,7 +389,6 @@ const handleGameMessage = (message) => {
   }
 };
 </script>
-
 
 <style scoped>
 .splash-screen img {

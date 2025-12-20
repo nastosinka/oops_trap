@@ -11,11 +11,11 @@ const props = defineProps({
 });
 
 const images = [
-  new URL('@/assets/images/maps/Map2/tr3/6.png', import.meta.url).href,
-  new URL('@/assets/images/maps/Map2/tr3/2.png', import.meta.url).href,
-  new URL('@/assets/images/maps/Map2/tr3/3.png', import.meta.url).href,
-  new URL('@/assets/images/maps/Map2/tr3/4.png', import.meta.url).href,
-  new URL('@/assets/images/maps/Map2/tr3/5.png', import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/6.png", import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/2.png", import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/3.png", import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/4.png", import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/5.png", import.meta.url).href,
 ];
 
 const currentFrame = ref(0);
@@ -27,8 +27,8 @@ const currentImage = computed(() => images[currentFrame.value]);
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;   
-  height: 100%;  
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   z-index: 3;
   pointer-events: none;

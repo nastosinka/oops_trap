@@ -42,7 +42,8 @@ const routes = [
   {
     path: "/physics-runner", // только падение
     name: "TestPhysics",
-    component: () => import("@/components/game/player/test/RunnerPhysicsEdited.vue"),
+    component: () =>
+      import("@/components/game/player/test/RunnerPhysicsEdited.vue"),
   },
   {
     path: "/map-edit", // редактура полигонов
@@ -56,7 +57,7 @@ const routes = [
     component: () => import("@/test/MapPhysicsTest.vue"),
   },
   {
-    path: "/hui", 
+    path: "/hui",
     name: "Hui",
     component: () => import("@/components/game/traps/map2/TrapNum3.vue"),
     //meta: { devOnly: true }

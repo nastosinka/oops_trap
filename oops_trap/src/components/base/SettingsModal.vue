@@ -21,7 +21,11 @@
       <div class="select-wrapper">
         <select v-model="selectedMafiaId" class="setting-select">
           <option disabled value="">select mafia</option>
-          <option v-for="player in players" :key="player.id" :value="player.id.toString()">
+          <option
+            v-for="player in players"
+            :key="player.id"
+            :value="player.id.toString()"
+          >
             {{ player.name }}
           </option>
         </select>
@@ -35,7 +39,11 @@
       <div class="select-wrapper">
         <select v-model="selectedTime" class="setting-select">
           <option disabled value="">select time</option>
-          <option v-for="time in timeOptions" :key="time.value" :value="time.value">
+          <option
+            v-for="time in timeOptions"
+            :key="time.value"
+            :value="time.value"
+          >
             {{ time.label }}
           </option>
         </select>
@@ -45,7 +53,6 @@
     <div class="settings-actions">
       <BaseButton label="Apply" @click="handleApply" />
     </div>
-
   </div>
 </template>
 
@@ -93,7 +100,9 @@ export default {
 
   computed: {
     selectedMafia() {
-      return this.players.find(p => p.id === Number(this.selectedMafiaId)) || null;
+      return (
+        this.players.find((p) => p.id === Number(this.selectedMafiaId)) || null
+      );
     },
   },
 
@@ -119,7 +128,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 .settings-modal {
