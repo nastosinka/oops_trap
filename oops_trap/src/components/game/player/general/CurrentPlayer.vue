@@ -310,6 +310,8 @@ export default {
             this.velocity.y = 0;
           }
 
+          this.$emit("update-coords", { x: this.pos.x, y: this.pos.y });
+
           this.respawnTimeout = null; // сбрасываем таймер
         }, 500); // 1000 мс = 1 секунда
       }
