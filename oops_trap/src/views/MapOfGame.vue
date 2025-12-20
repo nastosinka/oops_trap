@@ -4,8 +4,20 @@
       <!-- Карта -->
       <GameMap2 />
 
+      <!-- ✅ ФИКС: Показываем всех игроков, даже если 1 -->
+      <OtherPlayers 
+        :players="processedOtherPlayers"
+      />
+      
+      <!-- ✅ ДЛЯ ТЕСТА: Отображение дебаг-информации -->
+      <div v-if="showDebug" class="debug-info">
+        Players count: {{ processedOtherPlayers.length }}
+        <div v-for="player in processedOtherPlayers" :key="player.id">
+          {{ player.name }}: ({{ player.x }}, {{ player.y }})
+        </div>
+      </div>
+
       <!-- Ловушки -->
-      <!-- будет доп компонент - выгрузчик ловушек, логика будет перебора как для 3 ловушки -->
       <TrapNum3
         v-for="trap in traps" 
         :key="trap.id"
@@ -13,35 +25,57 @@
         :active="trap.active"
       />
       <TrapNum4
-        :key="4"
-        :type="c"
+        key="4"
+        type="c"
         :active="false"
       />
       <TrapNum6
-        :key="6"
-        :type="b"
+        key="6"
+        type="b"
         :active="false"
       />
       <TrapNum8
-        :key="8"
-        :type="a"
+        key="8"
+        type="a"
         :active="false"
       />
 
-      <!-- Игрок -->
-      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons" />
+      <!-- Текущий игрок -->
+      <RunnerPhysics 
+        ref="physicsPlayerRef" 
+        :game-area="gameArea" 
+        :polygons="polygons" 
+        @player-move="handlePlayerMove"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from "vue";
+import { ref, onMounted, onUnmounted, provide, computed } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue";
 import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue";
 import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue";
 import TrapNum8 from "@/components/game/traps/map2/TrapNum8.vue";
+import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
+
+const props = defineProps({
+  otherPlayers: { 
+    type: Array, 
+    default: () => [],
+    required: true 
+  }
+});
+
+// ✅ ФИКС: Убираем v-if чтобы компонент всегда монтировался
+const processedOtherPlayers = computed(() => {
+  return Array.isArray(props.otherPlayers) ? props.otherPlayers : [];
+});
+
+// Для отладки
+const showDebug = ref(true);
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
@@ -51,7 +85,7 @@ const physicsPlayerRef = ref(null);
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
 
-// gameArea для масштабирования и позиционирования элементов
+// gameArea для масштабирования
 const gameArea = ref({
   width: 0,
   height: 0,
@@ -62,15 +96,12 @@ const gameArea = ref({
   marginLeft: 0,
 });
 
-// Полигоны для физики игрока
+function handlePlayerMove(coords) {
+  window.dispatchEvent(new CustomEvent('player-coords-update', { detail: coords }));
+}
+
+// Полигоны
 const polygons = ref([]);
-
-// Ловушки — только тип и активность
-const traps = ref([
-  { id: 1, type: "poisonWater", active: false },
-]);
-
-// ======== Полигоны ========
 async function fetchPolygons() {
   try {
     const res = await fetch("/api/polygons/map2");
@@ -98,7 +129,7 @@ function spawnPlayerAtSpawn() {
   }
 }
 
-// ======== Масштабирование ========
+// Масштабирование
 const updateScreenSize = () => {
   if (!screenRef.value || !gameContentRef.value) return;
 
@@ -132,6 +163,8 @@ const updateScreenSize = () => {
     marginTop, 
     marginLeft 
   };
+  
+  provide("gameArea", gameArea.value);
 };
 
 let resizeTimeout;
@@ -140,11 +173,16 @@ const handleResize = () => {
   resizeTimeout = setTimeout(updateScreenSize, 50);
 };
 
-// ======== Lifecycle ========
+// Ловушки
+const traps = ref([
+  { id: 1, type: "poisonWater", active: false },
+]);
+
+// Lifecycle
 onMounted(() => {
+  console.log('🗺️ MapOfGame mounted with players:', processedOtherPlayers.value);
   fetchPolygons();
   updateScreenSize();
-  provide("gameArea", gameArea);
   window.addEventListener("resize", handleResize);
 });
 
@@ -171,9 +209,21 @@ onUnmounted(() => {
   position: relative;
   background-color: #2c3e50;
   transition: all 0.3s ease;
-  /* Убедимся, что game-content имеет базовый размер */
   width: 1920px;
   height: 1080px;
-  transform-origin: top left; /* Важно для корректного масштабирования */
+  transform-origin: top left;
+}
+
+.debug-info {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  z-index: 1000;
+  max-width: 300px;
 }
 </style>

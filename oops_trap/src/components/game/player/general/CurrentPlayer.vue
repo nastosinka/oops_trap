@@ -24,9 +24,10 @@ export default {
     gameArea: { type: Object, required: true },
     polygons: { type: Array, default: () => [] },
   },
+  emits: ['player-move'],
   data() {
     return {
-      pos: { x: 1800, y: 200 },
+      pos: { x: 105, y: 150 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -37,7 +38,13 @@ export default {
       animationFrame: null,
       SPAWN_POINT: { x: 105, y: 150 },
       respawnTimeout: null,
-
+      currentFrame: 0,
+      
+      // ✅ ДОБАВЛЕНО: для троттлинга отправки координат
+      lastSentPos: { x: 1800, y: 200 },
+      lastSendTime: 0,
+      sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
+      
       idle,
       walk1,
       walk2,
@@ -70,6 +77,9 @@ export default {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
+    
+    // Отправляем начальные координаты
+    this.sendCoords();
   },
   beforeUnmount() {
     window.removeEventListener("keydown", this.handleKeyDown);
@@ -90,7 +100,7 @@ export default {
 
       for (const [action, keys] of Object.entries(mapping)) {
         if (keys.includes(key)) {
-          this.keys.add(action); // добавляем английский символ в Set
+          this.keys.add(action);
           if (action === "a") this.dir = "left";
           if (action === "d") this.dir = "right";
         }
@@ -113,7 +123,6 @@ export default {
       }
     },
 
-
     pointInPolygon(x, y, polygon) {
       let inside = false;
       for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -128,7 +137,6 @@ export default {
     },
 
     polygonUnderPlayer(type) {
-      // Возвращает true, если игрок внутри полигона типа type
       return this.polygons.some((poly) =>
         poly.type === type &&
         this.pointInPolygon(
@@ -184,6 +192,29 @@ export default {
       );
     },
 
+    // ✅ ДОБАВЛЕНО: Метод отправки координат с троттлингом
+    sendCoords(force = false) {
+      const now = Date.now();
+      const timePassed = now - this.lastSendTime;
+      
+      // Проверяем, изменилась ли позиция
+      const posChanged = 
+        this.lastSentPos.x !== this.pos.x || 
+        this.lastSentPos.y !== this.pos.y;
+      
+      // Отправляем если: форсированно ИЛИ (прошло время И позиция изменилась)
+      if (force || (timePassed >= this.sendInterval && posChanged)) {
+        this.lastSentPos = { x: this.pos.x, y: this.pos.y };
+        this.lastSendTime = now;
+        
+        this.$emit('player-move', {
+          x: this.pos.x,
+          y: this.pos.y,
+          lastImage: this.isWalking ? this.currentFrame % 3 + 1 : 1
+        });
+      }
+    },
+
     loop() {
       // ===== X =====
       let moveX = 0;
@@ -195,7 +226,6 @@ export default {
         this.pos.x += moveX;
 
         if (this.checkWall(dir)) {
-          // пробуем "ступеньку"
           let climbed = false;
           let climbedPixels = 0;
           for (let i = 1; i <= STEP_HEIGHT; i++) {
@@ -220,42 +250,33 @@ export default {
 
       this.onVine = onVine || onRope;
 
-      // Проверка на границы сверху/снизу имеет приоритет
       const hittingCeiling = this.checkCeiling();
       const hittingGround = this.checkGround();
 
       if (onVine || onRope) {
-        // ===== VERTICAL POLYGONS =====
-
-        // Движение вверх / вниз
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
 
-        // 🔹 Rope: можно спрыгнуть
         if (onRope && (this.keys.has("a") || this.keys.has("d"))) {
           this.onVine = false;
-          this.velocity.y = 1; // начинаем падение
+          this.velocity.y = 1;
         } else {
-          // Vine и Rope без гравитации
           this.velocity.y = 0;
         }
 
         this.isOnGround = false;
       }
       else if (inWater && !hittingGround) {
-        // Вода: вертикальное движение и отсутствие падения
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
 
-        // Прыжок из воды по Space
         if (this.keys.has(" ") || this.keys.has("Spacebar")) {
-          this.velocity.y = -6.7; // сила прыжка
+          this.velocity.y = -6.7;
           this.isOnGround = false;
         } else {
           this.velocity.y = 0;
         }
       } else {
-        // Обычная физика
         if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
           this.velocity.y = -6.7;
           this.isOnGround = false;
@@ -274,10 +295,9 @@ export default {
             this.isOnGround = true;
             this.velocity.y = 0;
 
-            // прилипание к полу
             let snap = 0;
             while (this.checkGround() && snap++ < 10) {
-              this.pos.y -= 1; // целый пиксель
+              this.pos.y -= 1;
             }
 
           } else {
@@ -285,12 +305,21 @@ export default {
           }
         }
       }
+      
       this.pos.x = Math.round(this.pos.x);
       this.pos.y = Math.round(this.pos.y);
 
+      // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
+      this.sendCoords();
+      
+      // Обновляем кадр анимации
+      if (this.isWalking) {
+        this.currentFrame = (this.currentFrame + 1) % 3;
+      }
+
       this.animationFrame = requestAnimationFrame(this.loop);
+      
       if ((this.polygonUnderPlayer("spike") || this.polygonUnderPlayer("lava")) && !this.respawnTimeout) {
-        // ставим таймер на 1 секунду
         this.respawnTimeout = setTimeout(() => {
           const spawnPoly = this.polygons.find(p => p.type === "spawn");
           if (spawnPoly && spawnPoly.points.length) {
@@ -308,12 +337,13 @@ export default {
             this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
             this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
             this.velocity.y = 0;
+            
+            // ✅ ИСПРАВЛЕНО: отправляем координаты после респавна с форсированием
+            this.sendCoords(true);
           }
 
-          this.$emit("update-coords", { x: this.pos.x, y: this.pos.y });
-
-          this.respawnTimeout = null; // сбрасываем таймер
-        }, 500); // 1000 мс = 1 секунда
+          this.respawnTimeout = null;
+        }, 500);
       }
     }
   },
@@ -355,4 +385,3 @@ export default {
   }
 }
 </style>
-  

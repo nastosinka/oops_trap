@@ -19,30 +19,24 @@
           </p>
         </div>
         <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
+          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
+              ? 'Cannot return to lobby during active game'
+              : 'Return to lobby'
+            " @click="returnToLobby">
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
       </div>
       <div class="container">
-        <MapOfGame ref="mapRef" />
+        <!-- ✅ ИСПРАВЛЕНО: Передаем данные в MapOfGame -->
+        <MapOfGame ref="mapRef" :other-players="otherPlayers" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick, watch, reactive } from "vue";
+import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
@@ -61,14 +55,16 @@ const lobbyId = computed(() => route.query.lobbyId);
 const isHost = ref(false);
 const showSplash = ref(true);
 const playerCoords = reactive({ x: 0, y: 0 });
+
+// ✅ ДОБАВЛЕНО: Список других игроков
+const otherPlayers = ref([]);
+
 // игровые данные
 const timeLeft = ref(0);
 const isConnected = ref(false);
 const gameEnded = ref(false);
 const connectionError = ref(null);
 const timerActive = ref(false);
-const messageInput = ref("");
-const chatMessages = ref([]);
 
 // Computed property для проверки активности игры
 const isGameActive = computed(() => timerActive.value && timeLeft.value > 0 && !gameEnded.value);
@@ -86,7 +82,7 @@ const connectionStatusClass = computed(() => {
   };
 });
 
-// Отправка координат игрока на сервер
+// ✅ ИСПРАВЛЕНО: Отправка координат игрока на сервер
 const sendPlayerMove = (x, y, lastImage = 1) => {
   if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN) return;
   console.log(`📍 Sending player coords -> x: ${x}, y: ${y}, lastImage: ${lastImage}`);
@@ -101,6 +97,16 @@ const sendPlayerMove = (x, y, lastImage = 1) => {
   );
 };
 
+// ✅ ДОБАВЛЕНО: Слушаем координаты от карты
+function setupCoordsListener() {
+  window.addEventListener('player-coords-update', (event) => {
+    const newCoords = event.detail;
+    playerCoords.x = newCoords.x;
+    playerCoords.y = newCoords.y;
+    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+  });
+}
+
 onMounted(async () => {
   setTimeout(() => {
     showSplash.value = false;
@@ -109,6 +115,7 @@ onMounted(async () => {
   userStore.initializeUser();
   await checkIfUserIsHost();
   setupGameWebSocket();
+  setupCoordsListener(); // ✅ ДОБАВЛЕНО
 
   playerCoords.x = 100;
   playerCoords.y = 100;
@@ -117,6 +124,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupWebSocket();
+  window.removeEventListener('player-coords-update', setupCoordsListener); // ✅ ДОБАВЛЕНО
 });
 
 // Проверяем, является ли пользователь хостом лобби
@@ -234,6 +242,7 @@ const cleanupWebSocket = () => {
   isConnected.value = false;
 };
 
+// ✅ ОБНОВЛЕНО: Обработка сообщений от сервера
 const handleGameMessage = (message) => {
   console.log("📨 Received game message:", message);
 
@@ -241,7 +250,6 @@ const handleGameMessage = (message) => {
     case "timer_started":
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
-      addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
       break;
 
     case "timer_update":
@@ -253,43 +261,32 @@ const handleGameMessage = (message) => {
       }
       break;
 
-    case "chat_message":
-      addChatMessage({
-        id: Date.now() + Math.random(),
-        playerId: message.playerId,
-        text: message.text,
-        timestamp: message.timestamp,
-        isHost: message.isHost,
-      });
-      break;
-
-    case "coord_message": {
-      const me = message.coords.find((p) => p.id === userId.value);
-      if (me) {
-        playerCoords.x = me.x;
-        playerCoords.y = me.y;
-        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
+    case "coord_message":
+    case "player_move":
+      // ✅ ОБНОВЛЕНО: Обрабатываем координаты всех игроков
+      if (message.coords && Array.isArray(message.coords)) {
+        // Фильтруем себя из списка других игроков
+        otherPlayers.value = message.coords
+          .filter(player => player.id !== userId.value)
+          .map(player => ({
+            id: player.id,
+            name: player.name || `Player ${player.id}`,
+            x: player.x,
+            y: player.y,
+            lastImage: player.lastImage || 1,
+            isHost: player.isHost || false
+          }));
+        // В handleGameMessage добавь после обработки:
+        console.log('🎮 Updated otherPlayers:', otherPlayers.value);
+        console.log('🎮 Player IDs:', otherPlayers.value.map(p => p.id || p.fid));
+        // Обновляем свои координаты если они изменились
+        const me = message.coords.find(p => p.id === userId.value);
+        if (me) {
+          playerCoords.x = me.x;
+          playerCoords.y = me.y;
+        }
       }
-      addSystemMessage(message.coords);
       break;
-    }
-
-    case "player_move": {
-      const me = message.coords.find((p) => p.id === userId.value);
-      if (me) {
-        playerCoords.x = me.x;
-        playerCoords.y = me.y;
-        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
-      }
-      addChatMessage({
-        id: Date.now() + Math.random(),
-        playerId: "Coord",
-        text: JSON.stringify(message.coords),
-        timestamp: message.timestamp,
-        isHost: false,
-      });
-      break;
-    }
 
     case "rollback":
       if (message.playerId === userId.value) {
@@ -300,423 +297,349 @@ const handleGameMessage = (message) => {
       break;
 
     case "player_joined":
+      console.log('👤 Player joined:', message.playerId);
+      break;
+
     case "player_disconnected":
-      addSystemMessage(message.message);
+      // Удаляем отключившегося игрока
+      otherPlayers.value = otherPlayers.value.filter(p => p.id !== message.playerId);
+      console.log('🚪 Player disconnected:', message.playerId);
       break;
 
     default:
       console.log("Unknown message type:", message.type);
   }
 };
-
-const movePlayer = (dx, dy) => {
-  playerCoords.x += dx;
-  playerCoords.y += dy;
-  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
-};
-
-const setRandomCoords = () => {
-  playerCoords.x = 100;
-  playerCoords.y = 100;
-  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
-};
-
-const beginGetCoords = () => {
-  getGameSocket.value.send(JSON.stringify({ type: "coord_message", gameId: gameId.value }));
-};
-
-const addChatMessage = (message) => {
-  chatMessages.value.push(message);
-  scrollChatToBottom();
-};
-
-const addSystemMessage = (text) => {
-  chatMessages.value.push({
-    id: Date.now() + Math.random(),
-    playerId: "System",
-    text,
-    timestamp: new Date().toISOString(),
-    isHost: false,
-    isSystem: true,
-  });
-  scrollChatToBottom();
-};
-
-const scrollChatToBottom = () => {
-  nextTick(() => {
-    const chatContainer = document.getElementById("chat");
-    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-  });
-};
-
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-};
-
-const handleKeyPress = (event) => {
-  if (event.key === "Enter") sendMessage();
-};
-
-const sendMessage = () => {
-  const text = messageInput.value.trim();
-  if (text && getGameSocket.value && getGameSocket.value.readyState === WebSocket.OPEN) {
-    getGameSocket.value.send(JSON.stringify({ type: "chat_message", gameId: gameId.value, playerId: userId.value, text }));
-    messageInput.value = "";
-  }
-};
-
-// Следим за изменениями сокета в хранилище
-watch(getGameSocket, (newSocket, oldSocket) => {
-  if (newSocket !== oldSocket) setupGameWebSocket();
-});
 </script>
-  
-  <style scoped>
-  .splash-screen img {
-    height: 100vh;
-    width: 100vw;
-    position: fixed;
-    top: 0;
-    left: 0;
+
+<style scoped>
+/* Все стили остаются без изменений */
+.splash-screen img {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: white;
+}
+
+.chat {
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 300px;
+  overflow-y: scroll;
+  margin: 10px 0;
+}
+
+.chat-message {
+  margin-bottom: 8px;
+  padding: 4px;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #666;
+  margin-right: 8px;
+}
+
+.player {
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.player.host {
+  color: #ff6b35;
+}
+
+.text {
+  word-break: break-word;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input,
+button {
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lobby-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+  color: #999;
+}
+
+.lobby-btn:disabled:hover {
+  background-color: #f0f0f0;
+}
+
+.status-connected {
+  color: green;
+  font-weight: bold;
+}
+
+.status-disconnected {
+  color: red;
+  font-weight: bold;
+}
+
+.game-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+.hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  font-family: "Courier New", monospace;
+  min-width: 200px;
+  border: 1px solid #333;
+  z-index: 50;
+}
+
+.hud-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.hud-buttons {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hud-buttons button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.exit-btn {
+  background: #ff4444;
+  color: white;
+}
+
+.exit-btn:hover {
+  background: #cc0000;
+}
+
+.lobby-btn {
+  background: #2196f3;
+  color: white;
+}
+
+.lobby-btn:hover {
+  background: #0b7dda;
+}
+
+.reconnect-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.reconnect-btn:hover {
+  background: #45a049;
+}
+
+.status-connected {
+  color: #4caf50;
+}
+
+.status-disconnected {
+  color: #ff4444;
+}
+
+.status-waiting {
+  color: #ff9800;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.game-results {
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #444;
+  text-align: center;
+  min-width: 300px;
+}
+
+.game-results h2 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.results-list {
+  margin: 20px 0;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+  background: #333;
+  border-radius: 5px;
+  border-left: 4px solid #666;
+}
+
+.result-item .winner {
+  border-left-color: #4caf50;
+  background: #2d4a2d;
+}
+
+.player-name {
+  font-weight: bold;
+}
+
+.player-score {
+  color: #ffd166;
+}
+
+.player-result.winner {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.overlay-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+.error-content {
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #ff4444;
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-content h3 {
+  color: #ff4444;
+  margin-bottom: 15px;
+}
+
+.error-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.waiting-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 15;
+}
+
+.waiting-content {
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #ff9800;
+  text-align: center;
+}
+
+.waiting-content h3 {
+  color: #ff9800;
+  margin-bottom: 15px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #333;
+  border-top: 4px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+.coord-controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.coord-controls button {
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: white;
+
+  100% {
+    transform: rotate(360deg);
   }
-  
-  .chat {
-    border: 1px solid #ccc;
-    padding: 10px;
-    height: 300px;
-    overflow-y: scroll;
-    margin: 10px 0;
-  }
-  
-  .chat-message {
-    margin-bottom: 8px;
-    padding: 4px;
-  }
-  
-  .timestamp {
-    font-size: 0.8em;
-    color: #666;
-    margin-right: 8px;
-  }
-  
-  .player {
-    font-weight: bold;
-    margin-right: 4px;
-  }
-  
-  .player.host {
-    color: #ff6b35;
-  }
-  
-  .text {
-    word-break: break-word;
-  }
-  
-  .input-group {
-    display: flex;
-    gap: 10px;
-  }
-  
-  input,
-  button {
-    padding: 8px;
-  }
-  
-  button {
-    cursor: pointer;
-  }
-  
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  /* Стили для disabled кнопки */
-  .lobby-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background-color: #f0f0f0;
-    color: #999;
-  }
-  
-  .lobby-btn:disabled:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .status-connected {
-    color: green;
-    font-weight: bold;
-  }
-  
-  .status-disconnected {
-    color: red;
-    font-weight: bold;
-  }
-  </style>
-  
-  <style scoped>
-  .input-group {
-    display: flex;
-    gap: 10px;
-  }
-  
-  input,
-  button {
-    padding: 8px;
-  }
-  
-  button {
-    cursor: pointer;
-  }
-  
-  .game-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    background: #1a1a1a;
-    overflow: hidden;
-  }
-  
-  .hud {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    font-family: "Courier New", monospace;
-    min-width: 200px;
-    border: 1px solid #333;
-    z-index: 50;
-  }
-  
-  .hud-info p {
-    margin: 5px 0;
-    font-size: 14px;
-  }
-  
-  .hud-buttons {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .hud-buttons button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-  }
-  
-  .exit-btn {
-    background: #ff4444;
-    color: white;
-  }
-  
-  .exit-btn:hover {
-    background: #cc0000;
-  }
-  
-  .lobby-btn {
-    background: #2196f3;
-    color: white;
-  }
-  
-  .lobby-btn:hover {
-    background: #0b7dda;
-  }
-  
-  .reconnect-btn {
-    background: #4caf50;
-    color: white;
-  }
-  
-  .reconnect-btn:hover {
-    background: #45a049;
-  }
-  
-  .status-connected {
-    color: #4caf50;
-  }
-  
-  .status-disconnected {
-    color: #ff4444;
-  }
-  
-  .status-waiting {
-    color: #ff9800;
-  }
-  
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-  }
-  
-  .game-results {
-    background: #2a2a2a;
-    padding: 30px;
-    border-radius: 10px;
-    border: 2px solid #444;
-    text-align: center;
-    min-width: 300px;
-  }
-  
-  .game-results h2 {
-    color: #fff;
-    margin-bottom: 20px;
-    font-size: 24px;
-  }
-  
-  .results-list {
-    margin: 20px 0;
-  }
-  
-  .result-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin: 5px 0;
-    background: #333;
-    border-radius: 5px;
-    border-left: 4px solid #666;
-  }
-  
-  .result-item .winner {
-    border-left-color: #4caf50;
-    background: #2d4a2d;
-  }
-  
-  .player-name {
-    font-weight: bold;
-  }
-  
-  .player-score {
-    color: #ffd166;
-  }
-  
-  .player-result.winner {
-    color: #4caf50;
-    font-weight: bold;
-  }
-  
-  .overlay-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  .error-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 20;
-  }
-  
-  .error-content {
-    background: #2a2a2a;
-    padding: 30px;
-    border-radius: 10px;
-    border: 2px solid #ff4444;
-    text-align: center;
-    max-width: 400px;
-  }
-  
-  .error-content h3 {
-    color: #ff4444;
-    margin-bottom: 15px;
-  }
-  
-  .error-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  .waiting-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 15;
-  }
-  
-  .waiting-content {
-    background: #2a2a2a;
-    padding: 30px;
-    border-radius: 10px;
-    border: 2px solid #ff9800;
-    text-align: center;
-  }
-  
-  .waiting-content h3 {
-    color: #ff9800;
-    margin-bottom: 15px;
-  }
-  
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #333;
-    border-top: 4px solid #ff9800;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
-  }
-  
-  .coord-controls {
-    margin-top: 10px;
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-  }
-  
-  .coord-controls button {
-    padding: 5px 8px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-  
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  </style>
-  
+}
+</style>
