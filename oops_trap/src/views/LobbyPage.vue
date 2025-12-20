@@ -88,7 +88,12 @@ export default {
       players: [],
       isHost: false, // Будет установлено после проверки
       showSettings: false,
-      currentSettings: {},
+      currentSettings: {
+        mafia: null, // сюда потом подставим players[0]
+        map: 1,
+        time: "normal",
+      },
+      pendingTrapperId: null,
       lobbyId: null,
       lobbyStatus: "waiting",
       pollInterval: null,
@@ -225,9 +230,11 @@ export default {
             this.isHost = settingsData.data.ownerId === this.userId;
 
             // Обновляем текущие настройки
+            this.pendingTrapperId = settingsData.data.trapper;
+
             this.currentSettings = {
-              map: settingsData.data.map || "city",
-              mafia: settingsData.data.trapper || 1,
+              map: settingsData.data.map || "1",
+              mafia: null || this.players[0], // позже подставим объект
               time: settingsData.data.time || "normal",
             };
           }
@@ -278,7 +285,23 @@ export default {
         isHost: player.id === this.lobbyOwnerId, // Помечаем хоста
       }));
 
+      if (this.pendingTrapperId) {
+        const mafiaPlayer = updatedPlayers.find(
+          (p) => p.id === this.pendingTrapperId
+        );
+
+        if (mafiaPlayer) {
+          this.currentSettings.mafia = mafiaPlayer;
+          this.pendingTrapperId = null;
+        }
+      }
+
       this.players = updatedPlayers;
+
+      if (!this.currentSettings.mafia && this.players.length > 0) {
+        this.currentSettings.mafia = this.players[0];
+      }
+
       console.log("👥 Updated players list:", this.players);
     },
 
@@ -321,9 +344,9 @@ export default {
 
       const apiSettings = {
         ownerId: currentUserId,
-        map: settings.map || 1,
+        map: Number(settings.map) || 1,
         time: settings.time || "normal",
-        trapper: settings.mafia || 1,
+        trapper: settings.mafia.id,
       };
 
       try {
@@ -341,8 +364,8 @@ export default {
 
         if (response.ok) {
           this.currentSettings = {
-            map: settings.map || "city",
-            mafia: settings.mafia || 1,
+            map: Number(settings.map) || 1,
+            mafia: settings.mafia,
             time: settings.time || "normal",
           };
 
@@ -477,7 +500,8 @@ export default {
 
         // переходим в игру
         this.$router.push({
-          path: `/game/${this.lobbyId}`,
+          // path: `/game/${this.lobbyId}`,
+          path: `/gametest`,
           query: {
             lobbyId: this.lobbyId,
             isHost: this.isHost,
@@ -516,12 +540,6 @@ export default {
 
       const result = await response.json();
       console.log("✅ Lobby status updated:", result);
-
-      Modal.success({
-        title: "Success",
-        content: "Game started successfully! Redirecting to game...",
-        okText: "OK",
-      });
     },
 
     async createGameSocketConnection() {

@@ -1,128 +1,162 @@
 <template>
   <div ref="screenRef" class="game-screen">
     <div ref="gameContentRef" class="game-content">
-      <!-- <GameMap1 /> -->
+      <!-- Фон -->
       <GameMap2 />
-      <!-- <RunnerTest ref="runnerTestRef" /> -->
-      <RunnerPhysics ref="physicsPlayerRef" :game-area="gameArea" />
+
+      <!-- Ловушки -->
+      <TrapNum3 key="3" type="d" :active="false" />
+      <TrapNum4 key="4" type="c" :active="false" />
+      <TrapNum6 key="6" type="b" :active="false" />
+      <TrapNum8 key="8" type="a" :active="false" />
+
+      <!-- Другие игроки -->
+      <OtherPlayers :players="otherPlayers" />
+
+      <!-- Текущий игрок -->
+      <RunnerPhysics
+        ref="physicsPlayerRef"
+        :game-area="gameArea"
+        :polygons="polygons"
+        @player-move="handlePlayerMove"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from "vue";
-// import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
-//import RunnerTest from "@/components/game/RunnerTest.vue";
+import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
+import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
+import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue";
+import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue";
+import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue";
+import TrapNum8 from "@/components/game/traps/map2/TrapNum8.vue";
 
-import RunnerPhysics from "../components/game/RunnerPhysics.vue";
+/* ----------------------------------
+   Props
+---------------------------------- */
+
+const props = defineProps({
+  otherPlayers: {
+    type: Array,
+    default: () => [],
+  },
+});
+
+/* ----------------------------------
+   Refs
+---------------------------------- */
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
-//const runnerTestRef = ref(null);
 const physicsPlayerRef = ref(null);
 
-// Базовое (референсное) разрешение игры
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
 
+/**
+ * 🔥 ВАЖНО: gameArea — ref и
+ * provide ТОЛЬКО ОДИН РАЗ
+ */
 const gameArea = ref({
-  width: 0,
-  height: 0,
+  width: BASE_WIDTH,
+  height: BASE_HEIGHT,
   scale: 1,
   baseWidth: BASE_WIDTH,
   baseHeight: BASE_HEIGHT,
+  marginTop: 0,
+  marginLeft: 0,
 });
 
-// Дебаунс для ресайза
-let resizeTimeout;
+provide("gameArea", gameArea);
 
-const updateScreenSize = () => {
+/* ----------------------------------
+   Player move
+---------------------------------- */
+
+function handlePlayerMove(coords) {
+  window.dispatchEvent(
+    new CustomEvent("player-coords-update", { detail: coords })
+  );
+}
+
+/* ----------------------------------
+   Polygons
+---------------------------------- */
+
+const polygons = ref([]);
+
+async function fetchPolygons() {
+  try {
+    const res = await fetch("/api/polygons/map2");
+    const data = await res.json();
+    polygons.value = data.polygons || [];
+  } catch (e) {
+    console.error("Polygon load error", e);
+  }
+}
+
+/* ----------------------------------
+   Resize / Scale
+---------------------------------- */
+
+function updateScreenSize() {
   if (!screenRef.value || !gameContentRef.value) return;
 
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  const ww = window.innerWidth;
+  const wh = window.innerHeight;
 
-  // Рассчитываем размеры для 16:9
-  let gameWidth,
-    gameHeight,
-    marginTop = 0,
-    marginLeft = 0;
+  let width,
+    height,
+    mt = 0,
+    ml = 0;
 
-  // Вариант 1: Высота больше ширины (узкое окно)
-  if (windowWidth / windowHeight < 16 / 9) {
-    // Ограничиваем по ширине, черные полосы сверху/снизу
-    gameWidth = windowWidth;
-    gameHeight = Math.round((gameWidth * 9) / 16);
-    marginTop = (windowHeight - gameHeight) / 2;
-  }
-  // Вариант 2: Ширина больше высоты (широкое окно)
-  else {
-    // Ограничиваем по высоте, черные полосы по бокам
-    gameHeight = windowHeight;
-    gameWidth = Math.round((gameHeight * 16) / 9);
-    marginLeft = (windowWidth - gameWidth) / 2;
+  if (ww / wh < 16 / 9) {
+    width = ww;
+    height = Math.round((ww * 9) / 16);
+    mt = (wh - height) / 2;
+  } else {
+    height = wh;
+    width = Math.round((wh * 16) / 9);
+    ml = (ww - width) / 2;
   }
 
-  // Устанавливаем размеры и отступы
-  gameContentRef.value.style.width = `${gameWidth}px`;
-  gameContentRef.value.style.height = `${gameHeight}px`;
-  gameContentRef.value.style.marginTop = `${marginTop}px`;
-  gameContentRef.value.style.marginLeft = `${marginLeft}px`;
+  gameContentRef.value.style.width = `${width}px`;
+  gameContentRef.value.style.height = `${height}px`;
+  gameContentRef.value.style.marginTop = `${mt}px`;
+  gameContentRef.value.style.marginLeft = `${ml}px`;
 
-  // Вычисляем масштаб (относительно базового размера)
-  const scale = gameWidth / BASE_WIDTH;
-
-  // Обновляем реактивные данные
   gameArea.value = {
-    width: gameWidth,
-    height: gameHeight,
-    scale,
-    baseWidth: BASE_WIDTH,
-    baseHeight: BASE_HEIGHT,
-    marginTop,
-    marginLeft,
+    ...gameArea.value,
+    width,
+    height,
+    scale: width / BASE_WIDTH,
+    marginTop: mt,
+    marginLeft: ml,
   };
+}
 
-  // Передаем данные в RunnerTest
-  // if (
-  //   runnerTestRef.value &&
-  //   typeof runnerTestRef.value.updateGameArea === "function"
-  // ) {
-  //   runnerTestRef.value.updateGameArea(gameArea.value);
-  // }
-  if (
-    physicsPlayerRef.value &&
-    typeof physicsPlayerRef.value.updateGameArea === "function"
-  ) {
-    physicsPlayerRef.value.updateGameArea(gameArea.value);
-  }
-};
+let resizeTimer;
+function onResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(updateScreenSize, 50);
+}
 
-// Обработчик ресайза с дебаунсом
-const handleResize = () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(updateScreenSize, 50); // 50мс дебаунс
-};
+/* ----------------------------------
+   Lifecycle
+---------------------------------- */
 
 onMounted(() => {
+  fetchPolygons();
   updateScreenSize();
-  window.addEventListener("resize", handleResize);
-
-  // Передаем gameArea через provide для вложенных компонентов
-  provide("gameArea", gameArea);
+  window.addEventListener("resize", onResize);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-  clearTimeout(resizeTimeout);
-});
-
-// Экспортируем методы для внешнего доступа
-defineExpose({
-  updateScreenSize,
-  getGameArea: () => gameArea.value,
-  getScale: () => gameArea.value.scale,
+  window.removeEventListener("resize", onResize);
+  clearTimeout(resizeTimer);
 });
 </script>
 
@@ -135,7 +169,7 @@ defineExpose({
   left: 0;
   margin: 0;
   padding: 0;
-  background-color: #2c3e50; /* Черные полосы */
+  background-color: #2c3e50;
   overflow: hidden;
 }
 
@@ -143,5 +177,21 @@ defineExpose({
   position: relative;
   background-color: #2c3e50;
   transition: all 0.3s ease;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+}
+
+.debug-info {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  z-index: 1000;
+  max-width: 300px;
 }
 </style>
