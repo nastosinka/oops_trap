@@ -1,9 +1,8 @@
 <template>
   <!-- Загрузочный экран -->
   <div v-if="showSplash" class="splash-screen">
-    <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
+    <img :src="playerImage" class="splash-image" />
   </div>
-
 
   <!-- Основная часть игры -->
   <div v-else class="game-container">
@@ -25,8 +24,8 @@
         <!-- Кнопки управления -->
         <div class="hud-buttons">
           <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
-              ? 'Cannot return to lobby during active game'
-              : 'Return to lobby'
+            ? 'Cannot return to lobby during active game'
+            : 'Return to lobby'
             " @click="returnToLobby">
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
@@ -48,6 +47,9 @@ import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
+import runnerImg from "@/assets/images/1_R.png";
+import mafiaImg from "@/assets/images/1_T.png";
+
 
 const route = useRoute();
 const router = useRouter();
@@ -63,6 +65,11 @@ const showSplash = ref(true);
 /* ------------------------------------------------------------------
    Реактивные данные и computed значения
 -------------------------------------------------------------------*/
+const myRole = computed(() => userStore.myRole);
+
+const playerImage = computed(() =>
+  myRole.value === "mafia" ? mafiaImg : runnerImg
+);
 
 // Идентификатор текущей игры
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
@@ -154,10 +161,6 @@ function setupCoordsListener() {
 -------------------------------------------------------------------*/
 
 onMounted(async () => {
-  setTimeout(() => {
-    showSplash.value = false;
-  }, 10000);
-
   userStore.initializeUser();
 
   await checkIfUserIsHost();
@@ -330,6 +333,7 @@ const cleanupWebSocket = () => {
 const handleGameMessage = (message) => {
   switch (message.type) {
     case "timer_started":
+      showSplash.value = false;
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
       break;
@@ -394,17 +398,17 @@ const handleGameMessage = (message) => {
 .splash-screen {
   position: fixed;
   inset: 0;
-  background: red;              /* 🔴 красный фон */
+  background: rgb(48, 62, 78);
   display: flex;
-  align-items: center;          /* вертикальный центр */
-  justify-content: center;      /* горизонтальный центр */
+  align-items: center;
+  justify-content: center;
   z-index: 9999;
 }
 
 .splash-image {
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;          /* 🔑 сохраняет пропорции */
+  object-fit: contain;
 }
 
 

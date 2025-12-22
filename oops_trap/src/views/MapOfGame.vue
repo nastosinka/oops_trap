@@ -14,12 +14,9 @@
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics
-        ref="physicsPlayerRef"
-        :game-area="gameArea"
-        :polygons="polygons"
-        @player-move="handlePlayerMove"
-      />
+      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
+        @player-move="handlePlayerMove" />
+
     </div>
   </div>
 </template>
@@ -33,6 +30,13 @@ import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue";
 import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue";
 import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue";
 import TrapNum8 from "@/components/game/traps/map2/TrapNum8.vue";
+import { computed } from "vue";
+import { useUserStore } from "@/stores/user";
+
+const userStore = useUserStore();
+
+const isMafia = computed(() => userStore.myRole === "mafia");
+
 
 /* ----------------------------------
    Props

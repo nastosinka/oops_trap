@@ -11,16 +11,8 @@
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div
-            v-for="player in players"
-            :key="player.id"
-            class="player"
-            :class="{ 'player-host': player.isHost }"
-          >
-            <div
-              class="player-color"
-              :style="{ backgroundColor: player.color }"
-            ></div>
+          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
+            <div class="player-color" :style="{ backgroundColor: player.color }"></div>
             <span class="player-name">{{ player.name }}</span>
             <span v-if="player.id === userId" class="player-you">(You) </span>
             <span v-if="player.isHost" class="player-host-badge">👑</span>
@@ -28,32 +20,15 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton
-          v-if="isHost"
-          label="Settings"
-          size="large"
-          @click="showSettings = true"
-        />
-        <BaseButton
-          v-if="isHost && lobbyStatus === 'waiting'"
-          label="Start"
-          size="large"
-          :disabled="players.length < 2"
-          @click="handleStart"
-        />
+        <BaseButton v-if="isHost" label="Settings" size="large" @click="showSettings = true" />
+        <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
+          @click="handleStart" />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
     </div>
   </div>
-  <UniversalModal
-    v-if="showSettings"
-    title="Game Settings"
-    type="settings"
-    :players="players"
-    :initial-settings="currentSettings"
-    @close="showSettings = false"
-    @settings-apply="handleSettingsApply"
-  />
+  <UniversalModal v-if="showSettings" title="Game Settings" type="settings" :players="players"
+    :initial-settings="currentSettings" @close="showSettings = false" @settings-apply="handleSettingsApply" />
 </template>
 
 <script>
@@ -164,8 +139,7 @@ export default {
           this.lobbyOwnerId = data.data.ownerId;
           this.isHost = data.data.ownerId === this.userId;
           console.log(
-            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${
-              this.lobbyId
+            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${this.lobbyId
             }`
           );
           console.log(
@@ -231,6 +205,15 @@ export default {
 
             // Обновляем текущие настройки
             this.pendingTrapperId = settingsData.data.trapper;
+
+            if (this.pendingTrapperId && this.userId) {
+              const role =
+                String(this.pendingTrapperId) === String(this.userId)
+                  ? "mafia"
+                  : "runner";
+
+              this.userStore.setMyRole(role);
+            }
 
             this.currentSettings = {
               map: settingsData.data.map || "1",
