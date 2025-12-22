@@ -1,8 +1,9 @@
 <template>
   <!-- Загрузочный экран -->
-  <div v-if="false" class="splash-screen">
+  <div v-if="showSplash" class="splash-screen">
     <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
   </div>
+
 
   <!-- Основная часть игры -->
   <div v-else class="game-container">
@@ -23,17 +24,10 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
+          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
+              ? 'Cannot return to lobby during active game'
+              : 'Return to lobby'
+            " @click="returnToLobby">
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -63,6 +57,8 @@ const {
   getGameSocket,
   currentGameId,
 } = storeToRefs(userStore);
+
+const showSplash = ref(true);
 
 /* ------------------------------------------------------------------
    Реактивные данные и computed значения
@@ -158,6 +154,10 @@ function setupCoordsListener() {
 -------------------------------------------------------------------*/
 
 onMounted(async () => {
+  setTimeout(() => {
+    showSplash.value = false;
+  }, 10000);
+
   userStore.initializeUser();
 
   await checkIfUserIsHost();
@@ -391,13 +391,22 @@ const handleGameMessage = (message) => {
 </script>
 
 <style scoped>
-.splash-screen img {
-  height: 100vh;
-  width: 100vw;
+.splash-screen {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
+  background: red;              /* 🔴 красный фон */
+  display: flex;
+  align-items: center;          /* вертикальный центр */
+  justify-content: center;      /* горизонтальный центр */
+  z-index: 9999;
 }
+
+.splash-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;          /* 🔑 сохраняет пропорции */
+}
+
 
 .container {
   max-width: 600px;

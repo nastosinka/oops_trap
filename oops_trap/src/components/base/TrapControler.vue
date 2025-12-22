@@ -73,3 +73,4 @@ export default {
   object-fit: contain;
 }
 </style>
+
