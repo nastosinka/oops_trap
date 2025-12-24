@@ -1,8 +1,12 @@
 <template>
   <div class="game-map">
     <div
-      class="map-layer st1-layer"
-      :style="{ backgroundImage: `url(${st1})` }"
+      class="map-layer st11-layer"
+      :style="{ backgroundImage: `url(${st11})` }"
+    ></div>
+    <div
+      class="map-layer st12-layer"
+      :style="{ backgroundImage: `url(${st12})` }"
     ></div>
     <div
       class="map-layer st2-layer"
@@ -12,7 +16,8 @@
 </template>
 
 <script setup>
-import st1 from "@/assets/images/maps/Map2/st/st1.png";
+import st11 from "@/assets/images/maps/Map2/st/st11.png";
+import st12 from "@/assets/images/maps/Map2/st/st12.png";
 import st2 from "@/assets/images/maps/Map2/st/st2.png";
 </script>
 
@@ -37,13 +42,19 @@ import st2 from "@/assets/images/maps/Map2/st/st2.png";
   pointer-events: none; /* Добавляем чтобы не мешали */
 }
 
-.st1-layer {
+.st11-layer {
   background-size: cover;
-  z-index: 2;
+  z-index: 0;
 }
+
+.st12-layer {
+  background-size: cover;
+  z-index: 50;
+}
+
 
 .st2-layer {
   background-size: contain;
-  z-index: 3;
+  z-index: 60;
 }
 </style>
