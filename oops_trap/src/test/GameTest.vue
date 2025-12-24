@@ -1,6 +1,6 @@
 <template>
   <!-- Загрузочный экран -->
-  <div v-if="showSplash" class="splash-screen">
+  <div v-if="false" class="splash-screen">
     <img :src="playerImage" class="splash-image" />
   </div>
 

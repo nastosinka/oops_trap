@@ -83,6 +83,7 @@ import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { Modal } from "ant-design-vue";
 import { reactive } from "vue";
+
 // import MapOfGame from "@/views/MapOfGame.vue";
 
 const route = useRoute();
