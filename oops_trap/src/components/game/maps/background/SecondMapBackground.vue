@@ -1,24 +1,17 @@
 <template>
   <div class="game-map">
-    <div
-      class="map-layer st11-layer"
-      :style="{ backgroundImage: `url(${st11})` }"
-    ></div>
-    <div
-      class="map-layer st12-layer"
-      :style="{ backgroundImage: `url(${st12})` }"
-    ></div>
-    <div
-      class="map-layer st2-layer"
-      :style="{ backgroundImage: `url(${st2})` }"
-    ></div>
+    <div class="map-layer main-layer" :style="{ backgroundImage: `url(${main})` }"></div>
+    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${walls})` }"></div>
+    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${crystals})` }"></div>
+    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${arrows})` }"></div>
   </div>
 </template>
 
 <script setup>
-import st11 from "@/assets/images/maps/Map2/st/st11.png";
-import st12 from "@/assets/images/maps/Map2/st/st12.png";
-import st2 from "@/assets/images/maps/Map2/st/st2.png";
+import main from "@/assets/images/maps/Map2/st/main.png";
+import walls from "@/assets/images/maps/Map2/st/walls.png";
+import crystals from "@/assets/images/maps/Map2/st/crystals.png";
+import arrows from "@/assets/images/maps/Map2/st/arrows.png";
 </script>
 
 <style scoped>
@@ -39,22 +32,17 @@ import st2 from "@/assets/images/maps/Map2/st/st2.png";
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  pointer-events: none; /* Добавляем чтобы не мешали */
+  pointer-events: none;
+  /* Добавляем чтобы не мешали */
 }
 
-.st11-layer {
+.main-layer {
   background-size: cover;
   z-index: 0;
 }
 
-.st12-layer {
+.under-layer {
   background-size: cover;
   z-index: 50;
-}
-
-
-.st2-layer {
-  background-size: contain;
-  z-index: 60;
 }
 </style>

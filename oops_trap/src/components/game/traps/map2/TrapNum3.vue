@@ -11,7 +11,7 @@ const props = defineProps({
 });
 
 const images = [
-  new URL("@/assets/images/maps/Map2/tr3/6.png", import.meta.url).href,
+  new URL("@/assets/images/maps/Map2/tr3/1.png", import.meta.url).href,
   new URL("@/assets/images/maps/Map2/tr3/2.png", import.meta.url).href,
   new URL("@/assets/images/maps/Map2/tr3/3.png", import.meta.url).href,
   new URL("@/assets/images/maps/Map2/tr3/4.png", import.meta.url).href,

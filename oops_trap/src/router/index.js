@@ -56,12 +56,6 @@ const routes = [
     name: "MapPhysicsTest",
     component: () => import("@/test/MapPhysicsTest.vue"),
   },
-  {
-    path: "/hui",
-    name: "Hui",
-    component: () => import("@/components/game/traps/map2/TrapNum3.vue"),
-    //meta: { devOnly: true }
-  },
 ];
 
 const router = createRouter({
