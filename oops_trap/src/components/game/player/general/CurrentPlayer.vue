@@ -374,7 +374,7 @@ export default {
   background-image: url("@/assets/images/players/1/bp1.png");
   background-size: contain;
   background-repeat: no-repeat;
-  z-index: 100;
+  z-index: 200;
 }
 
 .player.walking {

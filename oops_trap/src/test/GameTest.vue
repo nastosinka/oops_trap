@@ -34,7 +34,7 @@
 
       <!-- Игровая карта -->
       <div class="container">
-        <MapOfGame ref="mapRef" :other-players="otherPlayers" />
+        <MapOfGame ref="mapRef" :other-players="otherPlayers" :can-move="isGameActive" />
       </div>
     </div>
   </div>
@@ -351,21 +351,31 @@ const handleGameMessage = (message) => {
     case "coord_message":
     case "player_move":
       if (Array.isArray(message.coords)) {
-        const normalized = message.coords.map((player) => ({
-          id: String(player.fid || player.id),
-          name: player.name || `Player ${player.fid || player.id}`,
-          x: Number(player.x) || 100,
-          y: Number(player.y) || 100,
-          lastImage: Number(player.lastImage) || 1,
-          isHost: Boolean(player.isHost),
-          trapper: Boolean(player.trapper),
-        }));
+        const normalized = message.coords.map((player) => {
+          const isTrapper =
+            player.trapper === true ||
+            player.trapper === "true";
+
+          return {
+            id: String(player.fid || player.id),
+            name: player.name || `Player ${player.fid || player.id}`,
+            x: Number(player.x) || 100,
+            y: Number(player.y) || 100,
+            lastImage: Number(player.lastImage) || 1,
+            isHost: Boolean(player.isHost),
+            trapper: isTrapper,
+          };
+        });
 
         otherPlayers.value = normalized.filter(
-          (p) => p.id !== String(userId.value)
+          (p) =>
+            p.id !== String(userId.value) &&
+            p.trapper === false
         );
 
         const me = normalized.find((p) => p.id === String(userId.value));
+        console.table(normalized);
+        console.table(otherPlayers.value);
 
         if (me) {
           playerCoords.x = me.x;

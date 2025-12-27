@@ -80,7 +80,7 @@ function playerStyle(player) {
     top: Math.round(player.y * scale) + "px",
     width: Math.round(SPRITE_WIDTH * scale) + "px",
     height: Math.round(SPRITE_HEIGHT * scale) + "px",
-    zIndex: player.trapper ? 15 : 10,
+    zIndex: 150,
     pointerEvents: "none",
   };
 }
