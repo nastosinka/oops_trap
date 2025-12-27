@@ -52,14 +52,9 @@ const routes = [
     //meta: { devOnly: true }
   },
   {
-    path: "/map-physics-test", // не всю карту можно бегать, но видны полигоны
-    name: "MapPhysicsTest",
-    component: () => import("@/test/MapPhysicsTest.vue"),
-  },
-  {
     path: "/test",
     name: "Test",
-    component: () => import("@/test/MapPhysicsTest.vue"),
+    component: () => import("@/views/MapOfGame.vue"),
   },
 ];
 

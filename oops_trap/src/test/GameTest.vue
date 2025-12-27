@@ -1,6 +1,6 @@
 <template>
   <!-- Загрузочный экран -->
-  <div v-if="showSplash" class="splash-screen">
+  <div v-if="false" class="splash-screen">
     <img :src="playerImage" class="splash-image" />
   </div>
 
@@ -34,7 +34,7 @@
 
       <!-- Игровая карта -->
       <div class="container">
-        <MapOfGame ref="mapRef" :other-players="otherPlayers"/>
+        <MapOfGame ref="mapRef" :other-players="otherPlayers" />
       </div>
     </div>
   </div>

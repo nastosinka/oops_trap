@@ -3,20 +3,19 @@
     <div ref="gameContentRef" class="game-content">
       <!-- Фон -->
       <GameMap2 />
-
+      <!-- Контроллер -->
+      <div class="trap-controller-wrapper">
+        <TrapController v-if="true" :traps="traps" @activate="onTrapActivate" />
+      </div>
       <!-- Ловушки -->
-      <TrapNum3 key="3" type="d" :active="false" />
-      <TrapNum4 key="4" type="c" :active="false" />
-      <TrapNum6 key="6" type="b" :active="false" />
-      <TrapNum8 key="8" type="a" :active="false" />
+      <component v-for="trap in traps" :key="trap.id" :is="trap.component" :active="activeTrapId === trap.id" />
 
       <!-- Другие игроки -->
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
       <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
-        @player-move="handlePlayerMove"  />
-
+        @player-move="handlePlayerMove" />
     </div>
   </div>
 </template>
@@ -26,17 +25,18 @@ import { ref, onMounted, onUnmounted, provide } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
-import TrapNum3 from "@/components/game/traps/map2/TrapNum3.vue";
-import TrapNum4 from "@/components/game/traps/map2/TrapNum4.vue";
-import TrapNum6 from "@/components/game/traps/map2/TrapNum6.vue";
-import TrapNum8 from "@/components/game/traps/map2/TrapNum8.vue";
 import { computed } from "vue";
 import { useUserStore } from "@/stores/user";
+import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
+import TrapController from "@/components/game/traps/TrapController.vue";
+
+const traps = computed(() => TRAPS_BY_MAP[currentMap] || []);
 
 const userStore = useUserStore();
 
 const isMafia = computed(() => userStore.myRole === "mafia");
 
+const currentMap = "map2"; // позже можно брать из game / route
 
 /* ----------------------------------
    Props
@@ -60,10 +60,6 @@ const physicsPlayerRef = ref(null);
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
 
-/**
- * 🔥 ВАЖНО: gameArea — ref и
- * provide ТОЛЬКО ОДИН РАЗ
- */
 const gameArea = ref({
   width: BASE_WIDTH,
   height: BASE_HEIGHT,
@@ -197,5 +193,16 @@ onUnmounted(() => {
   font-size: 12px;
   z-index: 1000;
   max-width: 300px;
+}
+
+.trap-controller-wrapper {
+  position: absolute;       /* привязано к карте */
+  bottom: 20px;             /* отступ от низа карты */
+  left: 50%;                /* центрируем по горизонтали */
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;   /* кнопки столбиком */
+  gap: 10px;                /* расстояние между кнопками */
+  z-index: 1000;
 }
 </style>
