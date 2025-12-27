@@ -56,6 +56,11 @@ const routes = [
     name: "MapPhysicsTest",
     component: () => import("@/test/MapPhysicsTest.vue"),
   },
+  {
+    path: "/test",
+    name: "Test",
+    component: () => import("@/test/MapPhysicsTest.vue"),
+  },
 ];
 
 const router = createRouter({

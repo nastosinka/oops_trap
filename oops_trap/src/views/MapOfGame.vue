@@ -14,7 +14,7 @@
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons" :can-move="canMove"
+      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
         @player-move="handlePlayerMove"  />
 
     </div>
@@ -46,10 +46,6 @@ const props = defineProps({
   otherPlayers: {
     type: Array,
     default: () => [],
-  },
-  canMove: {
-    type: Boolean,
-    default: false,
   },
 });
 

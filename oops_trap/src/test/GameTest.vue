@@ -34,7 +34,7 @@
 
       <!-- Игровая карта -->
       <div class="container">
-        <MapOfGame ref="mapRef" :other-players="otherPlayers" :can-move="isGameActive" />
+        <MapOfGame ref="mapRef" :other-players="otherPlayers"/>
       </div>
     </div>
   </div>
