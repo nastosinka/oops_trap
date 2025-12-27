@@ -270,15 +270,27 @@ function setupGameWebSocket(server) {
                 for (let i = 0; i < game.players.length; i++) {
                     const player = game.players[i];
                     console.log(player);
+                    if (game.trapper === player['id']){
+                        gameRoom.playersWithSettings.set(player['id'], {
+                        name: player['name'], 
+                        x: 1850,
+                        y: 950,
+                        trapper: true,
+                        alive: null,
+                        time: null,
+                        lastImage: null,
+                    });
+                    } else {
                     gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: 100,
-                        y: 100,
+                        x: 1850,
+                        y: 950,
                         trapper: false,
                         alive: true,
                         time: null,
                         lastImage: null,
                     });
+                }
             }
             console.log(`Хранение координат инициализировано`);
             console.log(gameRoom.playersWithSettings);
