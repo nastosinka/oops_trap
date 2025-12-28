@@ -1,4 +1,5 @@
 const WebSocket = require('ws');
+const prisma = require('../db/prismaClient');
 const fs = require("fs");
 const path = require("path");
 
@@ -177,8 +178,8 @@ function setupGameWebSocket(server) {
                     case 'win': // игрок победил (не готово)
                         handlePlayerWin(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'stats': // получить статистику по игре (не готово)
-                        handleStats(ws, message.gameId);
+                    case 'all_stats': // получить статистику по игре (не готово)
+                        handleAllStats(ws, message.gameId);
                         break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings); 
@@ -384,7 +385,7 @@ function setupGameWebSocket(server) {
                 const trapType = checkTrapCollision(settings.x, settings.y, polygons);
                 if (trapType) {
                     player.alive = false;
-
+                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
                     broadcastToGame(gameId, {
                         type: "died",
                         playerId,
@@ -482,30 +483,139 @@ function stopCoordBroadcast(gameId) {
     }
 
 
-    function handleStats(gameId) {
-     const stats = game.players.map((player) => ({
-         userId: player.id,
-         role: true,
-            time: 12, 
-            result: Math.random() > 0.5 ? 1 : 0, // пример результата
-            map: game.map
-        }));
-        // + логика получения статистики из gameRoom
-        
-        
+    function handleAllStats(ws, gameId) {
         const game = games.get(parseInt(gameId));
         if (!game) {
-                    //+ логика, игра не найдена
+                    //+ логика, игра не найдена + проверка что игрок не траппер
             return;
         }
-        game.stats = stats;
+
+        broadcastToGame(gameId, {
+            type: 'all_stats',
+            stats: game.stats,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    async function saveStatistic(data) {
+  const { id_user, id_map, time, role } = data;
+
+  // Валидация входных данных
+  if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
+    throw {
+      error: 'Обязательные поля: id_user, id_map, time, role',
+    };
+  }
+
+  const userId = parseInt(id_user);
+  const mapId = parseInt(id_map);
+  const timeValue = parseInt(time);
+
+  if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
+    throw {
+      error: 'Поля id_user, id_map и time должны быть числами',
+    };
+  }
+
+  if (typeof role !== 'boolean') {
+    throw {
+      error: 'Поле role должно быть булевым значением',
+    };
+  }
+
+  try {
+    // Проверка существующей статистики
+    const existingStat = await prisma.stats.findFirst({
+      where: {
+        id_user: userId,
+        id_map: mapId,
+        role: role,
+      },
+    });
+
+    let result;
+    let action;
+
+    if (existingStat) {
+      if (existingStat.time > timeValue) {
+        result = await prisma.stats.update({
+          where: { id: existingStat.id },
+          data: { time: timeValue },
+        });
+        action = 'updated';
+        console.log('Статистика обновлена:', result);
+      } else {
+        console.log('Статистика не требует обновлений');
+        result = existingStat;
+        action = 'unchanged';
+      }
+    } else {
+      result = await prisma.stats.create({
+        data: {
+          id_user: userId,
+          id_map: mapId,
+          time: timeValue,
+          role: role,
+        },
+      });
+      action = 'created';
+      console.log('Новая статистика создана:', result);
+    }
+
+    // Форматирование результата
+    const formattedResult = {
+      id: result.id,
+      id_user: result.id_user,
+      id_map: result.id_map,
+      time: result.time,
+      role: result.role,
+    };
+
+    return {
+      success: true,
+      action: action,
+      data: formattedResult,
+    };
+
+  } catch (error) {
+    console.error('Ошибка при сохранении статистики:', error);
+
+    if (error.code === 'P2003') {
+      throw {
+        error: 'Неверный id_user или id_map',
+        details: 'Указанный пользователь или карта не существует'
+      };
+    }
+
+    throw {
+      error: 'Ошибка сервера при сохранении статистики',
+      details: error.message
+    };
+  }
+}
+
+    function handleStats(ws, gameId, playerId) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom) return;
+        const game = games.get(parseInt(gameId));
+        if (!game) {
+                    //+ логика, игра не найдена + проверка что игрок не траппер
+            return;
+        }
+        game.stats.set(playerId, {
+            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+            map: game.map,
+            role: true,
+        });
+        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
 
 
         broadcastToGame(gameId, {
             type: 'stats',
-            stats: stats,
+            stats: game.stats,
             timestamp: new Date().toISOString()
         });
+        console.log(game.stats);
     }
 
     function handlePlayerDisconnect(ws) {
