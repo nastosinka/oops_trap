@@ -35,6 +35,18 @@ function isInsideBoundaries(x, y, polygons) {
     return false;
 }
 
+function checkTrapCollision(x, y, polygons) {
+    for (const poly of polygons) {
+        if (poly.type === "lava" || poly.type === "spike" || (poly.type === "trap" && poly.isActive === true)) {
+            if (pointInPolygon(x, y, poly.points)) {
+                console.log(`Trap collision (${poly.type}) at ${x},${y}`);
+                return poly.type;
+            }
+        }
+    }
+    return null;
+}
+
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
@@ -225,7 +237,7 @@ function setupGameWebSocket(server) {
         if (!gameRoom.polygons) {
             try {
                 const mapName = "map_test"
-                //const mapName = gameRoom.mapName || "map_test";
+                //const mapName = gameRoom.mapName;
                 const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
 
                 const polygonsData = JSON.parse(fs.readFileSync(filePath));
@@ -344,25 +356,51 @@ function setupGameWebSocket(server) {
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
 
-        // Только если координаты корректны — применяем в playersWithSettings
-        if (settings && typeof settings.x === 'number' && typeof settings.y === 'number') {
+        if (player.alive === false) {
+            ws.send(JSON.stringify({
+                type: "rollback",
+                x: player.x,
+                y: player.y,
+                playerId
+            }));
+            return;
+        }
+
+        if (settings && typeof settings.x === "number" && typeof settings.y === "number") {
             if (validateCoord(gameRoom.playersWithSettings, settings) === true) {
                 const polygons = gameRoom.polygons;
+
                 if (isInsideBoundaries(settings.x, settings.y, polygons)) {
                     console.log(`❌ Игрок ${playerId} ударился о стену`);
-                        ws.send(JSON.stringify({
+                    ws.send(JSON.stringify({
                         type: "rollback",
                         x: player.x,
-                    y: player.y,
-                    playerId
+                        y: player.y,
+                        playerId
                     }));
-                } else {
+                    return;
+                }
+
+                const trapType = checkTrapCollision(settings.x, settings.y, polygons);
+                if (trapType) {
+                    player.alive = false;
+
+                    broadcastToGame(gameId, {
+                        type: "died",
+                        playerId,
+                        reason: trapType,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
+                    return;
+                }
+
                 player.x = settings.x;
                 player.y = settings.y;
                 player.lastImage = settings.lastImage;
-            }}
+            }
         } else {
-            // Если settings некорректен, просто логируем, но не портишь данные
             console.log(`handlePlayerMove: invalid settings from player ${playerId}`, settings);
         }
 
@@ -422,47 +460,6 @@ function stopCoordBroadcast(gameId) {
         console.log(`Остановлена отправка координатов для игры ${gameId}`);
     }
 }
-
-
-    // function handlePlayerMove(ws, gameId, playerId, position) {
-    //     const gameRoom = gameRooms.get(gameId);
-    //     if (!gameRoom) return;
-
-    //     const player = gameRoom.playersWithSettings.get(playerId);
-    //     //console.log("Проверяем player:", player);
-    //     if (!player) return;
-
-    //     const polygons = gameRoom.polygons;
-    //     console.log("Player trying to move to:", position.x, position.y);
-
-    //     // Проверка границы
-    //     if (isInsideBoundaries(position.x, position.y, polygons)) {
-    //         console.log(`❌ Игрок ${playerId} ударился о стену`);
-    //         ws.send(JSON.stringify({
-    //             type: "rollback",
-    //             x: player.x,
-    //             y: player.y,
-    //             playerId
-    //         }));
-    //         return;
-    //     }
-
-    //     // Обновляем позиции
-    //     player.x = position.x;
-    //     player.y = position.y;
-
-    //     // Отправляем всем
-    //     const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, p]) => ({
-    //         id,
-    //         ...p
-    //     }));
-
-    //     broadcastToGame(gameId, {
-    //         type: "coord_message",
-    //         playerId,
-    //         coords: playersArray
-    //     });
-    // }
 
     function handlePlayerDied(ws, gameId, playerId, text) {
         const gameRoom = gameRooms.get(gameId);

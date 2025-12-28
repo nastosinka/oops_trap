@@ -137,8 +137,8 @@ onMounted(async () => {
   await checkIfUserIsHost();
   setupGameWebSocket();
 
-  playerCoords.x = 100;
-  playerCoords.y = 100;
+  playerCoords.x = 1850;
+  playerCoords.y = 950;
 
   // Отправляем серверу начальные координаты
   if (
@@ -150,7 +150,7 @@ onMounted(async () => {
         type: "player_move",
         gameId: gameId.value,
         playerId: userId.value,
-        settings: { x: 100, y: 100, lastImage: 1 },
+        settings: { x: 1850, y: 950, lastImage: 1 },
       })
     );
   }
