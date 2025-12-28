@@ -194,15 +194,4 @@ onUnmounted(() => {
   z-index: 1000;
   max-width: 300px;
 }
-
-.trap-controller-wrapper {
-  position: absolute;       /* привязано к карте */
-  bottom: 20px;             /* отступ от низа карты */
-  left: 50%;                /* центрируем по горизонтали */
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;   /* кнопки столбиком */
-  gap: 10px;                /* расстояние между кнопками */
-  z-index: 1000;
-}
 </style>
