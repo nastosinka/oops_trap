@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const coordIntervals = new Map();
+const zaglyshka = [true, true, false, false]
 
 function pointInPolygon(x, y, points) {
     let inside = false;
@@ -184,12 +185,6 @@ function setupGameWebSocket(server) {
                     case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'died': // игрок умер (готово)
-                        handlePlayerDied(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'win': // игрок победил (не готово)
-                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
-                        break;
                     case 'all_stats': // получить статистику по игре (не готово)
                         handleAllStats(ws, message.gameId);
                         break;
@@ -198,6 +193,9 @@ function setupGameWebSocket(server) {
                         break;
                     case 'coord_message': // получить координаты
                         handleCoordMessage(ws, message.gameId); 
+                        break;
+                    case 'trap_message': // активировать ловушку
+                        handleTrapMessage(ws, message.gameId, message.trapId); 
                         break;
                 }
             } catch (error) {
@@ -213,6 +211,29 @@ function setupGameWebSocket(server) {
             console.error('💥 Ошибка соединения с игрой:', error);
         });
     });
+
+    function handleTrapMessage(ws, gameId, trapId) {
+        const game = games.get(parseInt(gameId));
+        if (!game) {
+                    //+ логика, игра не найдена + проверка что игрок не траппер
+            return;
+        }
+        setTimeout(() => {
+            zaglyshka[trapId] = false;
+            console.log("ловушка деактивирована");
+            console.log( zaglyshka);
+        }, 10000);
+        zaglyshka[trapId] = true;
+        console.log("ловушка активирована");
+        console.log( zaglyshka);
+
+
+        broadcastToGame(gameId, {
+            type: 'trap_message',
+            result: true,
+            timestamp: new Date().toISOString()
+        });
+    }
 
     function handleInitGame(ws, gameId, playerId, isHost) {
         let gameRoom = gameRooms.get(gameId);
@@ -516,7 +537,7 @@ function stopCoordBroadcast(gameId) {
         });
     }
 
-    async function saveStatistic(data) {
+async function saveStatistic(data) {
   const { id_user, id_map, time, role } = data;
 
   // Валидация входных данных
