@@ -49,6 +49,25 @@ function checkTrapCollision(x, y, polygons) {
     return null;
 }
 
+function getSpawnPoint(polygons) {
+    if (!Array.isArray(polygons)) return null;
+
+    const spawnPoly = polygons.find(p => p.type === "spawn");
+
+    if (!spawnPoly || !Array.isArray(spawnPoly.points) || spawnPoly.points.length === 0) {
+        return null;
+    }
+
+    const points = spawnPoly.points;
+
+    const x =
+        points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const y =
+        points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+    return { x, y };
+}
+
 function checkFinishCollision(x, y, polygons) {
     for (const poly of polygons) {
         if (poly.type === "finish") {
@@ -254,34 +273,6 @@ function setupGameWebSocket(server) {
             };
             gameRooms.set(gameId, gameRoom);
         }
-        //добавление "пустых" объектов игроков при создании игры
-        // if (!gameRoom.playersWithSettings.has(playerId)) {
-        //     gameRoom.playersWithSettings.set(playerId, {
-        //         name: "Unknown",
-        //         x: 100,
-        //         y: 100,
-        //         trapper: false,
-        //         alive: true,
-        //         time: null,
-        //         lastImage: null,
-        //     });
-        //     console.log(`Добавили игрока ${playerId} в playersWithSettings`);
-        // }
-        
-        if (!gameRoom.polygons) {
-            try {
-                const mapName = "map_test"
-                //const mapName = gameRoom.mapName;
-                const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
-
-                const polygonsData = JSON.parse(fs.readFileSync(filePath));
-                gameRoom.polygons = polygonsData.polygons;
-
-                console.log(`🗺️ Полигоны карты "${mapName}"`);
-            } catch (e) {
-                console.error("❌ Ошибка загрузки полигона:", e);
-            }
-        }
 
         if (isHost && !gameRoom.hostId) {
             gameRoom.hostId = playerId;
@@ -304,10 +295,27 @@ function setupGameWebSocket(server) {
         if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
             gameRoom.hasFirstPlayer = true;
             console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
-
+            
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
                 const game = games.get(parseInt(gameId));
+                if (!gameRoom.polygons) {
+                    try {
+                        const mapName = game.map;
+                        const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
+
+                        const polygonsData = JSON.parse(fs.readFileSync(filePath));
+                        gameRoom.polygons = polygonsData.polygons;
+
+                        console.log(`🗺️ Полигоны карты "${mapName}"`);
+                    } catch (e) {
+                        console.error("❌ Ошибка загрузки полигона:", e);
+                    }
+                }
+                const spawn = getSpawnPoint(gameRoom.polygons); ////// SPAWN COORDS - spawn.x spawn.y
+
+                console.log(`Игрок заспавнится на координатах ${spawn.x} - - ${spawn.y}.`);
+                
                 if (!game) {
                     //+ логика, игра не найдена
                     return;
