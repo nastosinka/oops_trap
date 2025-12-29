@@ -8,14 +8,24 @@
         <TrapController v-if="true" :traps="traps" @activate="onTrapActivate" />
       </div>
       <!-- Ловушки -->
-      <component v-for="trap in traps" :key="trap.id" :is="trap.component" :active="activeTrapId === trap.id" />
+      <component
+        :is="trap.component"
+        v-for="trap in traps"
+        :key="trap.id"
+        :active="activeTrapId === trap.id"
+      />
 
       <!-- Другие игроки -->
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
-        @player-move="handlePlayerMove" />
+      <RunnerPhysics
+        v-if="!isMafia"
+        ref="physicsPlayerRef"
+        :game-area="gameArea"
+        :polygons="polygons"
+        @player-move="handlePlayerMove"
+      />
     </div>
   </div>
 </template>
@@ -42,7 +52,7 @@ const currentMap = "map2"; // позже можно брать из game / route
    Props
 ---------------------------------- */
 
-const props = defineProps({
+const _props = defineProps({
   otherPlayers: {
     type: Array,
     default: () => [],

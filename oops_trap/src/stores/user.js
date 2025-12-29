@@ -68,7 +68,6 @@ export const useUserStore = defineStore("user", () => {
     myRole.value = role;
   };
 
-
   return {
     // Данные пользователя
     user,

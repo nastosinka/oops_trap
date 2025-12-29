@@ -1,9 +1,21 @@
 <template>
   <div class="game-map">
-    <div class="map-layer main-layer" :style="{ backgroundImage: `url(${main})` }"></div>
-    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${walls})` }"></div>
-    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${crystals})` }"></div>
-    <div class="map-layer under-layer" :style="{ backgroundImage: `url(${arrows})` }"></div>
+    <div
+      class="map-layer main-layer"
+      :style="{ backgroundImage: `url(${main})` }"
+    ></div>
+    <div
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${walls})` }"
+    ></div>
+    <div
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${crystals})` }"
+    ></div>
+    <div
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${arrows})` }"
+    ></div>
   </div>
 </template>
 

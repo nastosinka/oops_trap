@@ -23,10 +23,17 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
-            ? 'Cannot return to lobby during active game'
-            : 'Return to lobby'
-            " @click="returnToLobby">
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -49,7 +56,6 @@ import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
-
 
 const route = useRoute();
 const router = useRouter();
@@ -353,8 +359,7 @@ const handleGameMessage = (message) => {
       if (Array.isArray(message.coords)) {
         const normalized = message.coords.map((player) => {
           const isTrapper =
-            player.trapper === true ||
-            player.trapper === "true";
+            player.trapper === true || player.trapper === "true";
 
           return {
             id: String(player.fid || player.id),
@@ -368,9 +373,7 @@ const handleGameMessage = (message) => {
         });
 
         otherPlayers.value = normalized.filter(
-          (p) =>
-            p.id !== String(userId.value) &&
-            p.trapper === false
+          (p) => p.id !== String(userId.value) && p.trapper === false
         );
 
         const me = normalized.find((p) => p.id === String(userId.value));
@@ -420,7 +423,6 @@ const handleGameMessage = (message) => {
   max-height: 100%;
   object-fit: contain;
 }
-
 
 .container {
   max-width: 600px;
