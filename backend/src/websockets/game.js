@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const coordIntervals = new Map();
-const zaglyshka = [true, true, false, false]
+
 
 function pointInPolygon(x, y, points) {
     let inside = false;
@@ -214,7 +214,7 @@ function setupGameWebSocket(server) {
                         handleCoordMessage(ws, message.gameId); 
                         break;
                     case 'trap_message': // активировать ловушку
-                        handleTrapMessage(ws, message.gameId, message.trapId); 
+                        handleTrapMessage(ws, message.gameId, message.trap); 
                         break;
                 }
             } catch (error) {
@@ -231,20 +231,18 @@ function setupGameWebSocket(server) {
         });
     });
 
-    function handleTrapMessage(ws, gameId, trapId) {
-        const game = games.get(parseInt(gameId));
-        if (!game) {
-                    //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
+    function handleTrapMessage(ws, gameId, trapName) {
+        let gameRoom = gameRooms.get(gameId);
+        console.log(gameRoom.polygons);
+        const trap = gameRoom.polygons.find(p => p.name === trapName);
         setTimeout(() => {
-            zaglyshka[trapId] = false;
+            trap['isActive'] = false;
             console.log("ловушка деактивирована");
-            console.log( zaglyshka);
-        }, 10000);
-        zaglyshka[trapId] = true;
+            console.log(trap);
+        }, trap.timer);
+        trap['isActive'] = true;
         console.log("ловушка активирована");
-        console.log( zaglyshka);
+        console.log(trap);
 
 
         broadcastToGame(gameId, {
@@ -327,8 +325,8 @@ function setupGameWebSocket(server) {
                     if (game.trapper === player['id']){
                         gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: 1850,
-                        y: 950,
+                        x: spawn.x,
+                        y: spawn.y,
                         trapper: true,
                         alive: null,
                         time: null,
@@ -337,8 +335,8 @@ function setupGameWebSocket(server) {
                     } else {
                     gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: 1850,
-                        y: 950,
+                        x: spawn.x,
+                        y: spawn.y,
                         trapper: false,
                         alive: true,
                         time: null,
@@ -348,6 +346,7 @@ function setupGameWebSocket(server) {
             }
             console.log(`Хранение координат инициализировано`);
             console.log(gameRoom.playersWithSettings);
+            handleTrapMessage(ws, gameId, "gas-trap");
             }, 10000);
         }
 
