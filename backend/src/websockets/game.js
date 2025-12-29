@@ -48,6 +48,18 @@ function checkTrapCollision(x, y, polygons) {
     return null;
 }
 
+function checkFinishCollision(x, y, polygons) {
+    for (const poly of polygons) {
+        if (poly.type === "finish") {
+            if (pointInPolygon(x, y, poly.points)) {
+                console.log(`Finish collision (${poly.type}) at ${x},${y}`);
+                return poly.type;
+            }
+        }
+    }
+    return null;
+}
+
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
@@ -357,13 +369,7 @@ function setupGameWebSocket(server) {
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
 
-        if (player.alive === false) {
-            ws.send(JSON.stringify({
-                type: "rollback",
-                x: player.x,
-                y: player.y,
-                playerId
-            }));
+        if (player.alive != true) {
             return;
         }
 
@@ -385,7 +391,6 @@ function setupGameWebSocket(server) {
                 const trapType = checkTrapCollision(settings.x, settings.y, polygons);
                 if (trapType) {
                     player.alive = false;
-                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
                     broadcastToGame(gameId, {
                         type: "died",
                         playerId,
@@ -394,6 +399,20 @@ function setupGameWebSocket(server) {
                     });
 
                     console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
+                    return;
+                }
+                
+                const finish = checkFinishCollision(settings.x, settings.y, polygons);
+                if (finish) {
+                    player.alive = null;
+                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    broadcastToGame(gameId, {
+                        type: "win",
+                        playerId,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     return;
                 }
 
