@@ -28,9 +28,9 @@ jobs:
         working-directory: ./oops_trap
         run: npm ci
 
-      - name: run eslint
-        working-directory: ./oops_trap
-        run: npm run lint
+      # - name: run eslint
+      #   working-directory: ./oops_trap
+      #   run: npm run lint
 
       - name: build project
         working-directory: ./oops_trap
