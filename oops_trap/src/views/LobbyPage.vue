@@ -509,8 +509,7 @@ export default {
 
         // переходим в игру
         this.$router.push({
-          // path: `/game/${this.lobbyId}`,
-          path: `/gametest`,
+          path: `/game/${this.lobbyId}`,
           query: {
             lobbyId: this.lobbyId,
             isHost: this.isHost,

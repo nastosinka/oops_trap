@@ -5,7 +5,7 @@
       <GameMap2 />
       <!-- Контроллер -->
       <div class="trap-controller-wrapper">
-        <TrapController v-if="true" :traps="traps" @activate="onTrapActivate" />
+        <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
       </div>
       <!-- Ловушки -->
       <component
