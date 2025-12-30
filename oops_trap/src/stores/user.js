@@ -7,6 +7,7 @@ export const useUserStore = defineStore("user", () => {
   const gameSocket = ref(null); // Добавляем хранение игрового сокета
   const currentGameId = ref(null); // Текущая игра
   const currentLobbyId = ref(null); // Текущее лобби
+  const myRole = ref("runner");
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");
@@ -63,6 +64,10 @@ export const useUserStore = defineStore("user", () => {
     currentLobbyId.value = null;
   };
 
+  const setMyRole = (role) => {
+    myRole.value = role;
+  };
+
   return {
     // Данные пользователя
     user,
@@ -70,6 +75,7 @@ export const useUserStore = defineStore("user", () => {
     gameSocket,
     currentGameId,
     currentLobbyId,
+    myRole,
 
     // Computed свойства
     userId,
@@ -82,6 +88,7 @@ export const useUserStore = defineStore("user", () => {
     initializeUser,
     login,
     logout,
+    setMyRole,
 
     // Методы управления игровым сокетом
     setGameSocket,
