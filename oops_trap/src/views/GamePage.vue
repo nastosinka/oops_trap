@@ -1,11 +1,13 @@
 <template>
-  <!-- загрузочный экран -->
+  <!-- Загрузочный экран -->
   <div v-if="showSplash" class="splash-screen">
-    <img src="/src/assets/images/1_R.png" alt="Splash" class="splash-image" />
+    <img :src="playerImage" class="splash-image" />
   </div>
-  <!-- часть игры -->
+
+  <!-- Основная часть игры -->
   <div v-else class="game-container">
     <div class="game-container">
+      <!-- HUD с информацией об игре -->
       <div class="hud">
         <div class="hud-info">
           <p>Time left: {{ timeLeft }}s</p>
@@ -18,6 +20,8 @@
             <span :class="connectionStatusClass">{{ connectionStatus }}</span>
           </p>
         </div>
+
+        <!-- Кнопки управления -->
         <div class="hud-buttons">
           <button
             v-if="lobbyId"
@@ -34,56 +38,24 @@
           </button>
         </div>
       </div>
-      <div class="container">
-        <div id="chat" class="chat">
-          <div
-            v-for="message in chatMessages"
-            :key="message.id"
-            class="chat-message"
-          >
-            <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
-            <span class="player" :class="{ host: message.isHost }">
-              {{ message.playerId }}:
-            </span>
-            <span class="text">{{ message.text }}</span>
-          </div>
-        </div>
 
-        <div class="input-group">
-          <input
-            id="messageInput"
-            v-model="messageInput"
-            type="text"
-            placeholder="Сообщение"
-            :disabled="!isConnected"
-            @keypress="handleKeyPress"
-          />
-          <button :disabled="!isConnected" @click="sendMessage">
-            Отправить
-          </button>
-        </div>
-        <div v-if="isConnected" class="coord-controls">
-          <h4>Test Controls</h4>
-          <button @click="movePlayer(-1, 0)">Left</button>
-          <button @click="movePlayer(1, 0)">Right</button>
-          <button @click="movePlayer(0, -1)">Up</button>
-          <button @click="movePlayer(0, 1)">Down</button>
-          <button @click="setRandomCoords()">Random</button>
-          <button @click="beginGetCoords()">Homuncul</button>
-        </div>
+      <!-- Игровая карта -->
+      <div class="container">
+        <MapOfGame ref="mapRef" :other-players="otherPlayers" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { Modal } from "ant-design-vue";
-import { reactive } from "vue";
-// import MapOfGame from "@/views/MapOfGame.vue";
+import MapOfGame from "@/views/MapOfGame.vue";
+import runnerImg from "@/assets/images/1_R.png";
+import mafiaImg from "@/assets/images/1_T.png";
 
 const route = useRoute();
 const router = useRouter();
@@ -94,73 +66,131 @@ const {
   currentGameId,
 } = storeToRefs(userStore);
 
-// реактивные данные
-const gameId = computed(() => route.params.id || currentGameId.value || 1);
-const userId = computed(() => storeUserId.value);
-const lobbyId = computed(() => route.query.lobbyId);
-const isHost = ref(false);
 const showSplash = ref(true);
+
+/* ------------------------------------------------------------------
+   Реактивные данные и computed значения
+-------------------------------------------------------------------*/
+const myRole = computed(() => userStore.myRole);
+
+const playerImage = computed(() =>
+  myRole.value === "mafia" ? mafiaImg : runnerImg
+);
+
+// Идентификатор текущей игры
+const gameId = computed(() => route.params.id || currentGameId.value || 1);
+
+// Идентификатор пользователя
+const userId = computed(() => storeUserId.value);
+
+// Идентификатор лобби (если есть)
+const lobbyId = computed(() => route.query.lobbyId);
+
+// Флаг: является ли пользователь хостом
+const isHost = ref(false);
+
+// Координаты текущего игрока
 const playerCoords = reactive({ x: 0, y: 0 });
-// игровые данные
+
+// Список других игроков на карте
+const otherPlayers = ref([]);
+
+// Состояние таймера
 const timeLeft = ref(0);
-const isConnected = ref(false);
-const gameEnded = ref(false);
-const connectionError = ref(null);
 const timerActive = ref(false);
-const messageInput = ref("");
-const chatMessages = ref([]);
 
-// Computed property для проверки активности игры
-const isGameActive = computed(() => {
-  return timerActive.value && timeLeft.value > 0 && !gameEnded.value;
-});
+// Состояние соединения
+const isConnected = ref(false);
+const connectionError = ref(null);
 
-// Connection status
+// Флаг завершения игры
+const gameEnded = ref(false);
+
+// Активна ли сейчас игра
+const isGameActive = computed(
+  () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
+);
+
+// Текстовое состояние соединения
 const connectionStatus = computed(() => {
   if (connectionError.value) return "Disconnected";
   return isConnected.value ? "Connected" : "Connecting...";
 });
 
-const connectionStatusClass = computed(() => {
-  return {
-    "status-connected": isConnected.value,
-    "status-disconnected": connectionError.value,
-  };
-});
+// CSS-классы для статуса соединения
+const connectionStatusClass = computed(() => ({
+  "status-connected": isConnected.value,
+  "status-disconnected": connectionError.value,
+}));
+
+/* ------------------------------------------------------------------
+   Работа с координатами игрока
+-------------------------------------------------------------------*/
+
+/**
+ * Отправляет текущие координаты игрока на сервер по WebSocket.
+ *
+ * @param {number} x - координата X
+ * @param {number} y - координата Y
+ * @param {number} lastImage - идентификатор последнего спрайта
+ */
+const sendPlayerMove = (x, y, lastImage = 1) => {
+  const socket = getGameSocket.value;
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  socket.send(
+    JSON.stringify({
+      type: "player_move",
+      gameId: gameId.value,
+      playerId: userId.value,
+      settings: { x, y, lastImage },
+    })
+  );
+};
+
+/**
+ * Подписывается на глобальное событие обновления координат игрока,
+ * которое отправляется из компонента карты.
+ */
+function setupCoordsListener() {
+  window.addEventListener("player-coords-update", (event) => {
+    const newCoords = event.detail;
+    playerCoords.x = newCoords.x;
+    playerCoords.y = newCoords.y;
+
+    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+  });
+}
+
+/* ------------------------------------------------------------------
+   Жизненный цикл компонента
+-------------------------------------------------------------------*/
 
 onMounted(async () => {
-  setTimeout(() => {
-    showSplash.value = false;
-  }, 10000);
-
   userStore.initializeUser();
+
   await checkIfUserIsHost();
   setupGameWebSocket();
+  setupCoordsListener();
 
+  // Начальная позиция игрока
   playerCoords.x = 1850;
   playerCoords.y = 950;
-
-  // Отправляем серверу начальные координаты
-  if (
-    getGameSocket.value &&
-    getGameSocket.value.readyState === WebSocket.OPEN
-  ) {
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "player_move",
-        gameId: gameId.value,
-        playerId: userId.value,
-        settings: { x: 1850, y: 950, lastImage: 1 },
-      })
-    );
-  }
+  sendPlayerMove(playerCoords.x, playerCoords.y, 1);
 });
 
 onUnmounted(() => {
   cleanupWebSocket();
+  window.removeEventListener("player-coords-update", setupCoordsListener);
 });
 
-// Проверяем, является ли пользователь хостом лобби
+/* ------------------------------------------------------------------
+   Лобби и навигация
+-------------------------------------------------------------------*/
+
+/**
+ * Проверяет, является ли текущий пользователь хостом лобби.
+ */
 const checkIfUserIsHost = async () => {
   if (!lobbyId.value) {
     isHost.value = false;
@@ -175,25 +205,24 @@ const checkIfUserIsHost = async () => {
         credentials: "include",
       }
     );
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
     if (data.success && data.data) {
       isHost.value = data.data.ownerId === userId.value;
-      console.log(
-        `🎮 User is ${isHost.value ? "HOST" : "PLAYER"} of lobby ${
-          lobbyId.value
-        }`
-      );
     }
   } catch (error) {
-    console.error("❌ Error checking host status:", error);
+    console.error("Error checking host status:", error);
     isHost.value = false;
   }
 };
 
+/**
+ * Возвращает пользователя в лобби.
+ * Хост дополнительно переводит лобби в состояние ожидания.
+ */
 const returnToLobby = async () => {
-  // Проверяем, активна ли игра
   if (isGameActive.value) {
     Modal.warning({
       title: "Game in Progress",
@@ -215,44 +244,47 @@ const returnToLobby = async () => {
   try {
     if (isHost.value) {
       await updateLobbyStatus("waiting");
-      console.log("🎮 Host returned to lobby, status set to waiting");
     }
   } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
+    console.error("Error updating lobby status:", error);
   }
+
   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
 };
 
+/**
+ * Обновляет статус лобби на сервере.
+ *
+ * @param {string} newStatus - новый статус лобби
+ */
 const updateLobbyStatus = async (newStatus) => {
   try {
     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        newStatus,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newStatus }),
       credentials: "include",
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch (error) {
-    console.error("❌ Error updating lobby status:", error);
+    console.error("Error updating lobby status:", error);
     throw error;
   }
 };
 
-// Веб-сокеты - используем сохраненный сокет из хранилища
+/* ------------------------------------------------------------------
+   WebSocket и обработка сообщений игры
+-------------------------------------------------------------------*/
+
+/**
+ * Инициализирует WebSocket для игры и навешивает обработчики событий.
+ */
 const setupGameWebSocket = () => {
   const socket = getGameSocket.value;
 
   if (!socket) {
-    console.error("❌ No game socket found in store");
     connectionError.value = "No game connection";
     return;
   }
@@ -264,27 +296,22 @@ const setupGameWebSocket = () => {
       const message = JSON.parse(event.data);
       handleGameMessage(message);
     } catch (error) {
-      console.error("❌ Error parsing WebSocket message:", error);
+      console.error("Error parsing WebSocket message:", error);
     }
   };
 
   socket.onclose = (event) => {
-    console.log("🔌 Game WebSocket disconnected");
     isConnected.value = false;
-
     if (!event.wasClean) {
-      connectionError.value = `Connection lost: ${
-        event.reason || "Unknown error"
-      }`;
+      connectionError.value =
+        event.reason || "Connection was lost unexpectedly";
     }
   };
 
-  socket.onerror = (error) => {
-    console.error("💥 Game WebSocket error:", error);
+  socket.onerror = () => {
     connectionError.value = "Connection error";
   };
 
-  // Если сокет уже открыт, отправляем init сообщение
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(
       JSON.stringify({
@@ -297,210 +324,104 @@ const setupGameWebSocket = () => {
   }
 };
 
+/**
+ * Сбрасывает состояние соединения при уничтожении компонента.
+ */
 const cleanupWebSocket = () => {
-  // Не закрываем сокет, так как он управляется хранилищем
-  // Просто сбрасываем локальное состояние
   isConnected.value = false;
 };
 
+/**
+ * Обрабатывает входящие сообщения от игрового сервера.
+ *
+ * @param {Object} message - сообщение WebSocket
+ */
 const handleGameMessage = (message) => {
-  console.log("📨 Received game message:", message);
-
   switch (message.type) {
     case "timer_started":
+      showSplash.value = false;
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
-      addSystemMessage(`Game started! Time: ${message.totalTime} seconds`);
       break;
 
     case "timer_update":
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
+
       if (message.timeLeft <= 0 && isHost.value) {
         updateLobbyStatus("finished");
         gameEnded.value = true;
       }
       break;
 
-    case "chat_message":
-      addChatMessage({
-        id: Date.now() + Math.random(),
-        playerId: message.playerId,
-        text: message.text,
-        timestamp: message.timestamp,
-        isHost: message.isHost,
-      });
-      break;
-    case "coord_message": {
-      const me = message.coords.find((p) => p.id === userId.value);
-      if (me) {
-        playerCoords.x = me.x;
-        playerCoords.y = me.y;
+    case "coord_message":
+    case "player_move":
+      if (Array.isArray(message.coords)) {
+        const normalized = message.coords.map((player) => {
+          const isTrapper =
+            player.trapper === true || player.trapper === "true";
+
+          return {
+            id: String(player.fid || player.id),
+            name: player.name || `Player ${player.fid || player.id}`,
+            x: Number(player.x) || 100,
+            y: Number(player.y) || 100,
+            lastImage: Number(player.lastImage) || 1,
+            isHost: Boolean(player.isHost),
+            trapper: isTrapper,
+          };
+        });
+
+        otherPlayers.value = normalized.filter(
+          (p) => p.id !== String(userId.value) && p.trapper === false
+        );
+
+        const me = normalized.find((p) => p.id === String(userId.value));
+        console.table(normalized);
+        console.table(otherPlayers.value);
+
+        if (me) {
+          playerCoords.x = me.x;
+          playerCoords.y = me.y;
+        }
       }
-      addSystemMessage(message.coords);
       break;
-    }
-    case "player_move": {
-      const me = message.coords.find((p) => p.id === userId.value);
-      if (me) {
-        playerCoords.x = me.x;
-        playerCoords.y = me.y;
-      }
-      addChatMessage({
-        id: Date.now() + Math.random(),
-        playerId: "Coord",
-        text: JSON.stringify(message.coords),
-        timestamp: message.timestamp,
-        isHost: false,
-      });
-      break;
-    }
+
     case "rollback":
       if (message.playerId === userId.value) {
         playerCoords.x = message.x;
         playerCoords.y = message.y;
+        sendPlayerMove(playerCoords.x, playerCoords.y, 1);
       }
-      break;
-    // case "player_move":
-    //   if (message.position && message.playerId === userId.value) {
-    //     playerCoords.x = message.position.x;
-    //     playerCoords.y = message.position.y;
-    //   }
-    //   break;
-    case "player_joined":
-      addSystemMessage(message.message);
       break;
 
     case "player_disconnected":
-      addSystemMessage(message.message);
+      otherPlayers.value = otherPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
       break;
 
     default:
-      console.log("Unknown message type:", message.type);
+      break;
   }
 };
-
-const movePlayer = (dx, dy) => {
-  const newX = playerCoords.x + dx;
-  const newY = playerCoords.y + dy;
-  const newImage = 1;
-
-  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
-    return;
-
-  getGameSocket.value.send(
-    JSON.stringify({
-      type: "player_move",
-      gameId: gameId.value,
-      playerId: userId.value,
-      settings: { x: newX, y: newY, lastImage: newImage },
-    })
-  );
-};
-
-const setRandomCoords = () => {
-  const newX = 100;
-  const newY = 100;
-  const newImage = 1;
-
-  if (!getGameSocket.value || getGameSocket.value.readyState !== WebSocket.OPEN)
-    return;
-
-  getGameSocket.value.send(
-    JSON.stringify({
-      type: "player_move",
-      gameId: gameId.value,
-      playerId: userId.value,
-      settings: { x: newX, y: newY, lastImage: newImage },
-    })
-  );
-};
-
-const beginGetCoords = () => {
-  getGameSocket.value.send(
-    JSON.stringify({
-      type: "coord_message",
-      gameId: gameId.value,
-    })
-  );
-};
-
-const addChatMessage = (message) => {
-  chatMessages.value.push(message);
-  scrollChatToBottom();
-};
-
-const addSystemMessage = (text) => {
-  chatMessages.value.push({
-    id: Date.now() + Math.random(),
-    playerId: "System",
-    text,
-    timestamp: new Date().toISOString(),
-    isHost: false,
-    isSystem: true,
-  });
-  scrollChatToBottom();
-};
-
-const scrollChatToBottom = () => {
-  nextTick(() => {
-    const chatContainer = document.getElementById("chat");
-    if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-  });
-};
-
-const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-};
-
-const handleKeyPress = (event) => {
-  if (event.key === "Enter") {
-    sendMessage();
-  }
-};
-
-const sendMessage = () => {
-  const text = messageInput.value.trim();
-
-  if (
-    text &&
-    getGameSocket.value &&
-    getGameSocket.value.readyState === WebSocket.OPEN
-  ) {
-    getGameSocket.value.send(
-      JSON.stringify({
-        type: "chat_message",
-        gameId: gameId.value,
-        playerId: userId.value,
-        text,
-      })
-    );
-    messageInput.value = "";
-  }
-};
-
-// Следим за изменениями сокета в хранилище
-watch(getGameSocket, (newSocket, oldSocket) => {
-  if (newSocket !== oldSocket) {
-    setupGameWebSocket();
-  }
-});
 </script>
 
 <style scoped>
-.splash-screen img {
-  height: 100vh;
-  width: 100vw;
+.splash-screen {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
+  background: rgb(48, 62, 78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.splash-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .container {
@@ -560,7 +481,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Стили для disabled кнопки */
 .lobby-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -580,22 +500,6 @@ button:disabled {
 .status-disconnected {
   color: red;
   font-weight: bold;
-}
-</style>
-
-<style scoped>
-.input-group {
-  display: flex;
-  gap: 10px;
-}
-
-input,
-button {
-  padding: 8px;
-}
-
-button {
-  cursor: pointer;
 }
 
 .game-container {
@@ -617,6 +521,7 @@ button {
   font-family: "Courier New", monospace;
   min-width: 200px;
   border: 1px solid #333;
+  z-index: 50;
 }
 
 .hud-info p {

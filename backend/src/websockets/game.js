@@ -348,7 +348,6 @@ function setupGameWebSocket(server) {
             }
             console.log(`Хранение координат инициализировано`);
             console.log(gameRoom.playersWithSettings);
-            handleTrapMessage(ws, gameId, "gas-trap");
             }, 10000);
         }
 
