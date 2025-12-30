@@ -1,0 +1,401 @@
+<template>
+  <div
+    v-if="gameArea"
+    class="player"
+    :class="playerClasses"
+    :style="playerStyle"
+  ></div>
+</template>
+
+<script>
+import idle from "@/assets/images/players/1/bp1.png";
+import walk1 from "@/assets/images/players/1/bp1.png";
+import walk2 from "@/assets/images/players/1/bp2.png";
+import walk3 from "@/assets/images/players/1/bp3.png";
+
+// Хитбокс игрока (физика)
+const HITBOX = {
+  offsetX: 6,
+  offsetY: 10,
+  width: 12,
+  height: 32,
+};
+
+const STEP_HEIGHT = 6;
+
+export default {
+  name: "RunnerPhysics",
+  props: {
+    gameArea: { type: Object, required: true },
+    polygons: { type: Array, default: () => [] },
+  },
+  emits: ["player-move"],
+  data() {
+    return {
+      pos: { x: 1850, y: 910 },
+      velocity: { x: 0, y: 0 },
+      speed: 3,
+      gravity: 0.4,
+      isOnGround: false,
+      onVine: false,
+      dir: "right",
+      keys: new Set(),
+      animationFrame: null,
+      SPAWN_POINT: { x: 1850, y: 910 },
+      respawnTimeout: null,
+      currentFrame: 0,
+
+      lastSentPos: { x: 1850, y: 910 },
+      lastSendTime: 0,
+      sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
+
+      idle,
+      walk1,
+      walk2,
+      walk3,
+    };
+  },
+  computed: {
+    isWalking() {
+      return (
+        this.keys.has("a") ||
+        this.keys.has("d") ||
+        this.keys.has("w") ||
+        this.keys.has("s")
+      );
+    },
+    playerClasses() {
+      return {
+        walking: this.isWalking,
+        left: this.dir === "left",
+        right: this.dir === "right",
+      };
+    },
+    playerStyle() {
+      return {
+        left: Math.round(this.pos.x * this.gameArea.scale) + "px",
+        top: Math.round(this.pos.y * this.gameArea.scale) + "px",
+        width: Math.round(24 * this.gameArea.scale) + "px",
+        height: Math.round(48 * this.gameArea.scale) + "px",
+        transform: `scaleX(${this.dir === "left" ? -1 : 1})`,
+      };
+    },
+  },
+  mounted() {
+    this.loop = this.loop.bind(this);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
+    this.loop();
+
+    // Отправляем начальные координаты
+    this.sendCoords();
+  },
+  beforeUnmount() {
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
+    cancelAnimationFrame(this.animationFrame);
+  },
+  methods: {
+    handleKeyDown(e) {
+      const key = e.key.toLowerCase();
+
+      // Поддержка русской и английской раскладки
+      const mapping = {
+        w: ["w", "ц"],
+        a: ["a", "ф"],
+        s: ["s", "ы"],
+        d: ["d", "в"],
+      };
+
+      for (const [action, keys] of Object.entries(mapping)) {
+        if (keys.includes(key)) {
+          this.keys.add(action);
+          if (action === "a") this.dir = "left";
+          if (action === "d") this.dir = "right";
+        }
+      }
+    },
+
+    handleKeyUp(e) {
+      const key = e.key.toLowerCase();
+      const mapping = {
+        w: ["w", "ц"],
+        a: ["a", "ф"],
+        s: ["s", "ы"],
+        d: ["d", "в"],
+      };
+
+      for (const [action, keys] of Object.entries(mapping)) {
+        if (keys.includes(key)) {
+          this.keys.delete(action);
+        }
+      }
+    },
+
+    pointInPolygon(x, y, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x,
+          yi = polygon[i].y;
+        const xj = polygon[j].x,
+          yj = polygon[j].y;
+        const intersect =
+          yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    },
+
+    polygonUnderPlayer(type) {
+      return this.polygons.some(
+        (poly) =>
+          poly.type === type &&
+          this.pointInPolygon(
+            this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+            this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
+            poly.points
+          )
+      );
+    },
+
+    checkGround() {
+      const y = this.pos.y + HITBOX.offsetY + HITBOX.height + 1;
+      const xs = [
+        this.pos.x + HITBOX.offsetX + 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
+      ];
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          xs.some((x) => this.pointInPolygon(x, y, poly.points))
+      );
+    },
+
+    checkWall(dir) {
+      const x =
+        dir === "left"
+          ? this.pos.x + HITBOX.offsetX - 1
+          : this.pos.x + HITBOX.offsetX + HITBOX.width + 1;
+      const ys = [
+        this.pos.y + HITBOX.offsetY + 4,
+        this.pos.y + HITBOX.offsetY + HITBOX.height / 2,
+        this.pos.y + HITBOX.offsetY + HITBOX.height - 4,
+      ];
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          ys.some((y) => this.pointInPolygon(x, y, poly.points))
+      );
+    },
+
+    checkCeiling() {
+      const y = this.pos.y + HITBOX.offsetY - 1;
+      const xs = [
+        this.pos.x + HITBOX.offsetX + 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width / 2,
+        this.pos.x + HITBOX.offsetX + HITBOX.width - 2,
+      ];
+      return this.polygons.some(
+        (poly) =>
+          poly.type === "boundary" &&
+          xs.some((x) => this.pointInPolygon(x, y, poly.points))
+      );
+    },
+
+    // ✅ ДОБАВЛЕНО: Метод отправки координат с троттлингом
+    sendCoords(force = false) {
+      const now = Date.now();
+      const timePassed = now - this.lastSendTime;
+
+      // Проверяем, изменилась ли позиция
+      const posChanged =
+        this.lastSentPos.x !== this.pos.x || this.lastSentPos.y !== this.pos.y;
+
+      // Отправляем если: форсированно ИЛИ (прошло время И позиция изменилась)
+      if (force || (timePassed >= this.sendInterval && posChanged)) {
+        this.lastSentPos = { x: this.pos.x, y: this.pos.y };
+        this.lastSendTime = now;
+
+        this.$emit("player-move", {
+          x: this.pos.x,
+          y: this.pos.y,
+          lastImage: this.isWalking ? (this.currentFrame % 3) + 1 : 1,
+        });
+      }
+    },
+
+    loop() {
+      // ===== X =====
+      let moveX = 0;
+      if (this.keys.has("a")) moveX = -this.speed;
+      if (this.keys.has("d")) moveX = this.speed;
+
+      if (moveX !== 0) {
+        const dir = moveX < 0 ? "left" : "right";
+        this.pos.x += moveX;
+
+        if (this.checkWall(dir)) {
+          let climbed = false;
+          let climbedPixels = 0;
+          for (let i = 1; i <= STEP_HEIGHT; i++) {
+            this.pos.y -= 1;
+            climbedPixels++;
+            if (!this.checkWall(dir) && !this.checkCeiling()) {
+              climbed = true;
+              break;
+            }
+          }
+          if (!climbed) {
+            this.pos.y += climbedPixels;
+            this.pos.x -= moveX;
+          }
+        }
+      }
+
+      // ===== Y =====
+      const inWater = this.polygonUnderPlayer("water");
+      const onVine = this.polygonUnderPlayer("vine");
+      const onRope = this.polygonUnderPlayer("rope");
+
+      this.onVine = onVine || onRope;
+
+      const hittingCeiling = this.checkCeiling();
+      const hittingGround = this.checkGround();
+
+      if (onVine || onRope) {
+        if (this.keys.has("w")) this.pos.y -= this.speed;
+        if (this.keys.has("s")) this.pos.y += this.speed;
+
+        if (onRope && (this.keys.has("a") || this.keys.has("d"))) {
+          this.onVine = false;
+          this.velocity.y = 1;
+        } else {
+          this.velocity.y = 0;
+        }
+
+        this.isOnGround = false;
+      } else if (inWater && !hittingGround) {
+        if (this.keys.has("w")) this.pos.y -= this.speed / 2;
+        if (this.keys.has("s")) this.pos.y += this.speed / 2;
+
+        if (this.keys.has(" ") || this.keys.has("Spacebar")) {
+          this.velocity.y = -6.7;
+          this.isOnGround = false;
+        } else {
+          this.velocity.y = 0;
+        }
+      } else {
+        if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
+          this.velocity.y = -6.7;
+          this.isOnGround = false;
+        }
+
+        this.velocity.y += this.gravity;
+        this.pos.y += this.velocity.y;
+
+        if (this.velocity.y < 0 && hittingCeiling) {
+          this.pos.y -= this.velocity.y;
+          this.velocity.y = 0;
+        }
+
+        if (this.velocity.y >= 0) {
+          if (hittingGround) {
+            this.isOnGround = true;
+            this.velocity.y = 0;
+
+            let snap = 0;
+            while (this.checkGround() && snap++ < 10) {
+              this.pos.y -= 1;
+            }
+          } else {
+            this.isOnGround = false;
+          }
+        }
+      }
+
+      this.pos.x = Math.round(this.pos.x);
+      this.pos.y = Math.round(this.pos.y);
+
+      // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
+      this.sendCoords();
+
+      // Обновляем кадр анимации
+      if (this.isWalking) {
+        this.currentFrame = (this.currentFrame + 1) % 3;
+      }
+
+      this.animationFrame = requestAnimationFrame(this.loop);
+
+      if (
+        (this.polygonUnderPlayer("spike") || this.polygonUnderPlayer("lava")) &&
+        !this.respawnTimeout
+      ) {
+        this.respawnTimeout = setTimeout(() => {
+          const spawnPoly = this.polygons.find((p) => p.type === "spawn");
+          if (spawnPoly && spawnPoly.points.length) {
+            const sum = spawnPoly.points.reduce(
+              (acc, p) => {
+                acc.x += p.x;
+                acc.y += p.y;
+                return acc;
+              },
+              { x: 0, y: 0 }
+            );
+
+            const center = {
+              x: sum.x / spawnPoly.points.length,
+              y: sum.y / spawnPoly.points.length,
+            };
+
+            this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
+            this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
+            this.velocity.y = 0;
+
+            // ✅ ИСПРАВЛЕНО: отправляем координаты после респавна с форсированием
+            this.sendCoords(true);
+          }
+
+          this.respawnTimeout = null;
+        }, 500);
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+.player {
+  position: absolute;
+  transform-origin: center;
+  width: 24px;
+  height: 48px;
+  image-rendering: pixelated;
+  background-image: url("@/assets/images/players/1/bp1.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 200;
+}
+
+.player.walking {
+  animation: walkAnim 0.2s steps(2) infinite;
+}
+
+@keyframes walkAnim {
+  0% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+
+  33% {
+    background-image: url("@/assets/images/players/1/bp2.png");
+  }
+
+  66% {
+    background-image: url("@/assets/images/players/1/bp3.png");
+  }
+
+  100% {
+    background-image: url("@/assets/images/players/1/bp1.png");
+  }
+}
+</style>

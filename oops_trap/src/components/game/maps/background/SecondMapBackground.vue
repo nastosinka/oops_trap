@@ -1,24 +1,36 @@
 <template>
   <div class="game-map">
     <div
-      class="map-layer st1-layer"
-      :style="{ backgroundImage: `url(${st1})` }"
+      class="map-layer main-layer"
+      :style="{ backgroundImage: `url(${main})` }"
     ></div>
     <div
-      class="map-layer st2-layer"
-      :style="{ backgroundImage: `url(${st2})` }"
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${walls})` }"
+    ></div>
+    <div
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${crystals})` }"
+    ></div>
+    <div
+      class="map-layer under-layer"
+      :style="{ backgroundImage: `url(${arrows})` }"
     ></div>
   </div>
 </template>
 
 <script setup>
-import st1 from "@/assets/images/maps/Map2/st/st1.png";
-import st2 from "@/assets/images/maps/Map2/st/st2.png";
+import main from "@/assets/images/maps/Map2/st/main.png";
+import walls from "@/assets/images/maps/Map2/st/walls.png";
+import crystals from "@/assets/images/maps/Map2/st/crystals.png";
+import arrows from "@/assets/images/maps/Map2/st/arrows.png";
 </script>
 
 <style scoped>
 .game-map {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
 }
@@ -32,15 +44,17 @@ import st2 from "@/assets/images/maps/Map2/st/st2.png";
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  pointer-events: none;
+  /* Добавляем чтобы не мешали */
 }
 
-.st1-layer {
+.main-layer {
   background-size: cover;
-  z-index: 1;
+  z-index: 0;
 }
 
-.st2-layer {
-  background-size: contain;
-  z-index: 2;
+.under-layer {
+  background-size: cover;
+  z-index: 50;
 }
 </style>
