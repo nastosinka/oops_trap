@@ -185,8 +185,6 @@ function setupGameWebSocket(server) {
             if (gameRoom.timer.timeLeft <= 0) {
                 stopGameTimer(gameId);
                 console.log(`⏰ Время вышло для игры ${gameId}`);
-
-                //тут получать стату
             }
         }, 1000);
     }
@@ -204,7 +202,7 @@ function setupGameWebSocket(server) {
                     case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'all_stats': // получить статистику по игре (не готово)
+                    case 'all_stats': // получить статистику по игре
                         handleAllStats(ws, message.gameId);
                         break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
@@ -232,6 +230,7 @@ function setupGameWebSocket(server) {
     });
 
     function handleTrapMessage(ws, gameId, trapName) {
+        try {
         let gameRoom = gameRooms.get(gameId);
         console.log(gameRoom.polygons);
         const trap = gameRoom.polygons.find(p => p.name === trapName);
@@ -250,6 +249,9 @@ function setupGameWebSocket(server) {
             result: true,
             timestamp: new Date().toISOString()
         });
+        } catch (error) {
+                console.error('❌ Ошибка в игре:', error);
+            }
     }
 
     function handleInitGame(ws, gameId, playerId, isHost) {
@@ -509,26 +511,6 @@ function stopCoordBroadcast(gameId) {
     }
 }
 
-    function handlePlayerDied(ws, gameId, playerId, text) {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-
-        const player = gameRoom.playersWithSettings.get(playerId);
-        if (!player) return;
-
-        player.alive = false;
-
-        broadcastToGame(gameId, {
-            type: 'died',
-            playerId,
-            text,
-            timestamp: new Date().toISOString(),
-            isHost: player.isHost,
-        });
-        console.log(gameRoom);
-        console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
-    }
-
 
     function handleAllStats(ws, gameId) {
         const game = games.get(parseInt(gameId));
@@ -641,7 +623,7 @@ async function saveStatistic(data) {
   }
 }
 
-    function handleStats(ws, gameId, playerId) {
+    function handleStats(gameId, playerId) {
         const gameRoom = gameRooms.get(gameId);
         if (!gameRoom) return;
         const game = games.get(parseInt(gameId));
