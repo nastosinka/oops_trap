@@ -19,7 +19,7 @@ function pointInPolygon(x, y, points) {
 
         if (intersect) inside = !inside;
     }
-    console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
+    //console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
     return inside;
 }
 
@@ -27,7 +27,7 @@ function pointInPolygon(x, y, points) {
 function isInsideBoundaries(x, y, polygons) {
     for (const poly of polygons) {
         if (poly.type === "boundary") {
-            console.log("Checking boundary polygon:", poly.points);
+            //console.log("Checking boundary polygon:", poly.points);
             if (pointInPolygon(x, y, poly.points)) {
                 console.log(`❌ Point ${x},${y} is inside polygon`);
                 return true;
@@ -302,7 +302,7 @@ function setupGameWebSocket(server) {
                 if (!gameRoom.polygons) {
                     try {
                         const mapName = game.map;
-                        const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
+                        const filePath = path.join(__dirname, "../../data", `map${mapName}.json`);
 
                         const polygonsData = JSON.parse(fs.readFileSync(filePath));
                         gameRoom.polygons = polygonsData.polygons;
