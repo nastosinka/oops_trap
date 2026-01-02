@@ -239,6 +239,13 @@ function setupGameWebSocket(server) {
             trap['isActive'] = false;
             console.log("ловушка деактивирована");
             console.log(trap);
+            broadcastToGame(gameId, {
+            type: 'trap_message',
+            name: trapName,
+            time: trap.timer,
+            result: false,
+            timestamp: new Date().toISOString()
+        });
         }, trap.timer);
         trap['isActive'] = true;
         console.log("ловушка активирована");
@@ -247,6 +254,8 @@ function setupGameWebSocket(server) {
 
         broadcastToGame(gameId, {
             type: 'trap_message',
+            name: trapName,
+            time: trap.timer,
             result: true,
             timestamp: new Date().toISOString()
         });
