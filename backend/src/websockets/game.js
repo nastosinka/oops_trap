@@ -83,6 +83,7 @@ function checkFinishCollision(x, y, polygons) {
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
+const { console } = require('inspector');
 
 function validateCoord(lastSettings, settings){
     //+ логика
@@ -258,19 +259,64 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
         let gameRoom = gameRooms.get(gameId);
 
         if (!gameRoom) {
-            gameRoom = {
+            let lobby = lobbies.get(parseInt(gameId));
+            const map = await prisma.maps.findUnique({
+            where: { id: lobby.map },
+                select: {
+                    time_1: true,
+                    time_2: true,
+                    time_3: true,
+                },
+            });
+
+            if (lobby.time === "easy"){
+                    gameRoom = {
                 players: new Map(),
                 hostId: null,
                 timer: {
                     active: false,
-                    timeLeft: null,
+                    timeLeft: map.time_1,
                     interval: null,
-                    totalTime: null,
+                    totalTime: map.time_1,
                     startTimeout: null
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
             };
+                    
+                } 
+                if (lobby.time === "normal"){
+                    gameRoom = {
+                players: new Map(),
+                hostId: null,
+                timer: {
+                    active: false,
+                    timeLeft: map.time_2,
+                    interval: null,
+                    totalTime: map.time_2,
+                    startTimeout: null
+                },
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
+            };
+                }
+                if (lobby.time === "hard"){
+                    gameRoom = {
+                players: new Map(),
+                hostId: null,
+                timer: {
+                    active: false,
+                    timeLeft: map.time_3,
+                    interval: null,
+                    totalTime: map.time_3,
+                    startTimeout: null
+                },
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
+            };
+            } 
+
+            console.log(gameRoom.timer.totalTime);
             gameRooms.set(gameId, gameRoom);
         }
 
@@ -295,35 +341,12 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
         if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
             gameRoom.hasFirstPlayer = true;
             console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
-            const game = games.get(parseInt(gameId));
-
-            const mapTime = await prisma.maps.findUnique({
-            where: { id: parseInt(game.map) },
-                select: {
-                    time_1: true,
-                    time_2: true,
-                    time_3: true,
-                },
-            });
-
-            if (game.map === "easy"){
-                    gameRoom.timer.totalTime = mapTime.time_1;
-                    gameRoom.timer.timeLeft = mapTime.time_1;
-                    
-                } 
-                if (game.map === "normall"){
-                    gameRoom.timer.totalTime = mapTime.time_2;
-                    gameRoom.timer.timeLeft = mapTime.time_2;
-                } 
-                if (game.map === "hard"){
-                    gameRoom.timer.totalTime = mapTime.time_3;
-                    gameRoom.timer.timeLeft = mapTime.time_3;
-                } 
 
             
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
-
+                let game = games.get(parseInt(gameId));
+                console.log(game);
                 if (!gameRoom.polygons) {
                     try {
                         const mapName = game.map;
