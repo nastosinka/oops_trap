@@ -254,7 +254,7 @@ function setupGameWebSocket(server) {
             }
     }
 
-    function handleInitGame(ws, gameId, playerId, isHost) {
+async function handleInitGame(ws, gameId, playerId, isHost) {
         let gameRoom = gameRooms.get(gameId);
 
         if (!gameRoom) {
@@ -263,9 +263,9 @@ function setupGameWebSocket(server) {
                 hostId: null,
                 timer: {
                     active: false,
-                    timeLeft: 120,
+                    timeLeft: null,
                     interval: null,
-                    totalTime: 120,
+                    totalTime: null,
                     startTimeout: null
                 },
                 hasFirstPlayer: false,
@@ -295,10 +295,35 @@ function setupGameWebSocket(server) {
         if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
             gameRoom.hasFirstPlayer = true;
             console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
+            const game = games.get(parseInt(gameId));
+
+            const mapTime = await prisma.maps.findUnique({
+            where: { id: parseInt(game.map) },
+                select: {
+                    time_1: true,
+                    time_2: true,
+                    time_3: true,
+                },
+            });
+
+            if (game.map === "easy"){
+                    gameRoom.timer.totalTime = mapTime.time_1;
+                    gameRoom.timer.timeLeft = mapTime.time_1;
+                    
+                } 
+                if (game.map === "normall"){
+                    gameRoom.timer.totalTime = mapTime.time_2;
+                    gameRoom.timer.timeLeft = mapTime.time_2;
+                } 
+                if (game.map === "hard"){
+                    gameRoom.timer.totalTime = mapTime.time_3;
+                    gameRoom.timer.timeLeft = mapTime.time_3;
+                } 
+
             
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
-                const game = games.get(parseInt(gameId));
+
                 if (!gameRoom.polygons) {
                     try {
                         const mapName = game.map;
