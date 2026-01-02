@@ -16,6 +16,8 @@ enthumbs_vista.db
 *.msp
 *.lnk
 .idea
+.icloud
+*.icloud
 
 #frontend
 node_modules/
