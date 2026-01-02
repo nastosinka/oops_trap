@@ -1,8 +1,10 @@
 const WebSocket = require('ws');
+const prisma = require('../db/prismaClient');
 const fs = require("fs");
 const path = require("path");
 
 const coordIntervals = new Map();
+
 
 function pointInPolygon(x, y, points) {
     let inside = false;
@@ -17,7 +19,7 @@ function pointInPolygon(x, y, points) {
 
         if (intersect) inside = !inside;
     }
-    console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
+    //console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
     return inside;
 }
 
@@ -25,7 +27,7 @@ function pointInPolygon(x, y, points) {
 function isInsideBoundaries(x, y, polygons) {
     for (const poly of polygons) {
         if (poly.type === "boundary") {
-            console.log("Checking boundary polygon:", poly.points);
+            //console.log("Checking boundary polygon:", poly.points);
             if (pointInPolygon(x, y, poly.points)) {
                 console.log(`❌ Point ${x},${y} is inside polygon`);
                 return true;
@@ -33,6 +35,49 @@ function isInsideBoundaries(x, y, polygons) {
         }
     }
     return false;
+}
+
+function checkTrapCollision(x, y, polygons) {
+    for (const poly of polygons) {
+        if (poly.type === "lava" || poly.type === "spike" || (poly.type === "trap" && poly.isActive === true)) {
+            if (pointInPolygon(x, y, poly.points)) {
+                console.log(`Trap collision (${poly.type}) at ${x},${y}`);
+                return poly.type;
+            }
+        }
+    }
+    return null;
+}
+
+function getSpawnPoint(polygons) {
+    if (!Array.isArray(polygons)) return null;
+
+    const spawnPoly = polygons.find(p => p.type === "spawn");
+
+    if (!spawnPoly || !Array.isArray(spawnPoly.points) || spawnPoly.points.length === 0) {
+        return null;
+    }
+
+    const points = spawnPoly.points;
+
+    const x =
+        points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const y =
+        points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+    return { x, y };
+}
+
+function checkFinishCollision(x, y, polygons) {
+    for (const poly of polygons) {
+        if (poly.type === "finish") {
+            if (pointInPolygon(x, y, poly.points)) {
+                console.log(`Finish collision (${poly.type}) at ${x},${y}`);
+                return poly.type;
+            }
+        }
+    }
+    return null;
 }
 
 const gameRooms = new Map();
@@ -140,8 +185,6 @@ function setupGameWebSocket(server) {
             if (gameRoom.timer.timeLeft <= 0) {
                 stopGameTimer(gameId);
                 console.log(`⏰ Время вышло для игры ${gameId}`);
-
-                //тут получать стату
             }
         }, 1000);
     }
@@ -159,20 +202,17 @@ function setupGameWebSocket(server) {
                     case 'chat_message': // наследие чата
                         handleChatMessage(ws, message.gameId, message.playerId, message.text);
                         break;
-                    case 'died': // игрок умер (готово)
-                        handlePlayerDied(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'win': // игрок победил (не готово)
-                        handlePlayerWin(ws, message.gameId, message.playerId, message.text);
-                        break;
-                    case 'stats': // получить статистику по игре (не готово)
-                        handleStats(ws, message.gameId);
+                    case 'all_stats': // получить статистику по игре
+                        handleAllStats(ws, message.gameId);
                         break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings); 
                         break;
                     case 'coord_message': // получить координаты
                         handleCoordMessage(ws, message.gameId); 
+                        break;
+                    case 'trap_message': // активировать ловушку
+                        handleTrapMessage(ws, message.gameId, message.trap); 
                         break;
                 }
             } catch (error) {
@@ -188,6 +228,31 @@ function setupGameWebSocket(server) {
             console.error('💥 Ошибка соединения с игрой:', error);
         });
     });
+
+    function handleTrapMessage(ws, gameId, trapName) {
+        try {
+        let gameRoom = gameRooms.get(gameId);
+        console.log(gameRoom.polygons);
+        const trap = gameRoom.polygons.find(p => p.name === trapName);
+        setTimeout(() => {
+            trap['isActive'] = false;
+            console.log("ловушка деактивирована");
+            console.log(trap);
+        }, trap.timer);
+        trap['isActive'] = true;
+        console.log("ловушка активирована");
+        console.log(trap);
+
+
+        broadcastToGame(gameId, {
+            type: 'trap_message',
+            result: true,
+            timestamp: new Date().toISOString()
+        });
+        } catch (error) {
+                console.error('❌ Ошибка в игре:', error);
+            }
+    }
 
     function handleInitGame(ws, gameId, playerId, isHost) {
         let gameRoom = gameRooms.get(gameId);
@@ -207,34 +272,6 @@ function setupGameWebSocket(server) {
                 playersWithSettings: new Map(),
             };
             gameRooms.set(gameId, gameRoom);
-        }
-        //добавление "пустых" объектов игроков при создании игры
-        // if (!gameRoom.playersWithSettings.has(playerId)) {
-        //     gameRoom.playersWithSettings.set(playerId, {
-        //         name: "Unknown",
-        //         x: 100,
-        //         y: 100,
-        //         trapper: false,
-        //         alive: true,
-        //         time: null,
-        //         lastImage: null,
-        //     });
-        //     console.log(`Добавили игрока ${playerId} в playersWithSettings`);
-        // }
-        
-        if (!gameRoom.polygons) {
-            try {
-                const mapName = "map_test"
-                //const mapName = gameRoom.mapName || "map_test";
-                const filePath = path.join(__dirname, "../../data", `${mapName}.json`);
-
-                const polygonsData = JSON.parse(fs.readFileSync(filePath));
-                gameRoom.polygons = polygonsData.polygons;
-
-                console.log(`🗺️ Полигоны карты "${mapName}"`);
-            } catch (e) {
-                console.error("❌ Ошибка загрузки полигона:", e);
-            }
         }
 
         if (isHost && !gameRoom.hostId) {
@@ -258,10 +295,27 @@ function setupGameWebSocket(server) {
         if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
             gameRoom.hasFirstPlayer = true;
             console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
-
+            
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
                 const game = games.get(parseInt(gameId));
+                if (!gameRoom.polygons) {
+                    try {
+                        const mapName = game.map;
+                        const filePath = path.join(__dirname, "../../data", `map${mapName}.json`);
+
+                        const polygonsData = JSON.parse(fs.readFileSync(filePath));
+                        gameRoom.polygons = polygonsData.polygons;
+
+                        console.log(`🗺️ Полигоны карты "${mapName}"`);
+                    } catch (e) {
+                        console.error("❌ Ошибка загрузки полигона:", e);
+                    }
+                }
+                const spawn = getSpawnPoint(gameRoom.polygons); ////// SPAWN COORDS - spawn.x spawn.y
+
+                console.log(`Игрок заспавнится на координатах ${spawn.x} - - ${spawn.y}.`);
+                
                 if (!game) {
                     //+ логика, игра не найдена
                     return;
@@ -273,8 +327,8 @@ function setupGameWebSocket(server) {
                     if (game.trapper === player['id']){
                         gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: 1850,
-                        y: 950,
+                        x: spawn.x,
+                        y: spawn.y,
                         trapper: true,
                         alive: null,
                         time: null,
@@ -283,8 +337,8 @@ function setupGameWebSocket(server) {
                     } else {
                     gameRoom.playersWithSettings.set(player['id'], {
                         name: player['name'], 
-                        x: 1850,
-                        y: 950,
+                        x: spawn.x,
+                        y: spawn.y,
                         trapper: false,
                         alive: true,
                         time: null,
@@ -344,25 +398,58 @@ function setupGameWebSocket(server) {
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
 
-        // Только если координаты корректны — применяем в playersWithSettings
-        if (settings && typeof settings.x === 'number' && typeof settings.y === 'number') {
+        if (player.alive != true) {
+            return;
+        }
+
+        if (settings && typeof settings.x === "number" && typeof settings.y === "number") {
             if (validateCoord(gameRoom.playersWithSettings, settings) === true) {
                 const polygons = gameRoom.polygons;
+
                 if (isInsideBoundaries(settings.x, settings.y, polygons)) {
                     console.log(`❌ Игрок ${playerId} ударился о стену`);
-                        ws.send(JSON.stringify({
+                    ws.send(JSON.stringify({
                         type: "rollback",
                         x: player.x,
-                    y: player.y,
-                    playerId
+                        y: player.y,
+                        playerId
                     }));
-                } else {
+                    return;
+                }
+
+                const trapType = checkTrapCollision(settings.x, settings.y, polygons);
+                if (trapType) {
+                    player.alive = false;
+                    broadcastToGame(gameId, {
+                        type: "died",
+                        playerId,
+                        reason: trapType,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
+                    return;
+                }
+                
+                const finish = checkFinishCollision(settings.x, settings.y, polygons);
+                if (finish) {
+                    player.alive = null;
+                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    broadcastToGame(gameId, {
+                        type: "win",
+                        playerId,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
+                    return;
+                }
+
                 player.x = settings.x;
                 player.y = settings.y;
                 player.lastImage = settings.lastImage;
-            }}
+            }
         } else {
-            // Если settings некорректен, просто логируем, но не портишь данные
             console.log(`handlePlayerMove: invalid settings from player ${playerId}`, settings);
         }
 
@@ -424,91 +511,139 @@ function stopCoordBroadcast(gameId) {
 }
 
 
-    // function handlePlayerMove(ws, gameId, playerId, position) {
-    //     const gameRoom = gameRooms.get(gameId);
-    //     if (!gameRoom) return;
-
-    //     const player = gameRoom.playersWithSettings.get(playerId);
-    //     //console.log("Проверяем player:", player);
-    //     if (!player) return;
-
-    //     const polygons = gameRoom.polygons;
-    //     console.log("Player trying to move to:", position.x, position.y);
-
-    //     // Проверка границы
-    //     if (isInsideBoundaries(position.x, position.y, polygons)) {
-    //         console.log(`❌ Игрок ${playerId} ударился о стену`);
-    //         ws.send(JSON.stringify({
-    //             type: "rollback",
-    //             x: player.x,
-    //             y: player.y,
-    //             playerId
-    //         }));
-    //         return;
-    //     }
-
-    //     // Обновляем позиции
-    //     player.x = position.x;
-    //     player.y = position.y;
-
-    //     // Отправляем всем
-    //     const playersArray = Array.from(gameRoom.playersWithSettings.entries()).map(([id, p]) => ({
-    //         id,
-    //         ...p
-    //     }));
-
-    //     broadcastToGame(gameId, {
-    //         type: "coord_message",
-    //         playerId,
-    //         coords: playersArray
-    //     });
-    // }
-
-    function handlePlayerDied(ws, gameId, playerId, text) {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-
-        const player = gameRoom.playersWithSettings.get(playerId);
-        if (!player) return;
-
-        player.alive = false;
-
-        broadcastToGame(gameId, {
-            type: 'died',
-            playerId,
-            text,
-            timestamp: new Date().toISOString(),
-            isHost: player.isHost,
-        });
-        console.log(gameRoom);
-        console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
-    }
-
-
-    function handleStats(gameId) {
-     const stats = game.players.map((player) => ({
-         userId: player.id,
-         role: true,
-            time: 12, 
-            result: Math.random() > 0.5 ? 1 : 0, // пример результата
-            map: game.map
-        }));
-        // + логика получения статистики из gameRoom
-        
-        
+    function handleAllStats(ws, gameId) {
         const game = games.get(parseInt(gameId));
         if (!game) {
-                    //+ логика, игра не найдена
+                    //+ логика, игра не найдена + проверка что игрок не траппер
             return;
         }
-        game.stats = stats;
+
+        broadcastToGame(gameId, {
+            type: 'all_stats',
+            stats: game.stats,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+async function saveStatistic(data) {
+  const { id_user, id_map, time, role } = data;
+
+  // Валидация входных данных
+  if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
+    throw {
+      error: 'Обязательные поля: id_user, id_map, time, role',
+    };
+  }
+
+  const userId = parseInt(id_user);
+  const mapId = parseInt(id_map);
+  const timeValue = parseInt(time);
+
+  if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
+    throw {
+      error: 'Поля id_user, id_map и time должны быть числами',
+    };
+  }
+
+  if (typeof role !== 'boolean') {
+    throw {
+      error: 'Поле role должно быть булевым значением',
+    };
+  }
+
+  try {
+    // Проверка существующей статистики
+    const existingStat = await prisma.stats.findFirst({
+      where: {
+        id_user: userId,
+        id_map: mapId,
+        role: role,
+      },
+    });
+
+    let result;
+    let action;
+
+    if (existingStat) {
+      if (existingStat.time > timeValue) {
+        result = await prisma.stats.update({
+          where: { id: existingStat.id },
+          data: { time: timeValue },
+        });
+        action = 'updated';
+        console.log('Статистика обновлена:', result);
+      } else {
+        console.log('Статистика не требует обновлений');
+        result = existingStat;
+        action = 'unchanged';
+      }
+    } else {
+      result = await prisma.stats.create({
+        data: {
+          id_user: userId,
+          id_map: mapId,
+          time: timeValue,
+          role: role,
+        },
+      });
+      action = 'created';
+      console.log('Новая статистика создана:', result);
+    }
+
+    // Форматирование результата
+    const formattedResult = {
+      id: result.id,
+      id_user: result.id_user,
+      id_map: result.id_map,
+      time: result.time,
+      role: result.role,
+    };
+
+    return {
+      success: true,
+      action: action,
+      data: formattedResult,
+    };
+
+  } catch (error) {
+    console.error('Ошибка при сохранении статистики:', error);
+
+    if (error.code === 'P2003') {
+      throw {
+        error: 'Неверный id_user или id_map',
+        details: 'Указанный пользователь или карта не существует'
+      };
+    }
+
+    throw {
+      error: 'Ошибка сервера при сохранении статистики',
+      details: error.message
+    };
+  }
+}
+
+    function handleStats(gameId, playerId) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom) return;
+        const game = games.get(parseInt(gameId));
+        if (!game) {
+                    //+ логика, игра не найдена + проверка что игрок не траппер
+            return;
+        }
+        game.stats.set(playerId, {
+            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+            map: game.map,
+            role: true,
+        });
+        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
 
 
         broadcastToGame(gameId, {
             type: 'stats',
-            stats: stats,
+            stats: game.stats,
             timestamp: new Date().toISOString()
         });
+        console.log(game.stats);
     }
 
     function handlePlayerDisconnect(ws) {

@@ -174,8 +174,8 @@ onMounted(async () => {
   setupCoordsListener();
 
   // Начальная позиция игрока
-  playerCoords.x = 100;
-  playerCoords.y = 100;
+  playerCoords.x = 1850;
+  playerCoords.y = 950;
   sendPlayerMove(playerCoords.x, playerCoords.y, 1);
 });
 

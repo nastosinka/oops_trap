@@ -1,7 +1,7 @@
 {
   "polygons": [
     {
-      "type": "boundary",
+      "type": "finish",
       "points": [
         { "x": 95, "y": 90 },
         { "x": 105, "y": 90 },
@@ -10,7 +10,7 @@
       ]
     },
     {
-      "type": "boundary",
+      "type": "lava",
       "points": [
         { "x": 95, "y": 105 },
         { "x": 105, "y": 105 },
