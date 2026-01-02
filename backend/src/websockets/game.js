@@ -83,6 +83,7 @@ function checkFinishCollision(x, y, polygons) {
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
+const { console } = require('inspector');
 
 function validateCoord(lastSettings, settings){
     //+ логика
@@ -238,6 +239,13 @@ function setupGameWebSocket(server) {
             trap['isActive'] = false;
             console.log("ловушка деактивирована");
             console.log(trap);
+            broadcastToGame(gameId, {
+            type: 'trap_message',
+            name: trapName,
+            time: trap.timer,
+            result: false,
+            timestamp: new Date().toISOString()
+        });
         }, trap.timer);
         trap['isActive'] = true;
         console.log("ловушка активирована");
@@ -246,6 +254,8 @@ function setupGameWebSocket(server) {
 
         broadcastToGame(gameId, {
             type: 'trap_message',
+            name: trapName,
+            time: trap.timer,
             result: true,
             timestamp: new Date().toISOString()
         });
@@ -254,23 +264,68 @@ function setupGameWebSocket(server) {
             }
     }
 
-    function handleInitGame(ws, gameId, playerId, isHost) {
+async function handleInitGame(ws, gameId, playerId, isHost) {
         let gameRoom = gameRooms.get(gameId);
 
         if (!gameRoom) {
-            gameRoom = {
+            let lobby = lobbies.get(parseInt(gameId));
+            const map = await prisma.maps.findUnique({
+            where: { id: lobby.map },
+                select: {
+                    time_1: true,
+                    time_2: true,
+                    time_3: true,
+                },
+            });
+
+            if (lobby.time === "easy"){
+                    gameRoom = {
                 players: new Map(),
                 hostId: null,
                 timer: {
                     active: false,
-                    timeLeft: 120,
+                    timeLeft: map.time_1,
                     interval: null,
-                    totalTime: 120,
+                    totalTime: map.time_1,
                     startTimeout: null
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
             };
+                    
+                } 
+                if (lobby.time === "normal"){
+                    gameRoom = {
+                players: new Map(),
+                hostId: null,
+                timer: {
+                    active: false,
+                    timeLeft: map.time_2,
+                    interval: null,
+                    totalTime: map.time_2,
+                    startTimeout: null
+                },
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
+            };
+                }
+                if (lobby.time === "hard"){
+                    gameRoom = {
+                players: new Map(),
+                hostId: null,
+                timer: {
+                    active: false,
+                    timeLeft: map.time_3,
+                    interval: null,
+                    totalTime: map.time_3,
+                    startTimeout: null
+                },
+                hasFirstPlayer: false,
+                playersWithSettings: new Map(),
+            };
+            } 
+
+            console.log(gameRoom.timer.totalTime);
             gameRooms.set(gameId, gameRoom);
         }
 
@@ -295,10 +350,12 @@ function setupGameWebSocket(server) {
         if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
             gameRoom.hasFirstPlayer = true;
             console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
+
             
             gameRoom.timer.startTimeout = setTimeout(() => {
                 startGameTimer(gameId);
-                const game = games.get(parseInt(gameId));
+                let game = games.get(parseInt(gameId));
+                console.log(game);
                 if (!gameRoom.polygons) {
                     try {
                         const mapName = game.map;
