@@ -1,24 +1,15 @@
 <template>
-  <img :src="currentImage" class="trap-image" />
+  <div
+    class="trap-image"
+    :class="{ active }"
+  />
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-
 const props = defineProps({
   type: String,
   active: Boolean,
 });
-
-const images = [
-  new URL("@/assets/images/maps/Map2/tr4/1.png", import.meta.url).href,
-  new URL("@/assets/images/maps/Map2/tr4/2.png", import.meta.url).href,
-  new URL("@/assets/images/maps/Map2/tr4/3.png", import.meta.url).href,
-  new URL("@/assets/images/maps/Map2/tr4/4.png", import.meta.url).href,
-];
-
-const currentFrame = ref(0);
-const currentImage = computed(() => images[currentFrame.value]);
 </script>
 
 <style scoped>
@@ -26,10 +17,32 @@ const currentImage = computed(() => images[currentFrame.value]);
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%; /* теперь 100% берётся от game-map */
-  height: 100%; /* совпадает с картой */
-  object-fit: contain;
-  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background-image: url("@/assets/images/maps/Map2/tr4/1.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   pointer-events: none;
+  z-index: 3;
+}
+
+.trap-image.active {
+  animation: trapAnim 0.75s steps(1) forwards;
+}
+
+@keyframes trapAnim {
+  0% {
+    background-image: url("@/assets/images/maps/Map2/tr4/1.png");
+  }
+  33% {
+    background-image: url("@/assets/images/maps/Map2/tr4/2.png");
+  }
+  77% {
+    background-image: url("@/assets/images/maps/Map2/tr4/3.png");
+  }
+  100% {
+    background-image: url("@/assets/images/maps/Map2/tr4/4.png");
+  }
 }
 </style>

@@ -19,7 +19,7 @@ const props = defineProps({
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url("@/assets/images/maps/Map2/tr3/1.png");
+  background-image: url("@/assets/images/maps/Map2/tr10/1.png");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -32,18 +32,8 @@ const props = defineProps({
 }
 
 @keyframes trapAnim {
-  0% {
-    background-image: url("@/assets/images/maps/Map2/tr3/1.png"),
-                      url("@/assets/images/maps/Map2/tr3/2.png");
-  }
-  25% {
-    background-image: url("@/assets/images/maps/Map2/tr3/3.png");
-  }
-  50% {
-    background-image: url("@/assets/images/maps/Map2/tr3/4.png");
-  }
-  75%, 100% {
-    background-image: url("@/assets/images/maps/Map2/tr3/5.png");
+  100% {
+    background-image: url("@/assets/images/maps/Map2/tr10/1.png");
   }
 }
 </style>
