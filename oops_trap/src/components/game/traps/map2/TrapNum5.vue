@@ -28,17 +28,17 @@ const props = defineProps({
 }
 
 .trap-image.active {
-  animation: trapAnim 0.75s steps(1) forwards;
+  animation: trapAnim 1s steps(1) forwards;
 }
 
 @keyframes trapAnim {
   0% {
     background-image: url("@/assets/images/maps/Map2/tr5/1.png");
   }
-  50% {
+  33% {
     background-image: url("@/assets/images/maps/Map2/tr5/2.png");
   }
-  100% {
+  77%, 100% {
     background-image: url("@/assets/images/maps/Map2/tr5/3.png");
   }
 }

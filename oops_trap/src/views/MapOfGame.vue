@@ -197,6 +197,7 @@ onMounted(() => {
     new URL("@/assets/images/maps/Map2/tr4/3.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr4/4.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr5/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr5/3.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr6/2.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr6/3.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr6/4.png", import.meta.url).href,
@@ -214,6 +215,7 @@ onMounted(() => {
     new URL("@/assets/images/maps/Map2/tr8/4.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr9/2.png", import.meta.url).href,
     new URL("@/assets/images/maps/Map2/tr9/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr10/1.png", import.meta.url).href,
   ]);
 });
 

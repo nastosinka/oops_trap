@@ -15,29 +15,53 @@ const props = defineProps({
 <style scoped>
 .trap-image {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("@/assets/images/maps/Map2/tr1/1.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  inset: 0;
   pointer-events: none;
   z-index: 3;
+  opacity: 0;
 }
 
 .trap-image.active {
-  animation: trapAnim 0.75s steps(1) forwards;
+  opacity: 1;
 }
 
-@keyframes trapAnim {
+.trap-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("@/assets/images/maps/Map2/tr1/1.png") center / contain no-repeat;
+  opacity: 0;
+}
+
+.trap-image.active::before {
+  opacity: 1;
+}
+
+
+.trap-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("@/assets/images/maps/Map2/tr1/2.png") center / contain no-repeat;
+  opacity: 0;
+}
+
+.trap-image.active::after {
+  animation: showSecond 2s forwards;
+}
+
+@keyframes showSecond {
   0% {
-    background-image: url("@/assets/images/maps/Map2/tr1/1.png");
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
   }
   100% {
-    background-image: url("@/assets/images/maps/Map2/tr1/1.png"),
-    background-image: url("@/assets/images/maps/Map2/tr1/2.png");
+    opacity: 1;
   }
 }
 </style>
