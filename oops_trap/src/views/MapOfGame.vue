@@ -12,7 +12,7 @@
         :is="trap.component"
         v-for="trap in traps"
         :key="trap.id"
-        :active="activeTrapId === trap.id"
+        :active="trapsState[trap.name]"
       />
 
       <!-- Другие игроки -->
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from "vue";
+import { ref, onMounted, onUnmounted, provide, reactive, watchEffect } from "vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
@@ -41,6 +41,22 @@ import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
 import TrapController from "@/components/game/traps/TrapController.vue";
 
 const traps = computed(() => TRAPS_BY_MAP[currentMap] || []);
+const trapsState = reactive({});
+
+watchEffect(() => {
+  traps.value.forEach(trap => {
+    if (!(trap.name in trapsState)) {
+      trapsState[trap.name] = false;
+    }
+  });
+});
+function onTrapActivate(trap) {
+  trapsState[trap.name] = true;
+
+  setTimeout(() => {
+    trapsState[trap.name] = false;
+  }, trap.cooldown);
+}
 
 const userStore = useUserStore();
 
@@ -92,6 +108,12 @@ function handlePlayerMove(coords) {
   );
 }
 
+function preloadImages(urls) {
+  urls.forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
 /* ----------------------------------
    Polygons
 ---------------------------------- */
@@ -162,6 +184,39 @@ onMounted(() => {
   fetchPolygons();
   updateScreenSize();
   window.addEventListener("resize", onResize);
+  preloadImages([
+    new URL("@/assets/images/maps/Map2/tr1/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr2/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr2/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr3/1.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr3/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr3/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr3/4.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr3/5.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr4/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr4/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr4/4.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr5/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr5/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/4.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/5.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/7.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/8.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/9.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr6/10.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr7/1.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr7/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr7/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr7/4.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr8/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr8/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr8/4.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr9/2.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr9/3.png", import.meta.url).href,
+    new URL("@/assets/images/maps/Map2/tr10/1.png", import.meta.url).href,
+  ]);
 });
 
 onUnmounted(() => {

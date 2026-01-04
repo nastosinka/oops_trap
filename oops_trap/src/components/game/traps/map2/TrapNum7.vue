@@ -19,7 +19,7 @@ const props = defineProps({
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url("@/assets/images/maps/Map2/tr4/1.png");
+  background-image: url("@/assets/images/maps/Map2/tr7/1.png");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -33,16 +33,16 @@ const props = defineProps({
 
 @keyframes trapAnim {
   0% {
-    background-image: url("@/assets/images/maps/Map2/tr4/1.png");
+    background-image: url("@/assets/images/maps/Map2/tr7/1.png");
   }
   33% {
-    background-image: url("@/assets/images/maps/Map2/tr4/2.png");
+    background-image: url("@/assets/images/maps/Map2/tr7/2.png");
   }
   77% {
-    background-image: url("@/assets/images/maps/Map2/tr4/3.png");
+    background-image: url("@/assets/images/maps/Map2/tr7/3.png");
   }
   100% {
-    background-image: url("@/assets/images/maps/Map2/tr4/4.png");
+    background-image: url("@/assets/images/maps/Map2/tr7/4.png");
   }
 }
 </style>
