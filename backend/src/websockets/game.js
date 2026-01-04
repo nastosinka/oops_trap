@@ -83,7 +83,7 @@ function checkFinishCollision(x, y, polygons) {
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
-const { console } = require('inspector');
+//const { console } = require('inspector'); // ❌❌РАСКОММЕНТИТЬ ЧТОБЫ УБРАТЬ ЛОГИ❌❌
 
 function validateCoord(lastSettings, settings){
     //+ логика
@@ -116,14 +116,17 @@ function setupGameWebSocket(server) {
         }
     });
 
-    // Функции должны быть объявлены до их использования
     function broadcastToGame(gameId, message) {
         const gameRoom = gameRooms.get(gameId);
         if (!gameRoom) return;
 
         gameRoom.players.forEach(player => {
-            if (player.connected && player.ws.readyState === player.ws.OPEN) {
-                player.ws.send(JSON.stringify(message));
+            try {
+                if (player.connected && player.ws.readyState === player.ws.OPEN) {
+                    player.ws.send(JSON.stringify(message));
+                }
+            } catch (e) {
+                console.error('❌ Ошибка отправки WS:', e);
             }
         });
     }
@@ -200,9 +203,6 @@ function setupGameWebSocket(server) {
                     case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    case 'chat_message': // наследие чата
-                        handleChatMessage(ws, message.gameId, message.playerId, message.text);
-                        break;
                     case 'all_stats': // получить статистику по игре
                         handleAllStats(ws, message.gameId);
                         break;
@@ -213,7 +213,7 @@ function setupGameWebSocket(server) {
                         handleCoordMessage(ws, message.gameId); 
                         break;
                     case 'trap_message': // активировать ловушку
-                        handleTrapMessage(ws, message.gameId, message.trap); 
+                        handleTrapMessage(ws, message.gameId, message.trap, message.playerId); 
                         break;
                 }
             } catch (error) {
@@ -230,28 +230,20 @@ function setupGameWebSocket(server) {
         });
     });
 
-    function handleTrapMessage(ws, gameId, trapName) {
-        try {
-        let gameRoom = gameRooms.get(gameId);
-        console.log(gameRoom.polygons);
+function handleTrapMessage(ws, gameId, trapName, playerId) {
+    try {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom || !Array.isArray(gameRoom.polygons)) return;
+
+        const game = games.get(gameId);
+        if (!game) return;
+
+        if (game.trapper !== playerId) return;
+
         const trap = gameRoom.polygons.find(p => p.name === trapName);
-        setTimeout(() => {
-            trap['isActive'] = false;
-            console.log("ловушка деактивирована");
-            console.log(trap);
-            broadcastToGame(gameId, {
-            type: 'trap_message',
-            name: trapName,
-            time: trap.timer,
-            result: false,
-            timestamp: new Date().toISOString()
-        });
-        }, trap.timer);
-        trap['isActive'] = true;
-        console.log("ловушка активирована");
-        console.log(trap);
+        if (!trap || typeof trap.timer !== 'number' || trap.isActive) return;
 
-
+        trap.isActive = true;
         broadcastToGame(gameId, {
             type: 'trap_message',
             name: trapName,
@@ -259,12 +251,30 @@ function setupGameWebSocket(server) {
             result: true,
             timestamp: new Date().toISOString()
         });
-        } catch (error) {
-                console.error('❌ Ошибка в игре:', error);
-            }
-    }
 
-async function handleInitGame(ws, gameId, playerId, isHost) {
+        setTimeout(() => {
+            try {
+                trap.isActive = false;
+                broadcastToGame(gameId, {
+                    type: 'trap_message',
+                    name: trapName,
+                    time: trap.timer,
+                    result: false,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('❌ Ошибка деактивации ловушки', e);
+            }
+        }, trap.timer);
+
+    } catch (error) {
+        console.error('❌ Ошибка в handleTrapMessage:', error);
+    }
+}
+
+
+async function handleInitGame(ws, gameId, playerId, isHost) {    
+    try {
         let gameRoom = gameRooms.get(gameId);
 
         if (!gameRoom) {
@@ -428,29 +438,14 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
         });
 
         console.log(`👤 Игрок ${playerId} присоединился к игре ${gameId} (${isHost ? 'Хост' : 'Игрок'})`);
-    }
-
-    function handleChatMessage(ws, gameId, playerId, text) {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-
-        const player = gameRoom.players.get(playerId);
-        if (!player) return;
-
-        broadcastToGame(gameId, {
-            type: 'chat_message',
-            playerId,
-            text,
-            timestamp: new Date().toISOString(),
-            isHost: player.isHost
-        });
-
-        console.log(`💬 Игрок ${playerId} в игре ${gameId}: ${text}`);
+        } catch (error) {
+            console.error('❌ Ошибка в handleInitGame:', error);
+        }
     }
 
     function handlePlayerMove(ws, gameId, playerId, settings) {
         const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
+        if (!gameRoom || !gameRoom.polygons) return;
 
         const player = gameRoom.playersWithSettings.get(playerId);
         if (!player) return;
@@ -680,11 +675,12 @@ async function saveStatistic(data) {
 }
 
     function handleStats(gameId, playerId) {
+        try {
         const gameRoom = gameRooms.get(gameId);
         if (!gameRoom) return;
         const game = games.get(parseInt(gameId));
-        if (!game) {
-                    //+ логика, игра не найдена + проверка что игрок не траппер
+        if (!game || game.trapper === playerId) {
+                  //+ логика, игра не найдена + проверка что игрок не траппер
             return;
         }
         game.stats.set(playerId, {
@@ -701,6 +697,9 @@ async function saveStatistic(data) {
             timestamp: new Date().toISOString()
         });
         console.log(game.stats);
+        } catch (error) {
+            console.error('❌ Ошибка в handleStats:', error);
+        }
     }
 
     function handlePlayerDisconnect(ws) {
