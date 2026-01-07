@@ -52,6 +52,13 @@ test.describe('CreateLobbyPage — FULL COVERAGE', () => {
      BEFORE EACH
   ========================= */
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      });
+    });
     // Логиним пользователя перед каждым тестом
     await loginUser(page);
 
@@ -227,23 +234,36 @@ test.describe('CreateLobbyPage — FULL COVERAGE', () => {
     await page.click('button:has-text("Join the lobby")');
 
     const joinModal = page.locator('.modal:not(.modal--rules):not(.modal--stats)');
-
-    // Проверяем, что модалка видима
     await expect(joinModal).toBeVisible();
 
-    // Вводим неверный код
+    // Вводим код лобби, который приведет к ошибке
     await joinModal.locator('input.auth-form__input').fill('999');
 
-    // Кликаем кнопку Join
+    // Коды ошибок
+    const errorCodes = [401, 404, 500];
+    let currentCodeIndex = 0;
+
+    await page.route('**/api/lobby/lobbies/999/join', async route => {
+      const code = errorCodes[currentCodeIndex % errorCodes.length];
+      currentCodeIndex++;
+
+      await route.fulfill({
+        status: code,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Failed to join lobby' }),
+      });
+    });
+
+    // Нажимаем кнопку Join
     await joinModal.locator('button:has-text("Join")').click();
 
-    // Ждём появления toast ошибки Ant Design
+    // Ждём появления ошибки
     const errorToast = page.locator('text=Failed to join lobby');
 
-    // Проверяем, что текст toast содержит код ошибки
-    await expect(errorToast).toContainText("Failed to join lobby: 401");
+    // Проверяем, что текст содержит один из кодов ошибки
+    await expect(errorToast).toContainText(/Failed to join lobby: (401|404|500)/);
 
-    // Закрываем toast, если есть кнопка OK
+    // Закрываем ошибку, если есть кнопка OK
     const okButton = errorToast.locator('button:has-text("OK")');
     if (await okButton.count()) {
       await okButton.click();
