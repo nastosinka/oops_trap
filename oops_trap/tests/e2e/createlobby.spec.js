@@ -153,6 +153,20 @@ test.describe('CreateLobbyPage — FULL COVERAGE', () => {
      CREATE LOBBY: SUCCESS
   ========================= */
   test('успешное создание лобби', async ({ page }) => {
+    await page.route('**/api/lobby/lobbies/*/settings', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 123,
+        name: 'Test Lobby',
+        owner: 'testuser',
+        players: ['testuser'],
+        mode: 'join',
+        settings: { map: 'Map 1', difficulty: 'easy' },
+      }),
+    });
+  });
     // Перехватываем API для создания лобби
     await page.route('**/api/lobby/newlobby', async route => {
       await route.fulfill({
@@ -199,6 +213,20 @@ test.describe('CreateLobbyPage — FULL COVERAGE', () => {
      JOIN LOBBY: SUCCESS
   ========================= */
   test('успешное подключение к лобби', async ({ page }) => {
+    await page.route('**/api/lobby/lobbies/*/settings', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 123,
+        name: 'Test Lobby',
+        owner: 'adminchik',
+        players: ['adminchik','testuser'],
+        mode: 'join',
+        settings: { map: 'Map 1', difficulty: 'easy' },
+      }),
+    });
+  });
     // Открываем модалку Join Lobby
     await page.click('button:has-text("Join the lobby")');
 
