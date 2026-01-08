@@ -11,7 +11,12 @@
       <div class="players-scrollable-layer">
         <h2>Players ({{ players.length }})</h2>
         <div class="players-list">
-          <div v-for="player in players" :key="player.id" class="player" :class="{ 'player-host': player.isHost }">
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="player"
+            :class="{ 'player-host': player.isHost }"
+          >
             <div class="player-color" :style="{ backgroundColor: player.color }"></div>
             <span class="player-name">{{ player.name }}</span>
             <span v-if="player.id === userId" class="player-you">(You)</span>
@@ -20,65 +25,74 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton v-if="isHost" label="Settings" size="large" :disabled="!hasPlayers" @click="openSettings" />
-        <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
-          @click="handleStart" />
+        <BaseButton
+          v-if="isHost"
+          label="Settings"
+          size="large"
+          :disabled="!hasPlayers"
+          @click="openSettings"
+        />
+        <BaseButton
+          v-if="isHost && lobbyStatus === 'waiting'"
+          label="Start"
+          size="large"
+          :disabled="players.length < 2"
+          @click="handleStart"
+        />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
       </div>
     </div>
   </div>
-  <UniversalModal v-if="showSettings" title="Game Settings" type="settings" :players="players"
-    :initial-settings="currentSettings" @close="showSettings = false" @settings-apply="handleSettingsApply" />
+
+  <UniversalModal
+    v-if="showSettings"
+    title="Game Settings"
+    type="settings"
+    :players="players"
+    :initial-settings="currentSettings"
+    @close="showSettings = false"
+    @settings-apply="handleSettingsApply"
+  />
 </template>
 
 <script>
 import BaseButton from "@/components/base/BaseButton.vue";
-import { Modal } from "ant-design-vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
+import { Modal } from "ant-design-vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { createGameSocket } from "@/utils/websocket";
 
 export default {
   name: "LobbyPage",
-  components: {
-    BaseButton,
-    UniversalModal,
-  },
+  components: { BaseButton, UniversalModal },
 
   setup() {
     const userStore = useUserStore();
     const { user, userId, userName } = storeToRefs(userStore);
-
-    return {
-      userStore,
-      user,
-      userId,
-      userName,
-    };
+    return { userStore, user, userId, userName };
   },
 
   data() {
     return {
+      lobbyId: null,
       players: [],
       isHost: false,
-      showSettings: false,
-      currentSettings: {
-        mafia: null,
-        map: 1,
-        time: "normal",
-      },
-      pendingTrapperId: null,
-      lobbyId: null,
+      lobbyOwnerId: null,
       lobbyStatus: "waiting",
       pollInterval: null,
-      lobbyOwnerId: null,
+
+      // Настройки
+      pendingSettings: { mafiaId: null, map: 1, time: "normal" }, // от сервера
+      currentSettings: { mafia: null, map: 1, time: "normal" }, // локально для модалки
+
+      showSettings: false,
     };
   },
 
   computed: {
     lobbyCode() {
-      return this.lobbyId ? this.lobbyId.toString() : "";
+      return this.lobbyId || "";
     },
     statusClass() {
       return {
@@ -88,25 +102,19 @@ export default {
       };
     },
     hasPlayers() {
-      return this.players && this.players.length > 0;
+      return this.players.length > 0;
     },
   },
 
   async created() {
-    console.log("🟡 LobbyPage created - initializing...");
+    console.log("[LobbyPage] created - initializing user");
     this.userStore.initializeUser();
     this.lobbyId = this.$route.query.id;
+    console.log("[LobbyPage] Lobby ID:", this.lobbyId);
 
-    console.log("🔵 Lobby data:", {
-      lobbyId: this.lobbyId,
-      userId: this.userId,
-      routeQuery: this.$route.query,
-    });
-
-    await this.checkIfUserIsHost();
-
+    await this.fetchLobbySettings();
     this.startPolling();
-    this.fetchLobbyData();
+    await this.fetchLobbyData();
   },
 
   beforeUnmount() {
@@ -114,149 +122,103 @@ export default {
   },
 
   methods: {
-    async checkIfUserIsHost() {
-      if (!this.lobbyId) {
-        this.isHost = false;
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `/api/lobby/lobbies/${this.lobbyId}/settings`,
-          { method: "GET", credentials: "include" }
-        );
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-
-        if (data.success && data.data) {
-          this.lobbyOwnerId = data.data.ownerId;
-          this.isHost = data.data.ownerId === this.userId;
-          console.log(
-            `🎮 User is ${this.isHost ? "HOST" : "PLAYER"} of lobby ${this.lobbyId}`
-          );
-          console.log(
-            `👑 Lobby owner ID: ${this.lobbyOwnerId}, User ID: ${this.userId}`
-          );
-        } else this.isHost = false;
-      } catch (error) {
-        console.error("❌ Error checking host status:", error);
-        this.isHost = false;
-      }
-    },
-
-    openSettings() {
-      if (this.players.length === 0) return;
-
-      // Назначаем мафию безопасно, если ещё не назначено
-      if (!this.currentSettings.mafia || !this.currentSettings.mafia.id) {
-        this.currentSettings.mafia = this.players[0] || null;
-      }
-
-      this.showSettings = true;
-    },
-
     startPolling() {
+      console.log("[LobbyPage] startPolling");
       this.pollInterval = setInterval(() => this.fetchLobbyData(), 2000);
     },
 
     stopPolling() {
-      if (this.pollInterval) {
-        clearInterval(this.pollInterval);
-        this.pollInterval = null;
+      console.log("[LobbyPage] stopPolling");
+      if (this.pollInterval) clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    },
+
+    async fetchLobbySettings() {
+      if (!this.lobbyId) return;
+      try {
+        console.log("[LobbyPage] fetchLobbySettings - sending request");
+        const res = await fetch(`/api/lobby/lobbies/${this.lobbyId}/settings`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        console.log("[LobbyPage] fetchLobbySettings - received", data);
+
+        if (data.success && data.data) {
+          this.lobbyOwnerId = data.data.ownerId;
+          this.isHost = data.data.ownerId === this.userId;
+
+          this.pendingSettings = {
+            mafiaId: data.data.trapper,
+            map: data.data.map || 1,
+            time: data.data.time || "normal",
+          };
+
+          console.log("[LobbyPage] pendingSettings updated:", this.pendingSettings);
+        }
+      } catch (err) {
+        console.error("[LobbyPage] Failed to fetch lobby settings:", err);
       }
     },
 
     async fetchLobbyData() {
+      if (!this.lobbyId) return;
+
       try {
+        console.log("[LobbyPage] fetchLobbyData - fetching status");
         // Статус лобби
-        const statusResponse = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
+        const statusRes = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
           method: "GET",
           credentials: "include",
         });
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-          if (statusData.success && statusData.data) {
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          console.log("[LobbyPage] Lobby status data:", statusData);
+          if (statusData.success) {
             this.lobbyStatus = statusData.data.status;
-            this.checkLobbyStatus();
-          }
-        }
-
-        // Настройки
-        const settingsResponse = await fetch(`/api/lobby/lobbies/${this.lobbyId}/settings`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json();
-          if (settingsData.success && settingsData.data) {
-            this.lobbyOwnerId = settingsData.data.ownerId;
-            this.isHost = settingsData.data.ownerId === this.userId;
-            this.pendingTrapperId = settingsData.data.trapper;
-
-            if (!this.showSettings) {
-              // Безопасно назначаем мафию
-              const mafiaPlayer =
-                this.players.find(p => p.id === settingsData.data.trapper) ||
-                this.players[0] ||
-                null;
-
-              this.currentSettings = {
-                map: settingsData.data.map || 1,
-                mafia: mafiaPlayer,
-                time: settingsData.data.time || "normal",
-              };
+            if (this.lobbyStatus === "in-progress") {
+              await this.redirectToGamePage();
             }
           }
         }
 
+        console.log("[LobbyPage] fetchLobbyData - fetching players");
         // Список игроков
-        const playersResponse = await fetch(`/api/lobby/lobbies/${this.lobbyId}/users`, {
+        const playersRes = await fetch(`/api/lobby/lobbies/${this.lobbyId}/users`, {
           method: "GET",
           credentials: "include",
         });
-
-        if (playersResponse.ok) {
-          const playersData = await playersResponse.json();
-
-          const currentPlayersStr = JSON.stringify(
-            this.players.map(p => ({ id: p.id, name: p.name }))
-          );
-          const newPlayersStr = JSON.stringify(
-            playersData.players.map(p => ({ id: p.id, name: p.name }))
-          );
-
-          if (currentPlayersStr !== newPlayersStr) {
-            this.updatePlayersList(playersData.players);
-          }
+        if (playersRes.ok) {
+          const playersData = await playersRes.json();
+          console.log("[LobbyPage] Players data:", playersData);
+          this.updatePlayers(playersData.players || []);
         }
-      } catch (error) {
-        console.error("❌ Error fetching lobby data:", error);
+
+        console.log("[LobbyPage] fetchLobbyData - re-fetch settings for sync");
+        await this.fetchLobbySettings();
+
+      } catch (err) {
+        console.error("[LobbyPage] Failed to fetch lobby data:", err);
       }
     },
 
-    async checkLobbyStatus() {
-      if (this.lobbyStatus === "in-progress") {
-        await this.redirectToGamePage();
-      }
-    },
-
-    updatePlayersList(players) {
-      const updatedPlayers = players.map((player, index) => ({
-        ...player,
-        color: this.getPlayerColor(index),
-        isHost: player.id === this.lobbyOwnerId,
+    updatePlayers(players) {
+      console.log("[LobbyPage] updatePlayers - updating players list");
+      this.players = players.map((p, i) => ({
+        ...p,
+        color: this.getPlayerColor(i),
+        isHost: p.id === this.lobbyOwnerId,
       }));
 
-      this.players = updatedPlayers;
+      console.log("[LobbyPage] updatePlayers - players after update:", this.players);
 
-      // Если мафия ещё не назначена, ставим первого игрока
-      if (!this.currentSettings.mafia || !this.currentSettings.mafia.id) {
-        this.currentSettings.mafia = this.players[0] || null;
+      // Обновляем текущую мафию для модалки только если она закрыта
+      if (!this.showSettings) {
+        const mafia = this.players.find(p => p.id === this.pendingSettings.mafiaId) || this.players[0] || null;
+        this.currentSettings = { ...this.pendingSettings, mafia };
+        console.log("[LobbyPage] updatePlayers - currentSettings updated:", this.currentSettings);
       }
-
-      console.log("👥 Updated players list:", this.players);
     },
 
     getPlayerColor(index) {
@@ -264,135 +226,133 @@ export default {
       return colors[index % colors.length];
     },
 
+    openSettings() {
+      console.log("[LobbyPage] openSettings called");
+      const mafia = this.players.find(p => p.id === this.pendingSettings.mafiaId) || this.players[0] || null;
+      this.currentSettings = { ...this.pendingSettings, mafia };
+      console.log("[LobbyPage] openSettings - currentSettings:", this.currentSettings);
+      this.showSettings = true;
+    },
+
     async handleSettingsApply(settings) {
+      console.log("[LobbyPage] handleSettingsApply called with settings:", settings);
       if (!this.isHost) {
-        Modal.error({ title: "Error", content: "Only the host can change settings.", okText: "OK" });
-        return;
+        return Modal.error({ title: "Error", content: "Only the host can change settings." });
       }
 
       const apiSettings = {
-        ownerId: this.userStore.userId,
+        ownerId: this.userId,
         map: Number(settings.map) || 1,
         time: settings.time || "normal",
         trapper: settings.mafia.id,
       };
 
       try {
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/settings`, {
+        const res = await fetch(`/api/lobby/lobbies/${this.lobbyId}/settings`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(apiSettings),
           credentials: "include",
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (response.ok) {
-          this.currentSettings = {
-            map: Number(settings.map) || 1,
-            mafia: settings.mafia,
-            time: settings.time || "normal",
-          };
-          Modal.success({ title: "Success", content: "Settings updated", okText: "OK" });
-        } else throw new Error(`HTTP ${response.status}`);
-      } catch (error) {
-        Modal.error({ title: "Error", content: "Failed to update settings", okText: "OK" });
+        console.log("[LobbyPage] handleSettingsApply - settings saved on server");
+
+        this.pendingSettings = { mafiaId: settings.mafia.id, map: Number(settings.map), time: settings.time };
+        this.currentSettings = { ...this.pendingSettings, mafia: settings.mafia };
+
+        console.log("[LobbyPage] handleSettingsApply - pendingSettings:", this.pendingSettings);
+        console.log("[LobbyPage] handleSettingsApply - currentSettings:", this.currentSettings);
+
+        // Обновляем store
+        this.userStore.setLobbySettings({ ...this.pendingSettings });
+
+        Modal.success({ title: "Success", content: "Settings updated" });
+
+      } catch (err) {
+        console.error("[LobbyPage] Failed to apply settings:", err);
+        Modal.error({ title: "Error", content: "Failed to update settings" });
       }
     },
 
     showExitConfirm() {
       Modal.confirm({
         title: "Exit Lobby",
-        content: this.isHost
-          ? "Are you sure you want to exit and delete the lobby?"
-          : "Are you sure you want to leave the lobby?",
-        okText: "Yes, Exit",
+        content: this.isHost ? "Exit and delete the lobby?" : "Leave the lobby?",
+        okText: "Yes",
         cancelText: "Cancel",
         okType: "danger",
         centered: true,
-        onOk: () => this.exitLobby(),
+        onOk: this.exitLobby,
       });
     },
 
     async exitLobby() {
       try {
-        const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/leave`, {
+        const res = await fetch(`/api/lobby/lobbies/${this.lobbyId}/leave`, {
           method: "POST",
           credentials: "include",
         });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         this.stopPolling();
         this.$router.push("/createLobby");
-      } catch (error) {
-        Modal.error({
-          title: "Error",
-          content: this.isHost
-            ? `Failed to delete lobby: ${error.message}`
-            : `Failed to leave lobby: ${error.message}`,
-          okText: "OK",
-        });
+      } catch (err) {
+        console.error("[LobbyPage] Failed to exit lobby:", err);
+        Modal.error({ title: "Error", content: `Failed to leave lobby: ${err.message}` });
       }
     },
 
     async handleStart() {
       if (this.players.length < 2) {
-        Modal.warning({ title: "Not enough players", content: "Need at least 2 players to start the game", okText: "OK" });
-        return;
+        return Modal.warning({ title: "Not enough players", content: "Need at least 2 players to start the game" });
       }
       if (this.isHost) {
         await this.createGameSocketConnection();
-        await this.updateLobbyStatusToInProgress();
+        await this.updateLobbyStatus("in-progress");
       }
       await this.redirectToGamePage();
     },
 
+    async updateLobbyStatus(status) {
+      await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newStatus: status }),
+        credentials: "include",
+      });
+    },
+
     async redirectToGamePage() {
+      console.log("[LobbyPage] redirectToGamePage called");
       this.stopPolling();
       if (!this.isHost) await this.createGameSocketConnection();
       this.$router.push({ path: `/game/${this.lobbyId}`, query: { lobbyId: this.lobbyId, isHost: this.isHost } });
     },
 
-    async updateLobbyStatusToInProgress() {
-      const response = await fetch(`/api/lobby/lobbies/${this.lobbyId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newStatus: "in-progress" }),
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update lobby status");
-      }
-      await response.json();
-    },
-
     async createGameSocketConnection() {
       return new Promise((resolve, reject) => {
         try {
+          console.log("[LobbyPage] createGameSocketConnection called");
           const gameSocket = createGameSocket(this.lobbyId);
           this.userStore.setGameSocket(gameSocket, this.lobbyId, this.lobbyId);
-
           gameSocket.onopen = () => {
-            gameSocket.send(JSON.stringify({
-              type: "init",
-              playerId: this.userId,
-              gameId: this.lobbyId,
-              action: "player_ready",
-              isHost: this.isHost,
-            }));
+            console.log("[LobbyPage] WebSocket opened");
+            gameSocket.send(JSON.stringify({ type: "init", playerId: this.userId, gameId: this.lobbyId, action: "player_ready", isHost: this.isHost }));
             resolve(gameSocket);
           };
-          gameSocket.onerror = (error) => reject(new Error("Failed to connect to game server"));
+          gameSocket.onerror = () => reject(new Error("Failed WebSocket"));
           setTimeout(() => {
-            if (gameSocket.readyState !== WebSocket.OPEN) reject(new Error("WebSocket connection timeout"));
+            if (gameSocket.readyState !== WebSocket.OPEN) reject(new Error("WebSocket timeout"));
           }, 5000);
-        } catch (error) {
-          reject(error);
+        } catch (err) {
+          reject(err);
         }
       });
     },
   },
 };
 </script>
+
 
 <style scoped>
 /* ===========================
