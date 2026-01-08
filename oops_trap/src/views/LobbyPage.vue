@@ -395,6 +395,9 @@ export default {
 </script>
 
 <style scoped>
+/* ===========================
+   Игроки и бейджи
+=========================== */
 .player-host {
   font-weight: bold;
 }
@@ -406,10 +409,34 @@ export default {
 
 .nickname {
   font-weight: bold;
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  font-size: 28px;
+  color: #ffcc00;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.15);
+  padding: 10px 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-you {
+  font-size: 12px;
+  color: #888;
+  margin-left: 8px;
+  font-style: italic;
 }
 </style>
 
 <style scoped>
+/* ===========================
+   Статусы лобби
+=========================== */
 .lobby-status {
   font-weight: bold;
   margin: 10px 0;
@@ -438,13 +465,9 @@ export default {
 </style>
 
 <style scoped>
-.player-you {
-  font-size: 12px;
-  color: #888;
-  margin-left: 8px;
-  font-style: italic;
-}
-
+/* ===========================
+   Контейнер лобби
+=========================== */
 .lobby-container {
   height: 100vh;
   width: 100vw;
@@ -460,23 +483,6 @@ export default {
   box-sizing: border-box;
   font-family: "Irish Grover", system-ui;
   color: #e5e5e5;
-}
-
-.nickname {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  font-size: 28px;
-  color: #ffcc00;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  background: rgb(0, 0, 0, 0.15);
-  padding: 10px 15px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .content {
@@ -503,11 +509,14 @@ export default {
   border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
+/* ===========================
+   Список игроков
+=========================== */
 .players-scrollable-layer {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-top: 0px;
+  margin-top: 0;
   overflow: hidden;
 }
 
@@ -555,6 +564,9 @@ export default {
   align-items: center;
 }
 
+/* ===========================
+   Скроллбар
+=========================== */
 .players-list::-webkit-scrollbar {
   width: 8px;
 }
@@ -573,6 +585,9 @@ export default {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* ===========================
+   Адаптив
+=========================== */
 @media (max-width: 480px) {
   .content {
     width: 90vw;
