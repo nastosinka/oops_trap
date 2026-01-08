@@ -2,7 +2,8 @@
   <div ref="screenRef" class="game-screen">
     <div ref="gameContentRef" class="game-content">
       <!-- Фон -->
-      <GameMap2 />
+      <!-- <GameMap2 /> -->
+      <component :is="CurrentMap" />
       <!-- Контроллер -->
       <div class="trap-controller-wrapper">
         <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
@@ -32,22 +33,29 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from "vue";
-import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
 import { computed } from "vue";
 import { useUserStore } from "@/stores/user";
 import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
 import TrapController from "@/components/game/traps/TrapController.vue";
-
-const traps = computed(() => TRAPS_BY_MAP[currentMap] || []);
+import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
+import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 
 const userStore = useUserStore();
 
+const currentMap = computed(() =>
+  userStore.gameMap === 2 ? "map2" : "map1"
+);
+
+const CurrentMap = computed(() =>
+  userStore.gameMap === 2 ? GameMap2 : GameMap1
+);
+
+const traps = computed(() => TRAPS_BY_MAP[currentMap.value] || []);
+
+
 const isMafia = computed(() => userStore.myRole === "mafia");
-
-const currentMap = "map2"; // позже можно брать из game / route
-
 /* ----------------------------------
    Props
 ---------------------------------- */
@@ -98,15 +106,27 @@ function handlePlayerMove(coords) {
 
 const polygons = ref([]);
 
+// async function fetchPolygons() {
+//   try {
+//     const res = await fetch("/api/polygons/map2");
+//     const data = await res.json();
+//     polygons.value = data.polygons || [];
+//   } catch (e) {
+//     console.error("Polygon load error", e);
+//   }
+// }
+
 async function fetchPolygons() {
   try {
-    const res = await fetch("/api/polygons/map2");
+    const map = userStore.gameMap === 2 ? "map2" : "map1";
+    const res = await fetch(`/api/polygons/${map}`);
     const data = await res.json();
     polygons.value = data.polygons || [];
   } catch (e) {
     console.error("Polygon load error", e);
   }
 }
+
 
 /* ----------------------------------
    Resize / Scale

@@ -246,6 +246,7 @@ export default {
               mafia: null || this.players[0], // позже подставим объект
               time: settingsData.data.time || "normal",
             };
+            this.userStore.gameMap = Number(this.currentSettings.map);
           }
         }
 
