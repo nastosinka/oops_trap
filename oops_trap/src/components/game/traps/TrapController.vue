@@ -33,7 +33,7 @@ function activateTrap(trap) {
   cooldowns[trap.id] = true;
   setTimeout(() => {
     cooldowns[trap.id] = false;
-  }, trap.cooldown || 3000);
+  }, 10000);
 }
 </script>
 
@@ -43,7 +43,9 @@ function activateTrap(trap) {
   bottom: 20px;
   right: 20px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   z-index: 300;
+  max-width: 300px;
 }
 </style>

@@ -8,103 +8,6 @@ let nextLobbyId = 1;
 
 const games = new Map();
 
-async function saveStatistic(data) {
-  const { id_user, id_map, time, role } = data;
-
-  // Валидация входных данных
-  if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
-    throw {
-      error: 'Обязательные поля: id_user, id_map, time, role',
-    };
-  }
-
-  const userId = parseInt(id_user);
-  const mapId = parseInt(id_map);
-  const timeValue = parseInt(time);
-
-  if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
-    throw {
-      error: 'Поля id_user, id_map и time должны быть числами',
-    };
-  }
-
-  if (typeof role !== 'boolean') {
-    throw {
-      error: 'Поле role должно быть булевым значением',
-    };
-  }
-
-  try {
-    // Проверка существующей статистики
-    const existingStat = await prisma.stats.findFirst({
-      where: {
-        id_user: userId,
-        id_map: mapId,
-        role: role,
-      },
-    });
-
-    let result;
-    let action;
-
-    if (existingStat) {
-      if (existingStat.time > timeValue) {
-        result = await prisma.stats.update({
-          where: { id: existingStat.id },
-          data: { time: timeValue },
-        });
-        action = 'updated';
-        console.log('Статистика обновлена:', result);
-      } else {
-        console.log('Статистика не требует обновлений');
-        result = existingStat;
-        action = 'unchanged';
-      }
-    } else {
-      result = await prisma.stats.create({
-        data: {
-          id_user: userId,
-          id_map: mapId,
-          time: timeValue,
-          role: role,
-        },
-      });
-      action = 'created';
-      console.log('Новая статистика создана:', result);
-    }
-
-    // Форматирование результата
-    const formattedResult = {
-      id: result.id,
-      id_user: result.id_user,
-      id_map: result.id_map,
-      time: result.time,
-      role: result.role,
-    };
-
-    return {
-      success: true,
-      action: action,
-      data: formattedResult,
-    };
-
-  } catch (error) {
-    console.error('Ошибка при сохранении статистики:', error);
-
-    if (error.code === 'P2003') {
-      throw {
-        error: 'Неверный id_user или id_map',
-        details: 'Указанный пользователь или карта не существует'
-      };
-    }
-
-    throw {
-      error: 'Ошибка сервера при сохранении статистики',
-      details: error.message
-    };
-  }
-}
-
 
 // ========================================
 // POST /api/lobby/newlobby
@@ -426,7 +329,7 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
         time: lobby.time,
         players: lobby.players,
         status: 'in-progress',
-        stats: []
+        stats: new Map(),
       };
 
       games.set(game.id, game);
