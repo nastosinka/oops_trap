@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton v-if="isHost" label="Settings" size="large" @click="openSettings" />
+        <BaseButton v-if="isHost" label="Settings" size="large" :disabled="players.length === 0" @click="openSettings" />
         <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
           @click="handleStart" />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
@@ -155,24 +155,10 @@ export default {
     },
 
     openSettings() {
-      if (this.players.length === 0) {
-        Modal.warning({
-          title: "Wait",
-          content: "Players list not loaded yet. Please wait a moment.",
-          okText: "OK",
-        });
-        return;
-      }
+      if (this.players.length === 0) return;
 
-      // безопасно выбираем мафию: если нет, ставим первого игрока
-      const mafiaPlayer =
-        this.currentSettings.mafia || this.players[0] || null;
-
-      this.currentSettings = {
-        ...this.currentSettings,
-        mafia: mafiaPlayer,
-      };
-
+      // Безопасная установка мафии
+      this.currentSettings.mafia = this.currentSettings.mafia || this.players[0];
       this.showSettings = true;
     },
 
@@ -292,22 +278,12 @@ export default {
       const updatedPlayers = players.map((player, index) => ({
         ...player,
         color: this.getPlayerColor(index),
-        isHost: player.id === this.lobbyOwnerId, // Помечаем хоста
+        isHost: player.id === this.lobbyOwnerId,
       }));
-
-      if (this.pendingTrapperId) {
-        const mafiaPlayer = updatedPlayers.find(
-          (p) => p.id === this.pendingTrapperId
-        );
-
-        if (mafiaPlayer) {
-          this.currentSettings.mafia = mafiaPlayer;
-          this.pendingTrapperId = null;
-        }
-      }
 
       this.players = updatedPlayers;
 
+      // Если мафия ещё не назначена, ставим первого игрока
       if (!this.currentSettings.mafia && this.players.length > 0) {
         this.currentSettings.mafia = this.players[0];
       }
