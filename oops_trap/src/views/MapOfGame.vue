@@ -5,21 +5,35 @@
       <component :is="CurrentMap" />
       <!-- Контроллер -->
       <div class="trap-controller-wrapper">
-        <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
+        <TrapController
+          v-if="isMafia"
+          :traps="traps"
+          @activate="onTrapActivate"
+        />
       </div>
       <div>
-        Role: {{ userStore.gameMap }} <br>
+        Role: {{ userStore.gameMap }} <br />
         isMafia: {{ isMafia }}
       </div>
       <!-- Ловушки -->
-      <component :is="trap.component" v-for="trap in traps" :key="trap.id" :active="activeTrapId === trap.id" />
+      <component
+        :is="trap.component"
+        v-for="trap in traps"
+        :key="trap.id"
+        :active="activeTrapId === trap.id"
+      />
 
       <!-- Другие игроки -->
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
-        @player-move="handlePlayerMove" />
+      <RunnerPhysics
+        v-if="!isMafia"
+        ref="physicsPlayerRef"
+        :game-area="gameArea"
+        :polygons="polygons"
+        @player-move="handlePlayerMove"
+      />
     </div>
   </div>
 </template>
@@ -37,16 +51,13 @@ import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue"
 
 const userStore = useUserStore();
 
-const currentMap = computed(() =>
-  userStore.gameMap === 2 ? "map2" : "map1"
-);
+const currentMap = computed(() => (userStore.gameMap === 2 ? "map2" : "map1"));
 
 const CurrentMap = computed(() =>
   userStore.gameMap === 2 ? GameMap2 : GameMap1
 );
 
 const traps = computed(() => TRAPS_BY_MAP[currentMap.value] || []);
-
 
 const isMafia = computed(() => userStore.myRole === "mafia");
 /* ----------------------------------
@@ -119,7 +130,6 @@ async function fetchPolygons() {
     console.error("Polygon load error", e);
   }
 }
-
 
 /* ----------------------------------
    Resize / Scale

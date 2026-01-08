@@ -23,10 +23,17 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
-            ? 'Cannot return to lobby during active game'
-            : 'Return to lobby'
-            " @click="returnToLobby">
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
