@@ -8,6 +8,7 @@ export const useUserStore = defineStore("user", () => {
   const currentGameId = ref(null); // Текущая игра
   const currentLobbyId = ref(null); // Текущее лобби
   const myRole = ref("runner");
+  const gameMap = ref(1);
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");
@@ -76,6 +77,7 @@ export const useUserStore = defineStore("user", () => {
     currentGameId,
     currentLobbyId,
     myRole,
+    gameMap,
 
     // Computed свойства
     userId,

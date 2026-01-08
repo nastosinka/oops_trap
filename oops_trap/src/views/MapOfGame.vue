@@ -2,17 +2,25 @@
   <div ref="screenRef" class="game-screen">
     <div ref="gameContentRef" class="game-content">
       <!-- Фон -->
-      <GameMap2 />
+      <component :is="CurrentMap" />
       <!-- Контроллер -->
       <div class="trap-controller-wrapper">
-        <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
+        <TrapController
+          v-if="isMafia"
+          :traps="traps"
+          @activate="onTrapActivate"
+        />
+      </div>
+      <div>
+        Role: {{ userStore.gameMap }} <br />
+        isMafia: {{ isMafia }}
       </div>
       <!-- Ловушки -->
       <component
         :is="trap.component"
         v-for="trap in traps"
         :key="trap.id"
-        :active="trapsState[trap.name]"
+        :active="activeTrapId === trap.id"
       />
 
       <!-- Другие игроки -->
@@ -31,39 +39,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide, reactive, watchEffect } from "vue";
-import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
+import { ref, onMounted, onUnmounted, provide } from "vue";
 import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
 import { computed } from "vue";
 import { useUserStore } from "@/stores/user";
 import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
 import TrapController from "@/components/game/traps/TrapController.vue";
-
-const traps = computed(() => TRAPS_BY_MAP[currentMap] || []);
-const trapsState = reactive({});
-
-watchEffect(() => {
-  traps.value.forEach(trap => {
-    if (!(trap.name in trapsState)) {
-      trapsState[trap.name] = false;
-    }
-  });
-});
-function onTrapActivate(trap) {
-  trapsState[trap.name] = true;
-
-  setTimeout(() => {
-    trapsState[trap.name] = false;
-  }, trap.cooldown);
-}
+import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
+import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 
 const userStore = useUserStore();
 
+const currentMap = computed(() => (userStore.gameMap === 2 ? "map2" : "map1"));
+
+const CurrentMap = computed(() =>
+  userStore.gameMap === 2 ? GameMap2 : GameMap1
+);
+
+const traps = computed(() => TRAPS_BY_MAP[currentMap.value] || []);
+
 const isMafia = computed(() => userStore.myRole === "mafia");
-
-const currentMap = "map2"; // позже можно брать из game / route
-
 /* ----------------------------------
    Props
 ---------------------------------- */
@@ -120,9 +116,20 @@ function preloadImages(urls) {
 
 const polygons = ref([]);
 
+// async function fetchPolygons() {
+//   try {
+//     const res = await fetch("/api/polygons/map2");
+//     const data = await res.json();
+//     polygons.value = data.polygons || [];
+//   } catch (e) {
+//     console.error("Polygon load error", e);
+//   }
+// }
+
 async function fetchPolygons() {
   try {
-    const res = await fetch("/api/polygons/map2");
+    const map = userStore.gameMap === 2 ? "map2" : "map1";
+    const res = await fetch(`/api/polygons/${map}`);
     const data = await res.json();
     polygons.value = data.polygons || [];
   } catch (e) {

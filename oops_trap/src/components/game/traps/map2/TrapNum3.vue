@@ -1,11 +1,10 @@
 <template>
-  <div
-    class="trap-image"
-    :class="{ active }"
-  />
+  <img :src="currentImage" class="trap-image" />
 </template>
 
 <script setup>
+import { ref, computed } from "vue";
+
 const props = defineProps({
   type: String,
   active: Boolean,
