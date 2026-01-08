@@ -2,31 +2,24 @@
   <div ref="screenRef" class="game-screen">
     <div ref="gameContentRef" class="game-content">
       <!-- Фон -->
-      <!-- <GameMap2 /> -->
       <component :is="CurrentMap" />
       <!-- Контроллер -->
       <div class="trap-controller-wrapper">
         <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
       </div>
+      <div>
+        Role: {{ userStore.gameMap }} <br>
+        isMafia: {{ isMafia }}
+      </div>
       <!-- Ловушки -->
-      <component
-        :is="trap.component"
-        v-for="trap in traps"
-        :key="trap.id"
-        :active="activeTrapId === trap.id"
-      />
+      <component :is="trap.component" v-for="trap in traps" :key="trap.id" :active="activeTrapId === trap.id" />
 
       <!-- Другие игроки -->
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics
-        v-if="!isMafia"
-        ref="physicsPlayerRef"
-        :game-area="gameArea"
-        :polygons="polygons"
-        @player-move="handlePlayerMove"
-      />
+      <RunnerPhysics v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
+        @player-move="handlePlayerMove" />
     </div>
   </div>
 </template>
