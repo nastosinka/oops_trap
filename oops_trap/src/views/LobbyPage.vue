@@ -20,13 +20,7 @@
         </div>
       </div>
       <div class="actions">
-        <BaseButton
-  v-if="isHost"
-  label="Settings"
-  size="large"
-  :disabled="!hasPlayers"
-  @click="openSettings"
-/>
+        <BaseButton v-if="isHost" label="Settings" size="large" :disabled="!hasPlayers" @click="openSettings" />
         <BaseButton v-if="isHost && lobbyStatus === 'waiting'" label="Start" size="large" :disabled="players.length < 2"
           @click="handleStart" />
         <BaseButton label="Exit" size="large" @click="showExitConfirm" />
@@ -94,8 +88,8 @@ export default {
       };
     },
     hasPlayers() {
-    return this.players && this.players.length > 0;
-  },
+      return this.players && this.players.length > 0;
+    },
   },
 
   async created() {
@@ -266,7 +260,7 @@ export default {
     },
 
     getPlayerColor(index) {
-      const colors = ["#FF6B6B","#4ECDC4","#FFD166","#6A0572","#118AB2","#06D6A0","#EF476F","#FFD166","#118AB2","#06D6A0"];
+      const colors = ["#FF6B6B", "#4ECDC4", "#FFD166", "#6A0572", "#118AB2", "#06D6A0", "#EF476F", "#FFD166", "#118AB2", "#06D6A0"];
       return colors[index % colors.length];
     },
 
