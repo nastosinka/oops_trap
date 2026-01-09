@@ -40,13 +40,13 @@ router.post('/newlobby', requireAuth, async (req, res) => {
       id: nextLobbyId++,
       ownerId: ownerId,
       status: 'waiting', // waiting, in-progress, finished
-      map: null,
+      map: 1,
       players: [{
       ...user,
       lastPing: Date.now()
       }],
       createdAt: new Date(),
-      trapper: null,
+      trapper: ownerId,
       time: 'normal' // easy, normal, hard
     };
 
@@ -651,13 +651,15 @@ router.post('/lobbies/:id/ping', requireAuth, (req, res) => {
 
 setInterval(() => {
   const now = Date.now();
-  const TIMEOUT = 10_000; // 10 секунд без ping = выход
+  const TIMEOUT = 10000; // 10 секунд без ping = выход
   
   for (const [lobbyId, lobby] of lobbies.entries()) {
-      // НЕ чистим лобби, если игра уже началась
-    // if (lobby.status === ('in-progress'||'finished')) {
-    //   continue;
-    // }
+    if (lobby.status === ('in-progress'||'finished')) {
+        for (const [playerId, player] of lobby.players.entries()){
+          player.lastPing = now;
+        }
+         continue;
+    }
     const before = lobby.players.length;
 
     lobby.players = lobby.players.filter(player => {
