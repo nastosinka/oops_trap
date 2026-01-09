@@ -41,7 +41,10 @@ router.post('/newlobby', requireAuth, async (req, res) => {
       ownerId: ownerId,
       status: 'waiting', // waiting, in-progress, finished
       map: null,
-      players: [user],
+      players: [{
+      ...user,
+      lastPing: Date.now()
+      }],
       createdAt: new Date(),
       trapper: null,
       time: 'normal' // easy, normal, hard
@@ -438,7 +441,7 @@ router.post('/lobbies/:id/join', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    lobby.players.push(user);
+    lobby.players.push({...user, lastPing: Date.now()});
 
     console.log(`Пользователь ${user.name} (ID: ${userId}) присоединился к лобби ${lobbyId}`);
     console.log(`Теперь в лобби ${lobby.players.length} игроков`);
@@ -626,6 +629,71 @@ router.get('/lobbies/:id/status', requireAuth, async (req, res) => {
     });
   }
 });
+
+// ========================================
+// POST /api/lobby/lobbies/:id/ping
+// ========================================
+router.post('/lobbies/:id/ping', requireAuth, (req, res) => {
+  const lobbyId = parseInt(req.params.id);
+  const userId = req.user.id;
+
+  const lobby = lobbies.get(lobbyId);
+  if (!lobby) return res.status(404).end();
+
+  const player = lobby.players.find(p => p.id === userId);
+  if (!player) return res.status(404).end();
+
+  player.lastPing = Date.now();
+
+  res.status(200).json({ ok: true });
+});
+
+
+setInterval(() => {
+  const now = Date.now();
+  const TIMEOUT = 10_000; // 10 секунд без ping = выход
+  
+  for (const [lobbyId, lobby] of lobbies.entries()) {
+      // НЕ чистим лобби, если игра уже началась
+    // if (lobby.status === ('in-progress'||'finished')) {
+    //   continue;
+    // }
+    const before = lobby.players.length;
+
+    lobby.players = lobby.players.filter(player => {
+      const alive = now - player.lastPing < TIMEOUT;
+
+      if (!alive) {
+        console.log(
+          `🚪 Игрок ${player.name} (ID:${player.id}) ливнул из лобби ${lobbyId} (ping timeout)`
+        );
+      }
+
+      return alive;
+    });
+
+    // если лобби опустело — удаляем
+    if (lobby.players.length === 0) {
+      lobbies.delete(lobbyId);
+      console.log(`🧹 Лобби ${lobbyId} удалено (все игроки вышли)`);
+      continue;
+    }
+
+    // если хост ушёл — назначаем нового
+    if (!lobby.players.some(p => p.id === lobby.ownerId)) {
+      lobby.ownerId = lobby.players[0].id;
+      console.log(
+        `👑 Новый владелец лобби ${lobbyId}: ${lobby.players[0].name} (ID:${lobby.ownerId})`
+      );
+    }
+
+    if (before !== lobby.players.length) {
+      console.log(
+        `👥 Лобби ${lobbyId}: игроков ${before} → ${lobby.players.length}`
+      );
+    }
+  }
+}, 5000);
 
 module.exports = router;
 module.exports.lobbies = lobbies;
