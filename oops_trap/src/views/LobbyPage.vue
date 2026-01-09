@@ -99,6 +99,7 @@ export default {
       pollInterval: null,
       currentGameId: null,
       lobbyOwnerId: null, // ID владельца лобби
+      heartbeatInterval: null,
     };
   },
 
@@ -130,11 +131,13 @@ export default {
     await this.checkIfUserIsHost();
 
     this.startPolling();
+    this.startHeartbeat();
     this.fetchLobbyData();
   },
 
   beforeUnmount() {
     this.stopPolling();
+    this.stopHeartbeat();
   },
 
   methods: {
@@ -190,6 +193,23 @@ export default {
       if (this.pollInterval) {
         clearInterval(this.pollInterval);
         this.pollInterval = null;
+      }
+    },
+    startHeartbeat() {
+      this.heartbeatInterval = setInterval(() => {
+        fetch(`/api/lobby/lobbies/${this.lobbyId}/ping`, {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => {
+          // намеренно ничего не делаем
+        });
+      }, 3000);
+    },
+
+    stopHeartbeat() {
+      if (this.heartbeatInterval) {
+        clearInterval(this.heartbeatInterval);
+        this.heartbeatInterval = null;
       }
     },
 
