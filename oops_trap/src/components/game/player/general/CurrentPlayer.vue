@@ -1,10 +1,5 @@
 <template>
-  <div
-    v-if="gameArea"
-    class="player"
-    :class="playerClasses"
-    :style="playerStyle"
-  ></div>
+  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
 </template>
 
 <script>
@@ -45,7 +40,7 @@ export default {
       respawnTimeout: null,
       currentFrame: 0,
 
-      lastSentPos: { x: 1850, y: 910 },
+      lastSentPos: { x: 0, y: 0 },
       lastSendTime: 0,
       sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
 
@@ -86,7 +81,7 @@ export default {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
-
+    this.setSpawnFromPolygon();
     // Отправляем начальные координаты
     this.sendCoords();
   },
@@ -96,6 +91,19 @@ export default {
     cancelAnimationFrame(this.animationFrame);
   },
   methods: {
+    setSpawnFromPolygon() {
+      const spawnPoly = this.polygons.find(p => p.type === "spawn");
+      if (!spawnPoly || !spawnPoly.points.length) return;
+
+      const center = this.getPolygonCenter(spawnPoly.points);
+      const pos = this.spawnToPos(center);
+
+      this.pos.x = Math.round(pos.x);
+      this.pos.y = Math.round(pos.y);
+      this.velocity.y = 0;
+
+      this.sendCoords(true);
+    },
     handleKeyDown(e) {
       const key = e.key.toLowerCase();
 

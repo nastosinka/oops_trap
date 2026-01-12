@@ -8,7 +8,7 @@ export const useUserStore = defineStore("user", () => {
   const currentGameId = ref(null); // Текущая игра
   const currentLobbyId = ref(null); // Текущее лобби
   const myRole = ref("runner");
-  const gameMap = ref(1);
+  const gameMap = ref(2);
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");

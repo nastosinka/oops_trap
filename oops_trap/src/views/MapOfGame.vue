@@ -25,7 +25,7 @@
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <RunnerPhysics
+      <CurrentPlayer
         v-if="!isMafia"
         ref="physicsPlayerRef"
         :game-area="gameArea"
@@ -51,7 +51,7 @@ import { useUserStore } from "@/stores/user";
 import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
 
 import TrapController from "@/components/game/traps/TrapController.vue";
-import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
+import CurrentPlayer from "@/components/game/player/general/CurrentPlayer.vue";
 import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
 
 import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
