@@ -3,7 +3,8 @@
     <div ref="gameContentRef" class="game-content">
       <!-- Фон -->
       <component :is="CurrentMap" />
-      <!-- Контроллер -->
+
+      <!-- Контроллер ловушек -->
       <div class="trap-controller-wrapper">
         <TrapController
           v-if="isMafia"
@@ -11,16 +12,13 @@
           @activate="onTrapActivate"
         />
       </div>
-      <div>
-        Role: {{ userStore.gameMap }} <br />
-        isMafia: {{ isMafia }}
-      </div>
+
       <!-- Ловушки -->
       <component
-        :is="trap.component"
         v-for="trap in traps"
         :key="trap.id"
-        :active="activeTrapId === trap.id"
+        :is="trap.component"
+        :active="trapsState[trap.name]"
       />
 
       <!-- Другие игроки -->
@@ -39,32 +37,71 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, provide } from "vue";
-import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
-import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
-import { computed } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  watchEffect,
+  onMounted,
+  onUnmounted,
+  provide,
+} from "vue";
+
 import { useUserStore } from "@/stores/user";
 import { TRAPS_BY_MAP } from "@/components/game/traps/registry";
+
 import TrapController from "@/components/game/traps/TrapController.vue";
+import RunnerPhysics from "@/components/game/player/general/CurrentPlayer.vue";
+import OtherPlayers from "@/components/game/player/general/OtherPlayer.vue";
+
 import GameMap1 from "@/components/game/maps/background/FirstMapBackground.vue";
 import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue";
 
+/* ----------------------------------
+   Store / Role / Map
+---------------------------------- */
+
 const userStore = useUserStore();
 
-const currentMap = computed(() => (userStore.gameMap === 2 ? "map2" : "map1"));
+const isMafia = computed(() => userStore.myRole === "mafia");
+
+const currentMap = computed(() =>
+  userStore.gameMap === 2 ? "map2" : "map1"
+);
 
 const CurrentMap = computed(() =>
   userStore.gameMap === 2 ? GameMap2 : GameMap1
 );
 
+/* ----------------------------------
+   Traps
+---------------------------------- */
+
 const traps = computed(() => TRAPS_BY_MAP[currentMap.value] || []);
 
-const isMafia = computed(() => userStore.myRole === "mafia");
+const trapsState = reactive({});
+
+watchEffect(() => {
+  traps.value.forEach((trap) => {
+    if (!(trap.name in trapsState)) {
+      trapsState[trap.name] = false;
+    }
+  });
+});
+
+function onTrapActivate(trap) {
+  trapsState[trap.name] = true;
+
+  setTimeout(() => {
+    trapsState[trap.name] = false;
+  }, trap.cooldown);
+}
+
 /* ----------------------------------
    Props
 ---------------------------------- */
 
-const _props = defineProps({
+defineProps({
   otherPlayers: {
     type: Array,
     default: () => [],
@@ -78,6 +115,10 @@ const _props = defineProps({
 const screenRef = ref(null);
 const gameContentRef = ref(null);
 const physicsPlayerRef = ref(null);
+
+/* ----------------------------------
+   Game area
+---------------------------------- */
 
 const BASE_WIDTH = 1920;
 const BASE_HEIGHT = 1080;
@@ -104,31 +145,15 @@ function handlePlayerMove(coords) {
   );
 }
 
-function preloadImages(urls) {
-  urls.forEach((src) => {
-    const img = new Image();
-    img.src = src;
-  });
-}
 /* ----------------------------------
    Polygons
 ---------------------------------- */
 
 const polygons = ref([]);
 
-// async function fetchPolygons() {
-//   try {
-//     const res = await fetch("/api/polygons/map2");
-//     const data = await res.json();
-//     polygons.value = data.polygons || [];
-//   } catch (e) {
-//     console.error("Polygon load error", e);
-//   }
-// }
-
 async function fetchPolygons() {
   try {
-    const map = userStore.gameMap === 2 ? "map2" : "map1";
+    const map = currentMap.value;
     const res = await fetch(`/api/polygons/${map}`);
     const data = await res.json();
     polygons.value = data.polygons || [];
@@ -191,39 +216,6 @@ onMounted(() => {
   fetchPolygons();
   updateScreenSize();
   window.addEventListener("resize", onResize);
-  preloadImages([
-    new URL("@/assets/images/maps/Map2/tr1/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr2/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr2/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr3/1.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr3/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr3/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr3/4.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr3/5.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr4/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr4/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr4/4.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr5/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr5/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/4.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/5.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/7.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/8.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/9.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr6/10.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr7/1.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr7/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr7/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr7/4.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr8/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr8/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr8/4.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr9/2.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr9/3.png", import.meta.url).href,
-    new URL("@/assets/images/maps/Map2/tr10/1.png", import.meta.url).href,
-  ]);
 });
 
 onUnmounted(() => {
@@ -239,31 +231,16 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  margin: 0;
-  padding: 0;
   background-color: #2c3e50;
   overflow: hidden;
 }
 
 .game-content {
   position: relative;
-  background-color: #2c3e50;
-  transition: all 0.3s ease;
   width: 1920px;
   height: 1080px;
+  background-color: #2c3e50;
   transform-origin: top left;
-}
-
-.debug-info {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 12px;
-  z-index: 1000;
-  max-width: 300px;
+  transition: all 0.3s ease;
 }
 </style>
