@@ -27,7 +27,7 @@ export default {
   emits: ["player-move"],
   data() {
     return {
-      pos: { x: 1850, y: 100 },
+      pos: { x: 1850, y: 950 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -295,26 +295,20 @@ export default {
       const hittingCeiling = this.checkCeiling();
       const hittingGround = this.checkGround();
 
-      // ПРЫЖОК С КАНАТА ПО КНОПКЕ Q - САМОЕ ГЛАВНОЕ!
+      // прыжок с каната по q
       if (this.keys.has("q") && (onVine || onRope)) {
         this.onVine = false;
         this.isOnGround = false;
-
-        // ОГРОМНОЕ перемещение влево (телепортация + прыжок)
-        this.pos.x -= 1; // ← ТЕЛЕПОРТАЦИЯ на 100px влево
-
-        // Плюс обычный прыжок
+        this.pos.x -= 1; // даём шанс набрать импульс
         this.velocity.y = -6.7;
-        this.velocity.x = -9; // Дополнительный импульс влево
-
-        // Выходим из метода loop раньше, чтобы избежать конфликтов
+        this.velocity.x = -9; 
+        this.dir = "left";
         this.sendCoords();
         this.animationFrame = requestAnimationFrame(this.loop);
         return;
       }
 
-      // Обычная физика
-      if (onVine || onRope) {
+      if (onVine || onRope) { 
         this.onVine = true;
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
@@ -324,16 +318,8 @@ export default {
       } else if (inWater && !hittingGround) {
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
-
-        if (this.keys.has(" ") || this.keys.has("Spacebar") || this.keys.has("q")) {
-          this.velocity.y = -6.7;
-          this.velocity.x = 0;
-          this.isOnGround = false;
-        } else {
-          this.velocity.y = 0;
-        }
       } else {
-        if ((this.keys.has("w") || this.keys.has(" ") || this.keys.has("q")) && this.isOnGround) {
+        if ((this.keys.has("w") || this.keys.has("q")) && this.isOnGround) {
           this.velocity.y = -6.7;
           this.isOnGround = false;
         }
