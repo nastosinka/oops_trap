@@ -67,17 +67,20 @@ export default {
       };
     },
     playerStyle() {
-      const x = Math.floor(this.pos.x);
-      const y = Math.floor(this.pos.y);
+      const scale = this.gameArea.scale;
+
+      const screenX = Math.round(this.pos.x * scale) / scale;
+      const screenY = Math.round(this.pos.y * scale) / scale;
 
       const flip = this.dir === "left" ? -1 : 1;
 
       return {
-        transform: `translate(${x}px, ${y}px) scaleX(${flip})`,
+        transform: `translate(${screenX}px, ${screenY}px) scaleX(${flip})`,
         width: "24px",
         height: "48px",
       };
     }
+
 
 
   },
