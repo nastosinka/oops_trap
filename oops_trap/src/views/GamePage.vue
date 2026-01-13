@@ -23,17 +23,10 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
+          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
+            ? 'Cannot return to lobby during active game'
+            : 'Return to lobby'
+            " @click="returnToLobby">
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -72,6 +65,8 @@ const showSplash = ref(true);
    Реактивные данные и computed значения
 -------------------------------------------------------------------*/
 const myRole = computed(() => userStore.myRole);
+
+const isAlive = computed(() => userStore.isAlive);
 
 const playerImage = computed(() =>
   myRole.value === "mafia" ? mafiaImg : runnerImg
@@ -135,6 +130,8 @@ const connectionStatusClass = computed(() => ({
  * @param {number} lastImage - идентификатор последнего спрайта
  */
 const sendPlayerMove = (x, y, lastImage = 1) => {
+  if (!userStore.isAlive) return;
+
   const socket = getGameSocket.value;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
@@ -223,15 +220,7 @@ const checkIfUserIsHost = async () => {
  * Хост дополнительно переводит лобби в состояние ожидания.
  */
 const returnToLobby = async () => {
-  if (isGameActive.value) {
-    Modal.warning({
-      title: "Game in Progress",
-      content:
-        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-      okText: "OK",
-    });
-    return;
-  }
+  isAlive = true;
 
   if (!lobbyId.value) {
     Modal.error({
@@ -369,11 +358,15 @@ const handleGameMessage = (message) => {
             lastImage: Number(player.lastImage) || 1,
             isHost: Boolean(player.isHost),
             trapper: isTrapper,
+            alive: player.alive === true,
           };
         });
 
         otherPlayers.value = normalized.filter(
-          (p) => p.id !== String(userId.value) && p.trapper === false
+          (p) =>
+            p.id !== String(userId.value) &&
+            p.trapper === false &&
+            p.alive === true
         );
 
         const me = normalized.find((p) => p.id === String(userId.value));
@@ -396,6 +389,16 @@ const handleGameMessage = (message) => {
       break;
 
     case "player_disconnected":
+      otherPlayers.value = otherPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
+      break;
+
+    case "died":
+      if (String(message.playerId) === String(userId.value)) {
+        userStore.setAlive(false);
+      }
+
       otherPlayers.value = otherPlayers.value.filter(
         (p) => p.id !== String(message.playerId)
       );

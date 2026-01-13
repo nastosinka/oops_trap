@@ -27,7 +27,7 @@ export default {
   emits: ["player-move"],
   data() {
     return {
-      pos: { x: 850, y: 650 },
+      pos: { x: 1850, y: 950 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,

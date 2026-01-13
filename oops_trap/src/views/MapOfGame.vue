@@ -16,7 +16,7 @@
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <CurrentPlayer v-if="!isMafia" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
+      <CurrentPlayer v-if="!isMafia && isAlive" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
         @player-move="handlePlayerMove" />
     </div>
   </div>
@@ -48,6 +48,8 @@ import GameMap2 from "@/components/game/maps/background/SecondMapBackground.vue"
 ---------------------------------- */
 
 const userStore = useUserStore();
+
+const isAlive = computed(() => userStore.isAlive);
 
 const isMafia = computed(() => userStore.myRole === "mafia");
 
