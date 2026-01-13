@@ -174,16 +174,12 @@ function updateScreenSize() {
   ml = Math.round((ww - width) / 2);
   mt = Math.round((wh - height) / 2);
 
-  // ❗ ВАЖНО: базовые размеры НЕ меняем
   gameContentRef.value.style.width = `${BASE_WIDTH}px`;
   gameContentRef.value.style.height = `${BASE_HEIGHT}px`;
 
-  // ❗ ВЕСЬ SCALE ЗДЕСЬ
-  // gameContentRef.value.style.transform =
-  //   `translate(${ml}px, ${mt}px) scale(${scale})`;
   gameContentRef.value.style.transform = `translate(${ml}px, ${mt}px)`;
   gameContentRef.value.style.zoom = scale;
-  
+
   gameArea.value = {
     ...gameArea.value,
     width: BASE_WIDTH,

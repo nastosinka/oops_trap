@@ -27,7 +27,7 @@ export default {
   emits: ["player-move"],
   data() {
     return {
-      pos: { x: 1850, y: 910 },
+      pos: { x: 1850, y: 100 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -36,7 +36,6 @@ export default {
       dir: "right",
       keys: new Set(),
       animationFrame: null,
-      SPAWN_POINT: { x: 1850, y: 910 },
       respawnTimeout: null,
       currentFrame: 0,
 
@@ -133,6 +132,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
+        q: ["q", "й"]
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -151,6 +151,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
+        q: ["q", "й"]
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -290,19 +291,21 @@ export default {
       const hittingCeiling = this.checkCeiling();
       const hittingGround = this.checkGround();
 
-      if (onVine || onRope) {
+      if (onVine || onRope) { // лиана или канат
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
 
-        if (onRope && (this.keys.has("a") || this.keys.has("d"))) {
-          this.onVine = false;
-          this.velocity.y = 1;
+        if (this.keys.has("q")) {
+          this.onVine = false;          // отпускаем канат
+          this.velocity.y = -6.7;       // вертикальная скорость вверх
+          this.velocity.x = -3.5;       // скорость влево
+          this.isOnGround = false;
         } else {
-          this.velocity.y = 0;
+          this.velocity.y = 0;          // пока не прыгаем, вертикальная скорость = 0
         }
 
         this.isOnGround = false;
-      } else if (inWater && !hittingGround) {
+      } else if (inWater && !hittingGround) { // в воде и не касается земли
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
 
@@ -312,7 +315,7 @@ export default {
         } else {
           this.velocity.y = 0;
         }
-      } else {
+      } else { // ходит
         if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
           this.velocity.y = -6.7;
           this.isOnGround = false;
