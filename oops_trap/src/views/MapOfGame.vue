@@ -172,35 +172,41 @@ function updateScreenSize() {
   const ww = window.innerWidth;
   const wh = window.innerHeight;
 
-  let width,
-    height,
-    mt = 0,
-    ml = 0;
+  let scale, mt = 0, ml = 0;
 
   if (ww / wh < 16 / 9) {
-    width = ww;
-    height = Math.round((ww * 9) / 16);
-    mt = (wh - height) / 2;
+    scale = ww / BASE_WIDTH;
   } else {
-    height = wh;
-    width = Math.round((wh * 16) / 9);
-    ml = (ww - width) / 2;
+    scale = wh / BASE_HEIGHT;
   }
 
-  gameContentRef.value.style.width = `${width}px`;
-  gameContentRef.value.style.height = `${height}px`;
-  gameContentRef.value.style.marginTop = `${mt}px`;
-  gameContentRef.value.style.marginLeft = `${ml}px`;
+  scale = Math.round(scale * 1000) / 1000;
+
+  const width = BASE_WIDTH * scale;
+  const height = BASE_HEIGHT * scale;
+
+  ml = Math.round((ww - width) / 2);
+  mt = Math.round((wh - height) / 2);
+
+  // ❗ ВАЖНО: базовые размеры НЕ меняем
+  gameContentRef.value.style.width = `${BASE_WIDTH}px`;
+  gameContentRef.value.style.height = `${BASE_HEIGHT}px`;
+
+  // ❗ ВЕСЬ SCALE ЗДЕСЬ
+  gameContentRef.value.style.transform =
+    `translate(${ml}px, ${mt}px) scale(${scale})`;
 
   gameArea.value = {
     ...gameArea.value,
-    width,
-    height,
-    scale: width / BASE_WIDTH,
+    width: BASE_WIDTH,
+    height: BASE_HEIGHT,
+    scale,
     marginTop: mt,
     marginLeft: ml,
   };
 }
+
+
 
 let resizeTimer;
 function onResize() {
@@ -241,6 +247,6 @@ onUnmounted(() => {
   height: 1080px;
   background-color: #2c3e50;
   transform-origin: top left;
-  transition: all 0.3s ease;
+  transition: none;
 }
 </style>

@@ -67,14 +67,19 @@ export default {
       };
     },
     playerStyle() {
+      const x = Math.floor(this.pos.x);
+      const y = Math.floor(this.pos.y);
+
+      const flip = this.dir === "left" ? -1 : 1;
+
       return {
-        left: Math.round(this.pos.x * this.gameArea.scale) + "px",
-        top: Math.round(this.pos.y * this.gameArea.scale) + "px",
-        width: Math.round(24 * this.gameArea.scale) + "px",
-        height: Math.round(48 * this.gameArea.scale) + "px",
-        transform: `scaleX(${this.dir === "left" ? -1 : 1})`,
+        transform: `translate(${x}px, ${y}px) scaleX(${flip})`,
+        width: "24px",
+        height: "48px",
       };
-    },
+    }
+
+
   },
   mounted() {
     this.loop = this.loop.bind(this);
@@ -91,6 +96,18 @@ export default {
     cancelAnimationFrame(this.animationFrame);
   },
   methods: {
+    // Новые вспомогательные методы
+    addToY(value) {
+      this.pos.y = parseFloat((this.pos.y + value).toFixed(2));
+    },
+
+    subtractFromY(value) {
+      this.pos.y = parseFloat((this.pos.y - value).toFixed(2));
+    },
+
+    addToX(value) {
+      this.pos.x = parseFloat((this.pos.x + value).toFixed(2));
+    },
     setSpawnFromPolygon() {
       const spawnPoly = this.polygons.find(p => p.type === "spawn");
       if (!spawnPoly || !spawnPoly.points.length) return;
@@ -98,8 +115,8 @@ export default {
       const center = this.getPolygonCenter(spawnPoly.points);
       const pos = this.spawnToPos(center);
 
-      this.pos.x = Math.round(pos.x);
-      this.pos.y = Math.round(pos.y);
+      this.pos.x = pos.x;
+      this.pos.y = pos.y;
       this.velocity.y = 0;
 
       this.sendCoords(true);
@@ -232,7 +249,6 @@ export default {
         });
       }
     },
-
     loop() {
       // ===== X =====
       let moveX = 0;
@@ -322,9 +338,6 @@ export default {
         }
       }
 
-      this.pos.x = Math.round(this.pos.x);
-      this.pos.y = Math.round(this.pos.y);
-
       // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
       this.sendCoords();
 
@@ -374,14 +387,12 @@ export default {
 
 <style scoped>
 .player {
-  position: absolute;
-  transform-origin: center;
-  width: 24px;
-  height: 48px;
-  image-rendering: pixelated;
   background-image: url("@/assets/images/players/1/bp1.png");
   background-size: contain;
   background-repeat: no-repeat;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  backface-visibility: hidden;
   z-index: 200;
 }
 
