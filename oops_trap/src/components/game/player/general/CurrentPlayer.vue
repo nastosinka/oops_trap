@@ -256,8 +256,14 @@ export default {
     loop() {
       // ===== X =====
       let moveX = 0;
-      if (this.keys.has("a")) moveX = -this.speed;
-      if (this.keys.has("d")) moveX = this.speed;
+      if (this.keys.has("a")) {
+        moveX = -this.speed;
+        this.dir = "left";
+      }
+      if (this.keys.has("d")) {
+        moveX = this.speed;
+        this.dir = "right";
+      }
 
       if (moveX !== 0) {
         const dir = moveX < 0 ? "left" : "right";
@@ -286,42 +292,66 @@ export default {
       const onVine = this.polygonUnderPlayer("vine");
       const onRope = this.polygonUnderPlayer("rope");
 
-      this.onVine = onVine || onRope;
-
       const hittingCeiling = this.checkCeiling();
       const hittingGround = this.checkGround();
 
-      if (onVine || onRope) { // лиана или канат
+      // ПРЫЖОК С КАНАТА ПО КНОПКЕ Q - САМОЕ ГЛАВНОЕ!
+      if (this.keys.has("q") && (onVine || onRope)) {
+        this.onVine = false;
+        this.isOnGround = false;
+
+        // ОГРОМНОЕ перемещение влево (телепортация + прыжок)
+        this.pos.x -= 1; // ← ТЕЛЕПОРТАЦИЯ на 100px влево
+
+        // Плюс обычный прыжок
+        this.velocity.y = -6.7;
+        this.velocity.x = -9; // Дополнительный импульс влево
+
+        // Выходим из метода loop раньше, чтобы избежать конфликтов
+        this.sendCoords();
+        this.animationFrame = requestAnimationFrame(this.loop);
+        return;
+      }
+
+      // Обычная физика
+      if (onVine || onRope) {
+        this.onVine = true;
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
-
-        if (this.keys.has("q")) {
-          this.onVine = false;          // отпускаем канат
-          this.velocity.y = -6.7;       // вертикальная скорость вверх
-          this.velocity.x = -3.5;       // скорость влево
-          this.isOnGround = false;
-        } else {
-          this.velocity.y = 0;          // пока не прыгаем, вертикальная скорость = 0
-        }
-
+        this.velocity.y = 0;
+        this.velocity.x = 0;
         this.isOnGround = false;
-      } else if (inWater && !hittingGround) { // в воде и не касается земли
+      } else if (inWater && !hittingGround) {
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
 
-        if (this.keys.has(" ") || this.keys.has("Spacebar")) {
+        if (this.keys.has(" ") || this.keys.has("Spacebar") || this.keys.has("q")) {
           this.velocity.y = -6.7;
+          this.velocity.x = 0;
           this.isOnGround = false;
         } else {
           this.velocity.y = 0;
         }
-      } else { // ходит
-        if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
+      } else {
+        if ((this.keys.has("w") || this.keys.has(" ") || this.keys.has("q")) && this.isOnGround) {
           this.velocity.y = -6.7;
           this.isOnGround = false;
         }
 
         this.velocity.y += this.gravity;
+
+        // Горизонтальное движение от velocity (например, после прыжка с каната)
+        if (this.velocity.x !== 0) {
+          this.pos.x += this.velocity.x;
+
+          // Плавное замедление
+          if (this.velocity.x > 0) {
+            this.velocity.x = Math.max(0, this.velocity.x - 0.5);
+          } else if (this.velocity.x < 0) {
+            this.velocity.x = Math.min(0, this.velocity.x + 0.5);
+          }
+        }
+
         this.pos.y += this.velocity.y;
 
         if (this.velocity.y < 0 && hittingCeiling) {
@@ -333,6 +363,7 @@ export default {
           if (hittingGround) {
             this.isOnGround = true;
             this.velocity.y = 0;
+            this.velocity.x = 0;
 
             let snap = 0;
             while (this.checkGround() && snap++ < 10) {
@@ -344,10 +375,8 @@ export default {
         }
       }
 
-      // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
       this.sendCoords();
 
-      // Обновляем кадр анимации
       if (this.isWalking) {
         this.currentFrame = (this.currentFrame + 1) % 3;
       }
@@ -359,34 +388,11 @@ export default {
         !this.respawnTimeout
       ) {
         this.respawnTimeout = setTimeout(() => {
-          const spawnPoly = this.polygons.find((p) => p.type === "spawn");
-          if (spawnPoly && spawnPoly.points.length) {
-            const sum = spawnPoly.points.reduce(
-              (acc, p) => {
-                acc.x += p.x;
-                acc.y += p.y;
-                return acc;
-              },
-              { x: 0, y: 0 }
-            );
-
-            const center = {
-              x: sum.x / spawnPoly.points.length,
-              y: sum.y / spawnPoly.points.length,
-            };
-
-            this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
-            this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
-            this.velocity.y = 0;
-
-            // ✅ ИСПРАВЛЕНО: отправляем координаты после респавна с форсированием
-            this.sendCoords(true);
-          }
-
+          this.setSpawnFromPolygon();
           this.respawnTimeout = null;
         }, 500);
       }
-    },
+    }
   },
 };
 </script>
