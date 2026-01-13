@@ -130,8 +130,7 @@ const connectionStatusClass = computed(() => ({
  * @param {number} lastImage - идентификатор последнего спрайта
  */
 const sendPlayerMove = (x, y, lastImage = 1) => {
-  if (!userStore.isAlive) return;
-
+  if (!isAlive.value) return;
   const socket = getGameSocket.value;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
@@ -165,6 +164,7 @@ function setupCoordsListener() {
 
 onMounted(async () => {
   userStore.initializeUser();
+  userStore.setIsAlive(true);
 
   await checkIfUserIsHost();
   setupGameWebSocket();
@@ -220,7 +220,16 @@ const checkIfUserIsHost = async () => {
  * Хост дополнительно переводит лобби в состояние ожидания.
  */
 const returnToLobby = async () => {
-  isAlive = true;
+  userStore.setIsAlive(true);
+  if (isGameActive.value) {
+    Modal.warning({
+      title: "Game in Progress",
+      content:
+        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+      okText: "OK",
+    });
+    return;
+  }
 
   if (!lobbyId.value) {
     Modal.error({
@@ -396,7 +405,7 @@ const handleGameMessage = (message) => {
 
     case "died":
       if (String(message.playerId) === String(userId.value)) {
-        userStore.setAlive(false);
+        userStore.setIsAlive(false);
       }
 
       otherPlayers.value = otherPlayers.value.filter(

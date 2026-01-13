@@ -179,11 +179,12 @@ function updateScreenSize() {
   gameContentRef.value.style.width = `${BASE_WIDTH}px`;
   gameContentRef.value.style.height = `${BASE_HEIGHT}px`;
 
-  gameContentRef.value.style.transform = `translate(${ml}px, ${mt}px)`;
-  gameContentRef.value.style.zoom = scale;
+  gameContentRef.value.style.transform =
+    `scale(${scale}) translate(${ml / scale}px, ${mt / scale}px)`;
 
   gameArea.value = {
-    ...gameArea.value,
+    baseWidth: BASE_WIDTH,
+    baseHeight: BASE_HEIGHT,
     width: BASE_WIDTH,
     height: BASE_HEIGHT,
     scale,
@@ -208,6 +209,12 @@ onMounted(() => {
   fetchPolygons();
   updateScreenSize();
   window.addEventListener("resize", onResize);
+  window.addEventListener("click", (e) => {
+    const x = (e.clientX - gameArea.value.marginLeft) / gameArea.value.scale;
+    const y = (e.clientY - gameArea.value.marginTop) / gameArea.value.scale;
+
+    console.log("GAME COORDS", x.toFixed(1), y.toFixed(1));
+  });
 });
 
 onUnmounted(() => {
@@ -233,6 +240,6 @@ onUnmounted(() => {
   height: 1080px;
   background-color: #2c3e50;
   transform-origin: top left;
-  transition: none;
+  will-change: transform;
 }
 </style>

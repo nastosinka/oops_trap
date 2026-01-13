@@ -19,6 +19,10 @@ export const useUserStore = defineStore("user", () => {
   );
   const getGameSocket = computed(() => gameSocket.value);
 
+  const setIsAlive = (alive) => {
+    isAlive.value = alive;
+  };
+  
   const initializeUser = () => {
     if (!sessionId.value) {
       sessionId.value =
@@ -93,6 +97,7 @@ export const useUserStore = defineStore("user", () => {
     login,
     logout,
     setMyRole,
+    setIsAlive,
 
     // Методы управления игровым сокетом
     setGameSocket,

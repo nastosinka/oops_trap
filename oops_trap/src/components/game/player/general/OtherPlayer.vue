@@ -1,12 +1,7 @@
 <template>
   <div class="other-players-container">
-    <div
-      v-for="player in processedPlayers"
-      :key="player.id"
-      class="other-player"
-      :class="playerClasses(player)"
-      :style="playerStyle(player)"
-    >
+    <div v-for="player in processedPlayers" :key="player.id" class="other-player" :class="playerClasses(player)"
+      :style="playerStyle(player)">
       <div class="player-sprite"></div>
 
       <div v-if="showNames" class="player-name">
@@ -56,14 +51,14 @@ const SPRITE_HEIGHT = 48;
 const processedPlayers = computed(() =>
   Array.isArray(props.players)
     ? props.players.map((p) => ({
-        id: String(p.id),
-        name: p.name ?? `Player ${p.id}`,
-        x: Number(p.x) || 0,
-        y: Number(p.y) || 0,
-        lastImage: Number(p.lastImage) || 1,
-        isHost: !!p.isHost,
-        trapper: !!p.trapper,
-      }))
+      id: String(p.id),
+      name: p.name ?? `Player ${p.id}`,
+      x: Number(p.x) || 0,
+      y: Number(p.y) || 0,
+      lastImage: Number(p.lastImage) || 1,
+      isHost: !!p.isHost,
+      trapper: !!p.trapper,
+    }))
     : []
 );
 
@@ -72,18 +67,17 @@ const processedPlayers = computed(() =>
 ---------------------------------- */
 
 function playerStyle(player) {
-  const scale = gameArea.value.scale || 1;
-
   return {
     position: "absolute",
-    left: Math.round(player.x * scale) + "px",
-    top: Math.round(player.y * scale) + "px",
-    width: Math.round(SPRITE_WIDTH * scale) + "px",
-    height: Math.round(SPRITE_HEIGHT * scale) + "px",
+    left: Math.round(player.x) + "px",
+    top: Math.round(player.y) + "px",
+    width: SPRITE_WIDTH + "px",
+    height: SPRITE_HEIGHT + "px",
     zIndex: 150,
     pointerEvents: "none",
   };
 }
+
 
 /* ----------------------------------
    Classes
