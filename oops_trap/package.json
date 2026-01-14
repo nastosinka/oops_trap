@@ -14,7 +14,7 @@
     "lint:format": "npm run format && npm run lint:fix",
     "test:unit": "vitest --config config/vitest.config.js tests/unit",
     "test:unit:run": "vitest run --config config/vitest.config.js tests/unit",
-    "test:e2e": "playwright test --config config/playwright.config.js tests/e2e --ui",
+    "test:e2e": "playwright test --config config/playwright.config.js tests/e2e",
     "test:all": "npm run test:unit:run && npm run test:e2e",
     "test:coverage": "vitest run --config config/vitest.config.js --coverage",
     "deploy": "vk-miniapps-deploy",
