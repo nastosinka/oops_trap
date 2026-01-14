@@ -456,9 +456,8 @@ const handleGameMessage = (message) => {
 
     case "all_stats":
       console.log("🎲 Получена статистика игры от сервера:", message.stats);
-
+      console.log(message.stats);
       if (message.stats) {
-        // Преобразуем в массив для UI
         allPlayers.value = Object.entries(message.stats).map(([id, stat]) => ({
           id,
           name: stat.name || `Player ${id}`,
