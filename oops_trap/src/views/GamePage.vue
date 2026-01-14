@@ -49,8 +49,9 @@ import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
-import { watch } from "vue";
+import { useGameResultsStore } from "@/stores/gameResults";
 
+const resultsStore = useGameResultsStore();
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
@@ -108,37 +109,6 @@ const gameEnded = ref(false);
 const isGameActive = computed(
   () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
 );
-
-const shouldEndGame = computed(() => {
-  // Если таймер закончился
-  if (timeLeft.value <= 0) return true;
-
-  // Проверяем остальных игроков
-  const allOtherPlayersDone = allPlayers.value.every(
-    (p) => p.alive === false || p.alive === null
-  );
-
-  // Проверяем самого себя
-  const meDone = isAlive.value === false || isAlive.value === null;
-
-  return allOtherPlayersDone && meDone;
-});
-
-watch(shouldEndGame, (val) => {
-  if (val && !gameEnded.value) {
-    gameEnded.value = true;
-
-    // Если ты хост — обновляем статус лобби
-    if (isHost.value) {
-      updateLobbyStatus("finished").catch(console.error);
-    }
-
-    // Переход на страницу окончания игры
-    router.push("/results");
-  }
-});
-
-
 
 // Текстовое состояние соединения
 const connectionStatus = computed(() => {
@@ -455,20 +425,24 @@ const handleGameMessage = (message) => {
       break;
 
     case "all_stats":
-      console.log("🎲 Получена статистика игры от сервера:", message.stats);
-      console.log(message.stats);
-      if (message.stats) {
-        allPlayers.value = Object.entries(message.stats).map(([id, stat]) => ({
-          id,
-          name: stat.name || `Player ${id}`,
-          time: stat.time ?? null,
-          map: stat.map ?? null,
-          role: stat.role || "runner",
-          alive: typeof stat.alive === "boolean" ? stat.alive : true,
-        }));
+      if (!message.stats) return;
 
-        console.table(allPlayers.value); // наглядно в консоли
-      }
+      const results = Object.entries(message.stats).map(([id, stat]) => ({
+        id: String(id),
+        name: stat.name,
+        role: stat.role,
+        alive: stat.alive,
+        win: stat.win,
+        time: stat.time,
+        map: stat.map,
+      }));
+
+      resultsStore.setResults(results, results[0]?.map ?? null);
+
+      gameEnded.value = true;
+      timerActive.value = false;
+
+      router.push("/results");
       break;
 
     default:
