@@ -349,11 +349,6 @@ const handleGameMessage = (message) => {
     case "timer_update":
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
-
-      if (message.timeLeft <= 0 && isHost.value) {
-        updateLobbyStatus("finished");
-        gameEnded.value = true;
-      }
       break;
 
     case "coord_message":
@@ -384,8 +379,8 @@ const handleGameMessage = (message) => {
         allPlayers.value = normalized.filter((p) => p.id !== String(userId.value));
 
         const me = normalized.find((p) => p.id === String(userId.value));
-        console.table(normalized);
-        console.table(otherPlayers.value);
+        // console.table(normalized);
+        // console.table(otherPlayers.value);
 
         if (me) {
           playerCoords.x = me.x;
@@ -442,7 +437,9 @@ const handleGameMessage = (message) => {
       gameEnded.value = true;
       timerActive.value = false;
 
-      router.push("/results");
+      router.push({path: "/results", query: {
+    lobbyId: lobbyId.value,
+  },});
       break;
 
     default:
