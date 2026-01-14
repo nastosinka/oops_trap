@@ -49,6 +49,7 @@ import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
+import { watch } from "vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -105,6 +106,37 @@ const gameEnded = ref(false);
 const isGameActive = computed(
   () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
 );
+
+const shouldEndGame = computed(() => {
+  // Если таймер закончился
+  if (timeLeft.value <= 0) return true;
+
+  // Проверяем остальных игроков
+  const allOtherPlayersDone = otherPlayers.value.every(
+    (p) => p.alive === false || p.alive === null
+  );
+
+  // Проверяем самого себя
+  const meDone = isAlive.value === false || isAlive.value === null;
+
+  return allOtherPlayersDone && meDone;
+});
+
+watch(shouldEndGame, (val) => {
+  if (val && !gameEnded.value) {
+    gameEnded.value = true;
+
+    // Если ты хост — обновляем статус лобби
+    if (isHost.value) {
+      updateLobbyStatus("finished").catch(console.error);
+    }
+
+    // Переход на страницу окончания игры
+    router.push("/results");
+  }
+});
+
+
 
 // Текстовое состояние соединения
 const connectionStatus = computed(() => {

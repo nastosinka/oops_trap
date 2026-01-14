@@ -56,6 +56,11 @@ const routes = [
     name: "Test",
     component: () => import("@/views/MapOfGame.vue"),
   },
+  {
+    path: "/results",
+    name: "Results",
+    component: () => import("@/views/ResultsPage.vue"),
+  },
 ];
 
 const router = createRouter({
