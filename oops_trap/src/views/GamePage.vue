@@ -73,6 +73,8 @@ const playerImage = computed(() =>
   myRole.value === "mafia" ? mafiaImg : runnerImg
 );
 
+const allPlayers = ref([]);
+
 // Идентификатор текущей игры
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
 
@@ -112,7 +114,7 @@ const shouldEndGame = computed(() => {
   if (timeLeft.value <= 0) return true;
 
   // Проверяем остальных игроков
-  const allOtherPlayersDone = otherPlayers.value.every(
+  const allOtherPlayersDone = allPlayers.value.every(
     (p) => p.alive === false || p.alive === null
   );
 
@@ -399,16 +401,17 @@ const handleGameMessage = (message) => {
             lastImage: Number(player.lastImage) || 1,
             isHost: Boolean(player.isHost),
             trapper: isTrapper,
-            alive: player.alive === true,
+            alive: player.alive,
           };
         });
 
+        // Для карты — только видимые игроки
         otherPlayers.value = normalized.filter(
-          (p) =>
-            p.id !== String(userId.value) &&
-            p.trapper === false &&
-            p.alive === true
+          (p) => p.id !== String(userId.value) && p.trapper === false && p.alive === true
         );
+
+        // Для логики конца игры — все игроки
+        allPlayers.value = normalized.filter((p) => p.id !== String(userId.value));
 
         const me = normalized.find((p) => p.id === String(userId.value));
         console.table(normalized);
@@ -433,6 +436,9 @@ const handleGameMessage = (message) => {
       otherPlayers.value = otherPlayers.value.filter(
         (p) => p.id !== String(message.playerId)
       );
+      allPlayers.value = allPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
       break;
 
     case "died":
@@ -443,6 +449,27 @@ const handleGameMessage = (message) => {
       otherPlayers.value = otherPlayers.value.filter(
         (p) => p.id !== String(message.playerId)
       );
+      allPlayers.value = allPlayers.value.map((p) =>
+        p.id === String(message.playerId) ? { ...p, alive: false } : p
+      );
+      break;
+
+    case "all_stats":
+      console.log("🎲 Получена статистика игры от сервера:", message.stats);
+
+      if (message.stats) {
+        // Преобразуем в массив для UI
+        allPlayers.value = Object.entries(message.stats).map(([id, stat]) => ({
+          id,
+          name: stat.name || `Player ${id}`,
+          time: stat.time ?? null,
+          map: stat.map ?? null,
+          role: stat.role || "runner",
+          alive: typeof stat.alive === "boolean" ? stat.alive : true,
+        }));
+
+        console.table(allPlayers.value); // наглядно в консоли
+      }
       break;
 
     default:

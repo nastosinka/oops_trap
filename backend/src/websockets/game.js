@@ -5,7 +5,6 @@ const path = require("path");
 
 const coordIntervals = new Map();
 
-
 function pointInPolygon(x, y, points) {
     let inside = false;
     for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -80,6 +79,62 @@ function checkFinishCollision(x, y, polygons) {
     return null;
 }
 
+async function finalizeGame(gameId) {
+    const gameRoom = gameRooms.get(gameId);
+    const game = games.get(gameId);
+    if (!gameRoom || !game) return;
+  
+    const players = Array.from(gameRoom.playersWithSettings.entries());
+  
+    const runners = players.filter(([id, p]) => !p.trapper);
+    const mafiaId = game.trapper;
+  
+    const anyRunnerFinished = runners.some(([_, p]) => p.alive === null);
+  
+    // --- RUNNERS ---
+    for (const [id, p] of runners) {
+      const finished = p.alive === null;
+  
+      game.stats.set(id, {
+        name: p.name,
+        role: 'runner',
+        alive: p.alive,
+        win: finished,
+        time: finished
+          ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
+          : null,
+        map: game.map
+      });
+  
+      if (finished) {
+        await saveStatistic({
+          id_user: id,
+          id_map: game.map,
+          time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+          role: true
+        });
+      }
+    }
+  
+    // --- MAFIA ---
+    const mafiaWin = !anyRunnerFinished;
+  
+    game.stats.set(mafiaId, {
+      name: game.players.find(p => p.id === mafiaId)?.name,
+      role: 'mafia',
+      alive: true,
+      win: mafiaWin,
+      time: null,
+      map: game.map
+    });
+  
+    broadcastToGame(gameId, {
+      type: 'all_stats',
+      stats: Object.fromEntries(game.stats),
+    });
+  }
+  
+
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
@@ -144,8 +199,9 @@ function setupGameWebSocket(server) {
         console.log(`⏹️ Таймер остановлен для игры ${gameId}`);
 
         // Закрываем все соединения в комнате
-        gameRoom.players.forEach(player => {
+        gameRoom.players.forEach(async player => {
             if (player.connected && player.ws.readyState === player.ws.OPEN) {
+                await finalizeGame(gameId);
                 player.ws.close(1000, 'Game finished - time is up');
             }
         });
@@ -153,6 +209,23 @@ function setupGameWebSocket(server) {
         // Удаляем комнату
         gameRooms.delete(gameId);
         console.log(`🎯 Игра ${gameId} завершена, комната удалена`);
+    }
+
+    async function checkAllRunnersDone(gameId) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom || gameRoom.finished) return;
+    
+        const runners = [...gameRoom.playersWithSettings.values()]
+            .filter(p => !p.trapper);
+    
+        const allDone = runners.every(
+            p => p.alive === false || p.alive === null
+        );
+    
+        if (!allDone) return;
+        gameRoom.finished = true;
+        await finalizeGame(gameId);
+        stopGameTimer(gameId);
     }
 
     function startGameTimer(gameId) {
@@ -172,7 +245,7 @@ function setupGameWebSocket(server) {
         });
 
         // Запускаем интервал обновления (каждую секунду)
-        gameRoom.timer.interval = setInterval(() => {
+        gameRoom.timer.interval = setInterval(async () => {
             gameRoom.timer.timeLeft--;
 
             // Отправляем обновление времени всем игрокам
@@ -187,6 +260,10 @@ function setupGameWebSocket(server) {
 
             // Если время вышло
             if (gameRoom.timer.timeLeft <= 0) {
+                if (!gameRoom.finished) {
+                    gameRoom.finished = true;
+                    await finalizeGame(gameId);
+                }
                 stopGameTimer(gameId);
                 console.log(`⏰ Время вышло для игры ${gameId}`);
             }
@@ -204,7 +281,7 @@ function setupGameWebSocket(server) {
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
                     case 'all_stats': // получить статистику по игре
-                        handleAllStats(ws, message.gameId);
+                        // handleAllStats(ws, message.gameId);
                         break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings); 
@@ -301,6 +378,7 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
+                finished: false
             };
                     
                 } 
@@ -317,6 +395,7 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
+                finished: false
             };
                 }
                 if (lobby.time === "hard"){
@@ -332,6 +411,7 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                 },
                 hasFirstPlayer: false,
                 playersWithSettings: new Map(),
+                finished: false
             };
             } 
 
@@ -478,7 +558,7 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                         reason: trapType,
                         timestamp: new Date().toISOString()
                     });
-
+                    checkAllRunnersDone(gameId);
                     console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
                     return;
                 }
@@ -486,13 +566,13 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                 const finish = checkFinishCollision(settings.x, settings.y, polygons);
                 if (finish) {
                     player.alive = null;
-                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    // handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
                     broadcastToGame(gameId, {
                         type: "win",
                         playerId,
                         timestamp: new Date().toISOString()
                     });
-
+                    checkAllRunnersDone(gameId);
                     console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     return;
                 }
@@ -563,19 +643,19 @@ function stopCoordBroadcast(gameId) {
 }
 
 
-    function handleAllStats(ws, gameId) {
-        const game = games.get(parseInt(gameId));
-        if (!game) {
-                    //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
+    // function handleAllStats(ws, gameId) {
+    //     const game = games.get(parseInt(gameId));
+    //     if (!game) {
+    //                 //+ логика, игра не найдена + проверка что игрок не траппер
+    //         return;
+    //     }
 
-        broadcastToGame(gameId, {
-            type: 'all_stats',
-            stats: game.stats,
-            timestamp: new Date().toISOString()
-        });
-    }
+    //     broadcastToGame(gameId, {
+    //         type: 'all_stats',
+    //         stats: game.stats,
+    //         timestamp: new Date().toISOString()
+    //     });
+    // }
 
 async function saveStatistic(data) {
   const { id_user, id_map, time, role } = data;
@@ -674,33 +754,33 @@ async function saveStatistic(data) {
   }
 }
 
-    function handleStats(gameId, playerId) {
-        try {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-        const game = games.get(parseInt(gameId));
-        if (!game || game.trapper === playerId) {
-                  //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
-        game.stats.set(playerId, {
-            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
-            map: game.map,
-            role: true,
-        });
-        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
+    // function handleStats(gameId, playerId) {
+    //     try {
+    //     const gameRoom = gameRooms.get(gameId);
+    //     if (!gameRoom) return;
+    //     const game = games.get(parseInt(gameId));
+    //     if (!game || game.trapper === playerId) {
+    //               //+ логика, игра не найдена + проверка что игрок не траппер
+    //         return;
+    //     }
+    //     game.stats.set(playerId, {
+    //         time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+    //         map: game.map,
+    //         role: true,
+    //     });
+    //     saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
 
 
-        broadcastToGame(gameId, {
-            type: 'stats',
-            stats: game.stats,
-            timestamp: new Date().toISOString()
-        });
-        console.log(game.stats);
-        } catch (error) {
-            console.error('❌ Ошибка в handleStats:', error);
-        }
-    }
+    //     broadcastToGame(gameId, {
+    //         type: 'stats',
+    //         stats: game.stats,
+    //         timestamp: new Date().toISOString()
+    //     });
+    //     console.log(game.stats);
+    //     } catch (error) {
+    //         console.error('❌ Ошибка в handleStats:', error);
+    //     }
+    // }
 
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
