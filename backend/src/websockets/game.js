@@ -138,22 +138,22 @@ function setupGameWebSocket(server) {
 
         if (gameRoom.finished) return;
         gameRoom.finished = true;
-    
+
         if (!game.stats) {
             game.stats = new Map();
         }
-    
+
         const players = Array.from(gameRoom.playersWithSettings.entries());
-    
+
         const runners = players.filter(([id, p]) => !p.trapper);
         const mafiaId = game.trapper;
-    
+
         const anyRunnerFinished = runners.some(([_, p]) => p.alive === null);
-    
+
         // --- RUNNERS ---
         for (const [id, p] of runners) {
             const finished = p.alive === null;
-    
+
             game.stats.set(id, {
                 name: p.name,
                 role: 'runner',
@@ -164,7 +164,7 @@ function setupGameWebSocket(server) {
                     : null,
                 map: game.map
             });
-    
+
             if (finished) {
                 await saveStatistic({
                     id_user: id,
@@ -174,19 +174,27 @@ function setupGameWebSocket(server) {
                 });
             }
         }
-    
+
         // --- MAFIA ---
         const mafiaWin = !anyRunnerFinished;
-    
+
         game.stats.set(mafiaId, {
             name: game.players.find(p => p.id === mafiaId)?.name,
             role: 'mafia',
             alive: true,
             win: mafiaWin,
-            time: null,
+            time: mafiaWin
+            ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
+            : null,
             map: game.map
         });
-    
+
+        const lobby = lobbies.get(parseInt(gameId));
+        if (lobby) {
+            lobby.status = "finished";
+            console.log(`🏁 Лобби ${gameId} помечено как finished`);
+        }
+
         broadcastToGame(gameId, {
             type: 'all_stats',
             stats: Object.fromEntries(game.stats),
@@ -219,7 +227,7 @@ function setupGameWebSocket(server) {
         // Удаляем комнату
         setTimeout(() => {
             gameRooms.delete(gameId);
-        }, 500);        
+        }, 500);
         console.log(`🎯 Игра ${gameId} завершена, комната удалена`);
     }
 
@@ -820,6 +828,14 @@ function setupGameWebSocket(server) {
             }
             gameRoom.hasFirstPlayer = false;
         }
+
+        if (ws.playerId === gameRoom.hostId) {
+            const lobby = lobbies.get(parseInt(gameId));
+            if (lobby && lobby.status === "finished") {
+                lobby.status = "waiting";
+                console.log(`🔁 Host left finished game → lobby ${gameId} waiting`);
+            }
+        }        
     }
     // Очистка пустых комнат
     setInterval(() => {

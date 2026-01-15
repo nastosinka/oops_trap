@@ -223,58 +223,50 @@ const checkIfUserIsHost = async () => {
  * Возвращает пользователя в лобби.
  * Хост дополнительно переводит лобби в состояние ожидания.
  */
-const returnToLobby = async () => {
-  userStore.setIsAlive(true);
-  if (isGameActive.value) {
-    Modal.warning({
-      title: "Game in Progress",
-      content:
-        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-      okText: "OK",
-    });
-    return;
-  }
+// const returnToLobby = async () => {
+//   userStore.setIsAlive(true);
+//   if (isGameActive.value) {
+//     Modal.warning({
+//       title: "Game in Progress",
+//       content:
+//         "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+//       okText: "OK",
+//     });
+//     return;
+//   }
 
-  if (!lobbyId.value) {
-    Modal.error({
-      title: "Cannot Return to Lobby",
-      content: "Lobby information is not available",
-    });
-    return;
-  }
+//   if (!lobbyId.value) {
+//     Modal.error({
+//       title: "Cannot Return to Lobby",
+//       content: "Lobby information is not available",
+//     });
+//     return;
+//   }
 
-  try {
-    if (isHost.value) {
-      await updateLobbyStatus("waiting");
-    }
-  } catch (error) {
-    console.error("Error updating lobby status:", error);
-  }
-
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-};
+//   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+// };
 
 /**
  * Обновляет статус лобби на сервере.
  *
  * @param {string} newStatus - новый статус лобби
  */
-const updateLobbyStatus = async (newStatus) => {
-  try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newStatus }),
-      credentials: "include",
-    });
+// const updateLobbyStatus = async (newStatus) => {
+//   try {
+//     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ newStatus }),
+//       credentials: "include",
+//     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error updating lobby status:", error);
-    throw error;
-  }
-};
+//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//     return await response.json();
+//   } catch (error) {
+//     console.error("Error updating lobby status:", error);
+//     throw error;
+//   }
+// };
 
 /* ------------------------------------------------------------------
    WebSocket и обработка сообщений игры

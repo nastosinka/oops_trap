@@ -17,7 +17,7 @@ export const useGameResultsStore = defineStore("gameResults", () => {
   // Сбрасываем результаты (если игрок возвращается в лобби)
   const clearResults = () => {
     stats.value = [];
-    mapId.value = null;
+    // mapId.value = null;
   };
 
   return {

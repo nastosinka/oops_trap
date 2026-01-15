@@ -62,22 +62,22 @@ const lobbyId = computed(() => route.query.lobbyId);
 const isHost = computed(() => userStore.myRole === "host");
 
 // Функция обновления статуса лобби
-const updateLobbyStatus = async (newStatus) => {
-  try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newStatus }),
-      credentials: "include",
-    });
+// const updateLobbyStatus = async (newStatus) => {
+//   try {
+//     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ newStatus }),
+//       credentials: "include",
+//     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error updating lobby status:", error);
-    throw error;
-  }
-};
+//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//     return await response.json();
+//   } catch (error) {
+//     console.error("Error updating lobby status:", error);
+//     throw error;
+//   }
+// };
 
 /**
  * Формируем таблицу с результатами
@@ -158,17 +158,17 @@ const returnToLobby = async () => {
     return;
   }
 
-  try {
-    if (isHost.value) {
-      await updateLobbyStatus("waiting");
-    }
-  } catch (error) {
-    Modal.error({
-      title: "Lobby Update Error",
-      content: "Failed to update lobby status",
-    });
-    return;
-  }
+  // try {
+  //   if (isHost.value) {
+  //     await updateLobbyStatus("waiting");
+  //   }
+  // } catch (error) {
+  //   Modal.error({
+  //     title: "Lobby Update Error",
+  //     content: "Failed to update lobby status",
+  //   });
+  //   return;
+  // }
 
   router.replace(`/lobby?id=${lobbyId.value}&mode=join`);
 };
