@@ -3358,7 +3358,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "border-start",
