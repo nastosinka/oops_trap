@@ -1,5 +1,10 @@
 <template>
-  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
+  <div
+    v-if="gameArea"
+    class="player"
+    :class="playerClasses"
+    :style="playerStyle"
+  ></div>
 </template>
 
 <script>
@@ -78,10 +83,7 @@ export default {
         width: "24px",
         height: "48px",
       };
-    }
-
-
-
+    },
   },
   mounted() {
     this.loop = this.loop.bind(this);
@@ -111,7 +113,7 @@ export default {
       this.pos.x = parseFloat((this.pos.x + value).toFixed(2));
     },
     setSpawnFromPolygon() {
-      const spawnPoly = this.polygons.find(p => p.type === "spawn");
+      const spawnPoly = this.polygons.find((p) => p.type === "spawn");
       if (!spawnPoly || !spawnPoly.points.length) return;
 
       const center = this.getPolygonCenter(spawnPoly.points);
@@ -132,7 +134,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
-        q: ["q", "й"]
+        q: ["q", "й"],
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -151,7 +153,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
-        q: ["q", "й"]
+        q: ["q", "й"],
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -301,14 +303,14 @@ export default {
         this.isOnGround = false;
         this.pos.x -= 1; // даём шанс набрать импульс
         this.velocity.y = -6.7;
-        this.velocity.x = -9; 
+        this.velocity.x = -9;
         this.dir = "left";
         this.sendCoords();
         this.animationFrame = requestAnimationFrame(this.loop);
         return;
       }
 
-      if (onVine || onRope) { 
+      if (onVine || onRope) {
         this.onVine = true;
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
@@ -378,7 +380,7 @@ export default {
           this.respawnTimeout = null;
         }, 500);
       }
-    }
+    },
   },
 };
 </script>

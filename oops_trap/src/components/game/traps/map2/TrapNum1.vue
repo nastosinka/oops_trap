@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="trap-image"
-    :class="{ active }"
-  />
+  <div class="trap-image" :class="{ active }" />
 </template>
 
 <script setup>
@@ -29,7 +26,8 @@ const props = defineProps({
   content: "";
   position: absolute;
   inset: 0;
-  background: url("@/assets/images/maps/Map2/tr1/1.png") center / contain no-repeat;
+  background: url("@/assets/images/maps/Map2/tr1/1.png") center / contain
+    no-repeat;
   opacity: 0;
 }
 
@@ -37,12 +35,12 @@ const props = defineProps({
   opacity: 1;
 }
 
-
 .trap-image::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("@/assets/images/maps/Map2/tr1/2.png") center / contain no-repeat;
+  background: url("@/assets/images/maps/Map2/tr1/2.png") center / contain
+    no-repeat;
   opacity: 0;
 }
 

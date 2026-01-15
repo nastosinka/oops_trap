@@ -1,7 +1,12 @@
 <template>
   <div class="other-players-container">
-    <div v-for="player in processedPlayers" :key="player.id" class="other-player" :class="playerClasses(player)"
-      :style="playerStyle(player)">
+    <div
+      v-for="player in processedPlayers"
+      :key="player.id"
+      class="other-player"
+      :class="playerClasses(player)"
+      :style="playerStyle(player)"
+    >
       <div class="player-sprite"></div>
 
       <div v-if="showNames" class="player-name">
@@ -51,14 +56,14 @@ const SPRITE_HEIGHT = 48;
 const processedPlayers = computed(() =>
   Array.isArray(props.players)
     ? props.players.map((p) => ({
-      id: String(p.id),
-      name: p.name ?? `Player ${p.id}`,
-      x: Number(p.x) || 0,
-      y: Number(p.y) || 0,
-      lastImage: Number(p.lastImage) || 1,
-      isHost: !!p.isHost,
-      trapper: !!p.trapper,
-    }))
+        id: String(p.id),
+        name: p.name ?? `Player ${p.id}`,
+        x: Number(p.x) || 0,
+        y: Number(p.y) || 0,
+        lastImage: Number(p.lastImage) || 1,
+        isHost: !!p.isHost,
+        trapper: !!p.trapper,
+      }))
     : []
 );
 

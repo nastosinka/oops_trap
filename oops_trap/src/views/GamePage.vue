@@ -23,10 +23,17 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
-            ? 'Cannot return to lobby during active game'
-            : 'Return to lobby'
-            " @click="returnToLobby">
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -45,7 +52,6 @@ import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
@@ -364,11 +370,16 @@ const handleGameMessage = (message) => {
 
         // Для карты — только видимые игроки
         otherPlayers.value = normalized.filter(
-          (p) => p.id !== String(userId.value) && p.trapper === false && p.alive === true
+          (p) =>
+            p.id !== String(userId.value) &&
+            p.trapper === false &&
+            p.alive === true
         );
 
         // Для логики конца игры — все игроки
-        allPlayers.value = normalized.filter((p) => p.id !== String(userId.value));
+        allPlayers.value = normalized.filter(
+          (p) => p.id !== String(userId.value)
+        );
 
         const me = normalized.find((p) => p.id === String(userId.value));
         // console.table(normalized);
@@ -429,9 +440,12 @@ const handleGameMessage = (message) => {
       gameEnded.value = true;
       timerActive.value = false;
 
-      router.push({path: "/results", query: {
-    lobbyId: lobbyId.value,
-  },});
+      router.push({
+        path: "/results",
+        query: {
+          lobbyId: lobbyId.value,
+        },
+      });
       break;
 
     default:

@@ -1,12 +1,14 @@
 <template>
   <div class="results-page">
-    <h1 class="results-title" :class="{
-      'results-title--win': playerResult.status === 'win',
-      'results-title--lose': playerResult.status === 'lose',
-    }">
+    <h1
+      class="results-title"
+      :class="{
+        'results-title--win': playerResult.status === 'win',
+        'results-title--lose': playerResult.status === 'lose',
+      }"
+    >
       {{ playerResult.text }}
     </h1>
-
 
     <div class="stats-table-wrapper">
       <table class="stats-table">
@@ -19,7 +21,11 @@
           </tr>
         </thead>
         <tbody class="stats-table__body">
-          <tr v-for="player in sortedPlayers" :key="player.id" class="stats-table__row">
+          <tr
+            v-for="player in sortedPlayers"
+            :key="player.id"
+            class="stats-table__row"
+          >
             <td class="stats-table__cell">{{ player.name }}</td>
             <td class="stats-table__cell">{{ player.role }}</td>
             <td class="stats-table__cell">
@@ -56,10 +62,7 @@ const resultsStore = useGameResultsStore();
 const userStore = useUserStore();
 const router = useRouter();
 
-// Если есть флаги активности игры и роль хоста
-const isGameActive = computed(() => resultsStore.isActive || false);
 const lobbyId = computed(() => route.query.lobbyId);
-const isHost = computed(() => userStore.myRole === "host");
 
 // Функция обновления статуса лобби
 // const updateLobbyStatus = async (newStatus) => {
@@ -89,7 +92,9 @@ const isHost = computed(() => userStore.myRole === "host");
 const sortedPlayers = computed(() => {
   const stats = resultsStore.stats.map((p) => ({ ...p }));
 
-  const allDead = stats.every((p) => p.role === "mafia" || !p.alive || p.time === null);
+  const allDead = stats.every(
+    (p) => p.role === "mafia" || !p.alive || p.time === null
+  );
 
   return stats
     .map((p) => {
@@ -114,9 +119,7 @@ const sortedPlayers = computed(() => {
 const playerResult = computed(() => {
   const myId = String(userStore.userId);
 
-  const me = sortedPlayers.value.find(
-    (p) => String(p.id) === myId
-  );
+  const me = sortedPlayers.value.find((p) => String(p.id) === myId);
 
   if (!me) {
     return {
@@ -137,8 +140,6 @@ const playerResult = computed(() => {
     status: "lose",
   };
 });
-
-
 
 // Переход в лобби
 const returnToLobby = async () => {
@@ -172,10 +173,8 @@ const returnToLobby = async () => {
 
   router.replace(`/lobby?id=${lobbyId.value}&mode=join`);
 };
-
 </script>
 
-  
 <style scoped>
 .results-page {
   display: flex;
@@ -285,6 +284,4 @@ const returnToLobby = async () => {
 .results-title--lose {
   color: #e74c3c;
 }
-
 </style>
-  

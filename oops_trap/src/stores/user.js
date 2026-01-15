@@ -22,7 +22,7 @@ export const useUserStore = defineStore("user", () => {
   const setIsAlive = (alive) => {
     isAlive.value = alive;
   };
-  
+
   const initializeUser = () => {
     if (!sessionId.value) {
       sessionId.value =

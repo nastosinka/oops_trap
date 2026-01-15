@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="trap-image"
-    :class="{ active }"
-  />
+  <div class="trap-image" :class="{ active }" />
 </template>
 
 <script setup>

@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="trap-image"
-    :class="{ active }"
-  />
+  <div class="trap-image" :class="{ active }" />
 </template>
 
 <script setup>
@@ -36,7 +33,7 @@ const props = defineProps({
 
 @keyframes trapAnim {
   0% {
-    background-image: url("@/assets/images/maps/Map2/tr3/1.png"),
+    background-image: url("@/assets/images/maps/Map2/tr3/1.png");
   }
   25% {
     background-image: url("@/assets/images/maps/Map2/tr3/3.png");
@@ -44,7 +41,8 @@ const props = defineProps({
   50% {
     background-image: url("@/assets/images/maps/Map2/tr3/4.png");
   }
-  75%, 100% {
+  75%,
+  100% {
     background-image: url("@/assets/images/maps/Map2/tr3/5.png");
   }
 }

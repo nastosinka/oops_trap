@@ -4,7 +4,7 @@ import { ref } from "vue";
 export const useGameResultsStore = defineStore("gameResults", () => {
   // Массив игроков с их статистикой
   const stats = ref([]);
-  
+
   // Карта игры (по желанию)
   const mapId = ref(null);
 
