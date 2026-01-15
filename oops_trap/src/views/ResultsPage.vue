@@ -1,12 +1,9 @@
 <template>
   <div class="results-page">
-    <h1
-      class="results-title"
-      :class="{
-        'results-title--win': playerResult.status === 'win',
-        'results-title--lose': playerResult.status === 'lose',
-      }"
-    >
+    <h1 class="results-title" :class="{
+      'results-title--win': playerResult.status === 'win',
+      'results-title--lose': playerResult.status === 'lose',
+    }">
       {{ playerResult.text }}
     </h1>
 
@@ -21,11 +18,7 @@
           </tr>
         </thead>
         <tbody class="stats-table__body">
-          <tr
-            v-for="player in sortedPlayers"
-            :key="player.id"
-            class="stats-table__row"
-          >
+          <tr v-for="player in sortedPlayers" :key="player.id" class="stats-table__row">
             <td class="stats-table__cell">{{ player.name }}</td>
             <td class="stats-table__cell">{{ player.role }}</td>
             <td class="stats-table__cell">
@@ -49,6 +42,7 @@
 
 <script setup>
 import { computed } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useGameResultsStore } from "@/stores/gameResults";
 import { useUserStore } from "@/stores/user";
 import { useRouter } from "vue-router";
@@ -57,6 +51,7 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
+const heartbeatInterval = ref(null);
 
 const resultsStore = useGameResultsStore();
 const userStore = useUserStore();
@@ -64,23 +59,33 @@ const router = useRouter();
 
 const lobbyId = computed(() => route.query.lobbyId);
 
-// Функция обновления статуса лобби
-// const updateLobbyStatus = async (newStatus) => {
-//   try {
-//     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ newStatus }),
-//       credentials: "include",
-//     });
+const startHeartbeat = () => {
+  if (!lobbyId.value) return;
 
-//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-//     return await response.json();
-//   } catch (error) {
-//     console.error("Error updating lobby status:", error);
-//     throw error;
-//   }
-// };
+  heartbeatInterval.value = setInterval(() => {
+    fetch(`/api/lobby/lobbies/${lobbyId.value}/ping`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {
+      // намеренно ничего не делаем
+    });
+  }, 3000);
+};
+
+const stopHeartbeat = () => {
+  if (heartbeatInterval.value) {
+    clearInterval(heartbeatInterval.value);
+    heartbeatInterval.value = null;
+  }
+};
+
+onMounted(() => {
+  startHeartbeat();
+});
+
+onUnmounted(() => {
+  stopHeartbeat();
+});
 
 /**
  * Формируем таблицу с результатами
@@ -145,7 +150,6 @@ const playerResult = computed(() => {
 const returnToLobby = async () => {
   userStore.setIsAlive(true);
 
-  // 🔥 ВАЖНО: закрываем сокет
   const socket = userStore.gameSocket;
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.close(1000, "Leaving game");
@@ -158,18 +162,6 @@ const returnToLobby = async () => {
     });
     return;
   }
-
-  // try {
-  //   if (isHost.value) {
-  //     await updateLobbyStatus("waiting");
-  //   }
-  // } catch (error) {
-  //   Modal.error({
-  //     title: "Lobby Update Error",
-  //     content: "Failed to update lobby status",
-  //   });
-  //   return;
-  // }
 
   router.replace(`/lobby?id=${lobbyId.value}&mode=join`);
 };
