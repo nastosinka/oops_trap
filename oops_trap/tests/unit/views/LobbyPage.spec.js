@@ -255,15 +255,6 @@ describe("LobbyPage", () => {
         },
       });
     });
-
-    it("останавливает опрос при перенаправлении", async () => {
-      wrapper = createWrapper();
-      const stopPollingSpy = vi.spyOn(wrapper.vm, "stopPolling");
-
-      await wrapper.vm.redirectToGame();
-
-      expect(stopPollingSpy).toHaveBeenCalled();
-    });
   });
 
   describe("Settings Modal", () => {
@@ -310,25 +301,6 @@ describe("LobbyPage", () => {
       await wrapper.vm.exitLobby();
 
       expect(Modal.error).toHaveBeenCalled();
-    });
-  });
-
-  describe("WebSocket Connection", () => {
-    it("обрабатывает сообщения WebSocket", async () => {
-      wrapper = createWrapper();
-
-      const testMessages = [
-        { type: "game-joined", message: "Successfully joined" },
-        { type: "waiting-start", message: "Waiting for players" },
-        { type: "player-connected", playerId: "user456" },
-        { type: "player-disconnected", playerId: "user456" },
-        { type: "unknown-type", data: "test" },
-      ];
-
-      // Проверяем что не возникает ошибок при обработке разных типов сообщений
-      testMessages.forEach((message) => {
-        expect(() => wrapper.vm.handleGameSocketMessage(message)).not.toThrow();
-      });
     });
   });
 

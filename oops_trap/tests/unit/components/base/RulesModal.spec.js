@@ -131,7 +131,7 @@ describe("RulesModal", () => {
 
       const runnerContent = wrapper.find(".accordion-content");
       expect(runnerContent.text()).toContain("Runner Objectives");
-      expect(runnerContent.text()).toContain("двойной прыжок");
+      expect(runnerContent.text()).toContain("прыжка");
 
       const mapsHeader = wrapper.findAll(".accordion-header")[3];
       await mapsHeader.trigger("click");

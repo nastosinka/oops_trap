@@ -13,7 +13,7 @@ describe("SettingsModal.vue", () => {
 
   const defaultInitialSettings = {
     map: 1,
-    mafia: 2,
+    mafia: { id: 2, name: "Player 2" },
     time: "normal",
   };
 
@@ -102,10 +102,10 @@ describe("SettingsModal.vue", () => {
 
     it("должен устанавливать начальное значение мафии из initialSettings", () => {
       wrapper = createWrapper({
-        initialSettings: { mafia: 3 },
+        initialSettings: { mafia: { id: 3, name: "Player 3" } }, // Изменено: объект
       });
 
-      expect(wrapper.vm.selectedMafia).toBe(3);
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 3, name: "Player 3" }); // Изменено: объект
     });
 
     it("должен работать с пустым массивом игроков", () => {
@@ -152,7 +152,7 @@ describe("SettingsModal.vue", () => {
       wrapper = createWrapper();
 
       expect(wrapper.vm.selectedMap).toBe("");
-      expect(wrapper.vm.selectedMafia).toBe("");
+      expect(wrapper.vm.selectedMafia).toBe(null); // Изменено: null, а не ""
       expect(wrapper.vm.selectedTime).toBe("");
     });
 
@@ -165,7 +165,7 @@ describe("SettingsModal.vue", () => {
       });
 
       expect(wrapper.vm.selectedMap).toBe(1);
-      expect(wrapper.vm.selectedMafia).toBe("");
+      expect(wrapper.vm.selectedMafia).toBe(null); // Изменено: null, а не ""
       expect(wrapper.vm.selectedTime).toBe("easy");
     });
 
@@ -175,7 +175,7 @@ describe("SettingsModal.vue", () => {
       });
 
       expect(wrapper.vm.selectedMap).toBe(1);
-      expect(wrapper.vm.selectedMafia).toBe(2);
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: "Player 2" }); // Изменено: объект
       expect(wrapper.vm.selectedTime).toBe("normal");
     });
   });
@@ -189,7 +189,13 @@ describe("SettingsModal.vue", () => {
       await wrapper.vm.handleApply();
 
       expect(wrapper.emitted("apply")).toHaveLength(1);
-      expect(wrapper.emitted("apply")[0]).toEqual([defaultInitialSettings]);
+      expect(wrapper.emitted("apply")[0]).toEqual([
+        {
+          map: 1,
+          mafia: { id: 2, name: "Player 2" }, // Изменено: объект
+          time: "normal",
+        },
+      ]);
     });
 
     it("должен эмитить событие apply с частичными настройками", async () => {
@@ -203,7 +209,7 @@ describe("SettingsModal.vue", () => {
       expect(wrapper.emitted("apply")[0]).toEqual([
         {
           map: 2,
-          mafia: "",
+          mafia: null, // Изменено: null, а не ""
           time: "",
         },
       ]);
@@ -218,7 +224,13 @@ describe("SettingsModal.vue", () => {
       await button.trigger("click");
 
       expect(wrapper.emitted("apply")).toHaveLength(1);
-      expect(wrapper.emitted("apply")[0]).toEqual([defaultInitialSettings]);
+      expect(wrapper.emitted("apply")[0]).toEqual([
+        {
+          map: 1,
+          mafia: { id: 2, name: "Player 2" }, // Изменено: объект
+          time: "normal",
+        },
+      ]);
     });
   });
 
@@ -238,7 +250,7 @@ describe("SettingsModal.vue", () => {
       const mafiaSelect = wrapper.findAll("select")[1];
       await mafiaSelect.setValue("2");
 
-      expect(wrapper.vm.selectedMafia).toBe(2);
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: "Player 2" }); // Изменено: объект
     });
 
     it("должен обновлять selectedTime при изменении селекта времени", async () => {
@@ -254,7 +266,10 @@ describe("SettingsModal.vue", () => {
   describe("Валидация пропсов", () => {
     it("должен работать с пустым массивом players по умолчанию", () => {
       wrapper = mount(SettingsModal, {
-        props: {},
+        props: {
+          players: [], // Добавлено
+          initialSettings: {}, // Добавлено
+        },
         global: {
           components: {
             BaseButton,
@@ -263,11 +278,15 @@ describe("SettingsModal.vue", () => {
       });
 
       expect(wrapper.vm.players).toEqual([]);
+      expect(wrapper.vm.initialSettings).toEqual({});
     });
 
     it("должен работать с пустым объектом initialSettings по умолчанию", () => {
       wrapper = mount(SettingsModal, {
-        props: {},
+        props: {
+          players: [], // Добавлено
+          initialSettings: {}, // Добавлено
+        },
         global: {
           components: {
             BaseButton,
@@ -276,6 +295,10 @@ describe("SettingsModal.vue", () => {
       });
 
       expect(wrapper.vm.initialSettings).toEqual({});
+      // Проверяем, что компонент не падает при инициализации
+      expect(wrapper.vm.selectedMap).toBe("");
+      expect(wrapper.vm.selectedMafia).toBe(null);
+      expect(wrapper.vm.selectedTime).toBe("");
     });
   });
 });

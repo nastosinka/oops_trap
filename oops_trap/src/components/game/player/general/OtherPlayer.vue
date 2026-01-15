@@ -48,6 +48,7 @@ const gameArea = inject("gameArea", ref({ scale: 1 }));
 
 const SPRITE_WIDTH = 24;
 const SPRITE_HEIGHT = 48;
+const prevXMap = new Map();
 
 /* ----------------------------------
    Normalization
@@ -55,15 +56,31 @@ const SPRITE_HEIGHT = 48;
 
 const processedPlayers = computed(() =>
   Array.isArray(props.players)
-    ? props.players.map((p) => ({
-        id: String(p.id),
-        name: p.name ?? `Player ${p.id}`,
-        x: Number(p.x) || 0,
-        y: Number(p.y) || 0,
-        lastImage: Number(p.lastImage) || 1,
-        isHost: !!p.isHost,
-        trapper: !!p.trapper,
-      }))
+    ? props.players.map((p) => {
+        const id = String(p.id);
+        const x = Number(p.x) || 0;
+
+        const prevX = prevXMap.get(id);
+        let face = "right";
+
+        if (prevX !== undefined) {
+          if (x > prevX) face = "right";
+          else if (x < prevX) face = "left";
+        }
+
+        prevXMap.set(id, x);
+
+        return {
+          id,
+          name: p.name ?? `Player ${p.id}`,
+          x,
+          y: Number(p.y) || 0,
+          lastImage: Number(p.lastImage) || 1,
+          isHost: !!p.isHost,
+          trapper: !!p.trapper,
+          face,
+        };
+      })
     : []
 );
 
@@ -89,9 +106,9 @@ function playerStyle(player) {
 
 function playerClasses(player) {
   return {
-    "is-host": player.isHost,
-    "is-trapper": player.trapper,
     [`player-${player.lastImage}`]: true,
+    "face-left": player.face === "left",
+    "face-right": player.face === "right",
   };
 }
 </script>
@@ -143,6 +160,14 @@ function playerClasses(player) {
 
 .other-player.player-4 .player-sprite {
   background-image: url("@/assets/images/players/1/bp3.png");
+}
+
+.other-player.face-left .player-sprite {
+  transform: scaleX(-1);
+}
+
+.other-player.face-right .player-sprite {
+  transform: scaleX(1);
 }
 
 /* ------------------------------------------------------------------

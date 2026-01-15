@@ -163,12 +163,8 @@ describe("HomePage.vue", () => {
           username: "admin",
           password: "123456",
         }),
+        credentials: "include",
       });
-
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "token",
-        "test-token"
-      );
       expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
     });
 
@@ -262,12 +258,20 @@ describe("HomePage.vue", () => {
         confirmPassword: "123456",
       });
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "token",
-        "token123"
-      );
-      expect(showSuccess).toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "admin",
+          password: "123456",
+        }),
+        credentials: "include",
+      });
+
+
       expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
+      
+      expect(showSuccess).toHaveBeenCalled();
     });
   });
 });
