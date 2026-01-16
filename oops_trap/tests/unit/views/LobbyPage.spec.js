@@ -41,7 +41,7 @@ vi.mock("ant-design-vue", () => ({
         }
         callback();
         return {
-          catch: () => { },
+          catch: () => {},
         };
       },
     })),
@@ -71,7 +71,7 @@ describe("LobbyPage", () => {
   beforeEach(() => {
     mockRouter = {
       push: vi.fn(),
-      replace: vi.fn()  // Добавляем replace для теста exitLobby
+      replace: vi.fn(), // Добавляем replace для теста exitLobby
     };
     mockRoute = { query: { id: "123" } };
 
@@ -84,7 +84,7 @@ describe("LobbyPage", () => {
           status: "waiting",
           trapper: "user123",
           map: 1,
-          time: "normal"
+          time: "normal",
         },
         players: [{ id: "user123", name: "Test User" }],
       }),
@@ -276,7 +276,8 @@ describe("LobbyPage", () => {
       wrapper = createWrapper();
 
       // Создаем мок для метода fetchLobbyData, который используется в checkLobbyStatus
-      const fetchLobbyDataSpy = vi.spyOn(wrapper.vm, "fetchLobbyData")
+      const fetchLobbyDataSpy = vi
+        .spyOn(wrapper.vm, "fetchLobbyData")
         .mockImplementation(async function () {
           this.lobbyStatus = "in-progress";
           this.lobbyId = "123";
@@ -306,13 +307,13 @@ describe("LobbyPage", () => {
       await wrapper.setData({
         isHost: true,
         players: [
-          { id: "user123", name: "Test User", color: "#FF6B6B", isHost: true }
+          { id: "user123", name: "Test User", color: "#FF6B6B", isHost: true },
         ],
         pendingSettings: {
           mafiaId: "user123",
           map: 1,
-          time: "normal"
-        }
+          time: "normal",
+        },
       });
 
       // Получаем кнопку Settings

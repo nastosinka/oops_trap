@@ -424,28 +424,29 @@ const handleGameMessage = (message) => {
 
     case "all_stats":
       if (!message.stats) return;
+      {
+        const results = Object.entries(message.stats).map(([id, stat]) => ({
+          id: String(id),
+          name: stat.name,
+          role: stat.role,
+          alive: stat.alive,
+          win: stat.win,
+          time: stat.time,
+          map: stat.map,
+        }));
 
-      const results = Object.entries(message.stats).map(([id, stat]) => ({
-        id: String(id),
-        name: stat.name,
-        role: stat.role,
-        alive: stat.alive,
-        win: stat.win,
-        time: stat.time,
-        map: stat.map,
-      }));
+        resultsStore.setResults(results, results[0]?.map ?? null);
 
-      resultsStore.setResults(results, results[0]?.map ?? null);
+        gameEnded.value = true;
+        timerActive.value = false;
 
-      gameEnded.value = true;
-      timerActive.value = false;
-
-      router.push({
-        path: "/results",
-        query: {
-          lobbyId: lobbyId.value,
-        },
-      });
+        router.push({
+          path: "/results",
+          query: {
+            lobbyId: lobbyId.value,
+          },
+        });
+      }
       break;
 
     default:
