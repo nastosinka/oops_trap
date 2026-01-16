@@ -13,7 +13,7 @@ export const TRAPS_BY_MAP = {
   map2: [
     {
       id: "trap1",
-      name: "Trap 1",
+      name: "gas-trap",
       component: TrapNum1,
       cooldown: 5000,
     },

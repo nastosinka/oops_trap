@@ -327,8 +327,7 @@ function setupGameWebSocket(server) {
         try {
             const gameRoom = gameRooms.get(gameId);
             if (!gameRoom || !Array.isArray(gameRoom.polygons)) return;
-
-            const game = games.get(gameId);
+            const game = games.get(parseInt(gameId));
             if (!game) return;
 
             if (game.trapper !== playerId) return;
@@ -337,6 +336,7 @@ function setupGameWebSocket(server) {
             if (!trap || typeof trap.timer !== 'number' || trap.isActive) return;
 
             trap.isActive = true;
+            console.log(`Ловушка активирована ${trapName}`);
             broadcastToGame(gameId, {
                 type: 'trap_message',
                 name: trapName,
@@ -355,10 +355,11 @@ function setupGameWebSocket(server) {
                         result: false,
                         timestamp: new Date().toISOString()
                     });
+                    console.log(`Ловушка дезактивирована ${trapName}`);
                 } catch (e) {
                     console.error('❌ Ошибка деактивации ловушки', e);
                 }
-            }, trap.timer);
+            }, trap.timer*1000);
 
         } catch (error) {
             console.error('❌ Ошибка в handleTrapMessage:', error);
@@ -612,8 +613,6 @@ function setupGameWebSocket(server) {
             timestamp: new Date().toISOString(),
         });
 
-        console.log(`Координаты отправлены`);
-        console.log(playersArray);
     }
 
     function handleCoordMessage(ws, gameId, intervalMs = 100) {
@@ -640,8 +639,6 @@ function setupGameWebSocket(server) {
                 timestamp: new Date().toISOString(),
             });
 
-            console.log(`Координаты отправлены в ${new Date().toISOString()}`);
-            console.log(playersArray);
         }, intervalMs);
 
         coordIntervals.set(gameId, interval);
