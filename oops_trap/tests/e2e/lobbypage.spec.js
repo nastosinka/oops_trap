@@ -60,7 +60,15 @@ test.describe('LobbyPage — Visual Elements', () => {
   let lobbyId = 123;
 
   test.beforeEach(async ({ page }) => {
+    // Мокаем все неспецифичные API запросы
     await page.route('**/api/**', async route => {
+      // Пропускаем только те, которые будем мокать отдельно
+      if (
+        route.request().url().includes('/lobby/lobbies/') ||
+        route.request().url().includes('/auth/')
+      ) {
+        return route.continue();
+      }
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -74,34 +82,60 @@ test.describe('LobbyPage — Visual Elements', () => {
     // Создание лобби
     await createLobby(page, lobbyId);
 
-    // Мокаем конкретные API для LobbyPage
+    // Мокаем конкретные API для LobbyPage в правильном порядке
+    
+    // 1. API для проверки хоста (checkIfUserIsHost)
     await page.route(`**/api/lobby/lobbies/${lobbyId}/settings`, async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            ownerId: 1,
-            map: 1,
-            time: 'normal',
-            trapper: 2
-          }
-        }),
-      });
+      const method = route.request().method();
+      
+      if (method === 'GET') {
+        // Первоначальный запрос для проверки хоста
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              ownerId: 1, // Убедитесь, что это совпадает с ID пользователя (1)
+              map: 1,
+              time: 'normal',
+              trapper: 1 // Устанавливаем trapper в 1 для теста
+            }
+          }),
+        });
+      } else if (method === 'POST') {
+        // POST запрос для сохранения настроек
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      }
     });
 
+    // 2. API для статуса лобби
     await page.route(`**/api/lobby/lobbies/${lobbyId}/status`, async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: { status: 'waiting' }
-        }),
-      });
+      const method = route.request().method();
+      
+      if (method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { status: 'waiting' }
+          }),
+        });
+      } else if (method === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      }
     });
 
+    // 3. API для списка игроков
     await page.route(`**/api/lobby/lobbies/${lobbyId}/users`, async route => {
       await route.fulfill({
         status: 200,
@@ -114,10 +148,23 @@ test.describe('LobbyPage — Visual Elements', () => {
         }),
       });
     });
-});
 
+    // 4. API для heartbeat/ping
+    await page.route(`**/api/lobby/lobbies/${lobbyId}/ping`, async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
 
-    /* =========================
+    // Ждем загрузки страницы лобби
+    await page.waitForSelector('.lobby-container', { state: 'visible' });
+    // Даем время для выполнения всех начальных запросов
+    await page.waitForTimeout(1000);
+  });
+
+  /* =========================
     Проверка основных визуальных элементов
     ========================= */
 
@@ -144,8 +191,7 @@ test.describe('LobbyPage — Visual Elements', () => {
     await expect(page.locator('.players-scrollable-layer h2')).toContainText('Players (2)');
   });
 
-
-    /* =========================
+  /* =========================
     Проверка отображения игроков и хоста
     ========================= */
 
@@ -166,12 +212,17 @@ test.describe('LobbyPage — Visual Elements', () => {
     await expect(secondPlayer.locator('.player-host-badge')).toHaveCount(0);
   });
 
-
-    /* =========================
+  /* =========================
     Проверка отображения настроек в модальном окне
     ========================= */
 
   test('Настройки лобби отображаются корректно', async ({ page }) => {
+    // Ждем пока загрузится список игроков
+    await expect(page.locator('.players-list .player')).toHaveCount(2);
+    
+    // Даем время для завершения всех асинхронных операций
+    await page.waitForTimeout(500);
+
     // Открываем модалку настроек
     const settingsButton = page.locator('button:has-text("Settings")');
     await settingsButton.click();
@@ -179,18 +230,27 @@ test.describe('LobbyPage — Visual Elements', () => {
     const modal = page.locator('.settings-modal');
     await expect(modal).toBeVisible();
 
+    // Даем время модалке полностью отрендериться
+    await page.waitForTimeout(300);
+
     // Проверяем группы настроек
     await expect(modal.locator('.setting-title:has-text("map type")')).toBeVisible();
     await expect(modal.locator('.setting-title:has-text("mafia")')).toBeVisible();
     await expect(modal.locator('.setting-title:has-text("time")')).toBeVisible();
 
     // Проверяем, что select отображает замоканные значения
+    
+    // 1. Map select - должен быть '1'
     const mapSelect = modal.locator('select.setting-select').nth(0);
     await expect(mapSelect).toHaveValue('1');
 
+    // 2. Mafia select - должен быть '1' (потому что trapper = 1 в моке)
     const mafiaSelect = modal.locator('select.setting-select').nth(1);
+    // Даем дополнительное время для синхронизации данных
+    await page.waitForTimeout(300);
     await expect(mafiaSelect).toHaveValue('1');
 
+    // 3. Time select - должен быть 'normal'
     const timeSelect = modal.locator('select.setting-select').nth(2);
     await expect(timeSelect).toHaveValue('normal');
   });
