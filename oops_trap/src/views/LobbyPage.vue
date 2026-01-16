@@ -398,19 +398,15 @@ export default {
 
     async exitLobby() {
       try {
-        const resp = await fetch(`/api/lobby/lobbies/${this.lobbyId}/leave`, {
+        await fetch(`/api/lobby/lobbies/${this.lobbyId}/leave`, {
           method: "POST",
           credentials: "include",
         });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        this.stopPolling();
-        this.$router.push("/createLobby");
       } catch (e) {
-        Modal.error({
-          title: "Error",
-          content: "Failed to leave lobby: " + e.message,
-          okText: "OK",
-        });
+        console.warn("leave failed, but continuing:", e);
+      } finally {
+        this.stopPolling();
+        this.$router.replace("/createLobby");
       }
     },
 
