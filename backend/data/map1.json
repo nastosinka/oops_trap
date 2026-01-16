@@ -1425,8 +1425,8 @@
       "type": "water",
       "points": [
         {
-          "x": 1216.036866359447,
-          "y": 897.7188940092167
+          "x": 1206.2551440329219,
+          "y": 894.4855967078189
         },
         {
           "x": 1524.6082949308757,
@@ -1562,7 +1562,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "pit-2",
@@ -1594,7 +1594,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "stone",
@@ -1662,7 +1662,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "tablet-4",
@@ -1698,7 +1698,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "tablet-5",
@@ -1730,7 +1730,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "finish",
@@ -1914,7 +1914,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "stone-break-2",
@@ -1938,7 +1938,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "void-1",
