@@ -89,14 +89,12 @@ const processedPlayers = computed(() =>
 ---------------------------------- */
 
 function playerStyle(player) {
-  const scale = gameArea.value.scale || 1;
-
   return {
     position: "absolute",
-    left: Math.round(player.x * scale) + "px",
-    top: Math.round(player.y * scale) + "px",
-    width: Math.round(SPRITE_WIDTH * scale) + "px",
-    height: Math.round(SPRITE_HEIGHT * scale) + "px",
+    left: Math.round(player.x) + "px",
+    top: Math.round(player.y) + "px",
+    width: SPRITE_WIDTH + "px",
+    height: SPRITE_HEIGHT + "px",
     zIndex: 150,
     pointerEvents: "none",
   };

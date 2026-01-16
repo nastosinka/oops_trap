@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="trap-image"
-    :class="{ active }"
-  />
+  <div class="trap-image" :class="{ active }" />
 </template>
 
 <script setup>
@@ -59,7 +56,8 @@ const props = defineProps({
   80% {
     background-image: url("@/assets/images/maps/Map2/tr6/9.png");
   }
-  81%, 100% {
+  81%,
+  100% {
     background-image: url("@/assets/images/maps/Map2/tr6/10.png");
   }
 }

@@ -5,7 +5,6 @@ const path = require("path");
 
 const coordIntervals = new Map();
 
-
 function pointInPolygon(x, y, points) {
     let inside = false;
     for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
@@ -14,7 +13,7 @@ function pointInPolygon(x, y, points) {
 
         // Проверка пересечения луча с ребром
         const intersect = ((yi > y) !== (yj > y)) &&
-                          (x < (xj - xi) * (y - yi) / (yj - yi + 0.0000001) + xi); 
+            (x < (xj - xi) * (y - yi) / (yj - yi + 0.0000001) + xi);
         // + маленькая поправка чтобы не делить на ноль
 
         if (intersect) inside = !inside;
@@ -85,7 +84,7 @@ const gameRooms = new Map();
 const { lobbies, games } = require('./../routes/lobby');
 //const { console } = require('inspector'); // ❌❌РАСКОММЕНТИТЬ ЧТОБЫ УБРАТЬ ЛОГИ❌❌
 
-function validateCoord(lastSettings, settings){
+function validateCoord(lastSettings, settings) {
     //+ логика
     return true;
 }
@@ -131,7 +130,78 @@ function setupGameWebSocket(server) {
         });
     }
 
-    function stopGameTimer(gameId) {
+    async function finalizeGame(gameId) {
+        console.log("HUIIII");
+        const gameRoom = gameRooms.get(gameId);
+        const game = games.get(parseInt(gameId));
+        if (!gameRoom || !game) return;
+
+        if (gameRoom.finished) return;
+        gameRoom.finished = true;
+
+        if (!game.stats) {
+            game.stats = new Map();
+        }
+
+        const players = Array.from(gameRoom.playersWithSettings.entries());
+
+        const runners = players.filter(([id, p]) => !p.trapper);
+        const mafiaId = game.trapper;
+
+        const anyRunnerFinished = runners.some(([_, p]) => p.alive === null);
+
+        // --- RUNNERS ---
+        for (const [id, p] of runners) {
+            const finished = p.alive === null;
+
+            game.stats.set(id, {
+                name: p.name,
+                role: 'runner',
+                alive: p.alive,
+                win: finished,
+                time: finished
+                    ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
+                    : null,
+                map: game.map
+            });
+
+            if (finished) {
+                await saveStatistic({
+                    id_user: id,
+                    id_map: game.map,
+                    time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+                    role: true
+                });
+            }
+        }
+
+        // --- MAFIA ---
+        const mafiaWin = !anyRunnerFinished;
+
+        game.stats.set(mafiaId, {
+            name: game.players.find(p => p.id === mafiaId)?.name,
+            role: 'mafia',
+            alive: true,
+            win: mafiaWin,
+            time: mafiaWin
+            ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
+            : null,
+            map: game.map
+        });
+
+        const lobby = lobbies.get(parseInt(gameId));
+        if (lobby) {
+            lobby.status = "finished";
+            console.log(`🏁 Лобби ${gameId} помечено как finished`);
+        }
+
+        broadcastToGame(gameId, {
+            type: 'all_stats',
+            stats: Object.fromEntries(game.stats),
+        });
+    }
+
+    async function stopGameTimer(gameId) {
         const gameRoom = gameRooms.get(gameId);
         if (!gameRoom || !gameRoom.timer.active) return;
 
@@ -143,16 +213,38 @@ function setupGameWebSocket(server) {
         gameRoom.timer.active = false;
         console.log(`⏹️ Таймер остановлен для игры ${gameId}`);
 
+        if (!gameRoom.finished) {
+            await finalizeGame(gameId);
+        }
+
         // Закрываем все соединения в комнате
-        gameRoom.players.forEach(player => {
+        gameRoom.players.forEach(async player => {
             if (player.connected && player.ws.readyState === player.ws.OPEN) {
                 player.ws.close(1000, 'Game finished - time is up');
             }
         });
 
         // Удаляем комнату
-        gameRooms.delete(gameId);
+        setTimeout(() => {
+            gameRooms.delete(gameId);
+        }, 500);
         console.log(`🎯 Игра ${gameId} завершена, комната удалена`);
+    }
+
+    async function checkAllRunnersDone(gameId) {
+        const gameRoom = gameRooms.get(gameId);
+        if (!gameRoom || gameRoom.finished) return;
+
+        const runners = [...gameRoom.playersWithSettings.values()]
+            .filter(p => !p.trapper);
+
+        const allDone = runners.every(
+            p => p.alive === false || p.alive === null
+        );
+
+        if (!allDone) return;
+        await finalizeGame(gameId);
+        stopGameTimer(gameId);
     }
 
     function startGameTimer(gameId) {
@@ -172,7 +264,7 @@ function setupGameWebSocket(server) {
         });
 
         // Запускаем интервал обновления (каждую секунду)
-        gameRoom.timer.interval = setInterval(() => {
+        gameRoom.timer.interval = setInterval(async () => {
             gameRoom.timer.timeLeft--;
 
             // Отправляем обновление времени всем игрокам
@@ -187,6 +279,7 @@ function setupGameWebSocket(server) {
 
             // Если время вышло
             if (gameRoom.timer.timeLeft <= 0) {
+                await finalizeGame(gameId);
                 stopGameTimer(gameId);
                 console.log(`⏰ Время вышло для игры ${gameId}`);
             }
@@ -194,7 +287,7 @@ function setupGameWebSocket(server) {
     }
 
     wss.on('connection', (ws) => {
-        ws.on('message', (data) => {
+        ws.on('message', async (data) => {
             try {
                 const message = JSON.parse(data);
                 console.log('📨 Сообщение в игре:', message);
@@ -203,17 +296,17 @@ function setupGameWebSocket(server) {
                     case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    case 'all_stats': // получить статистику по игре
-                        handleAllStats(ws, message.gameId);
-                        break;
+                    // case 'all_stats': // получить статистику по игре
+                    //     await finalizeGame(message.gameId);
+                    //     break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
-                        handlePlayerMove(ws, message.gameId, message.playerId, message.settings); 
+                        handlePlayerMove(ws, message.gameId, message.playerId, message.settings);
                         break;
                     case 'coord_message': // получить координаты
-                        handleCoordMessage(ws, message.gameId); 
+                        handleCoordMessage(ws, message.gameId);
                         break;
                     case 'trap_message': // активировать ловушку
-                        handleTrapMessage(ws, message.gameId, message.trap, message.playerId); 
+                        handleTrapMessage(ws, message.gameId, message.trap, message.playerId);
                         break;
                 }
             } catch (error) {
@@ -230,214 +323,217 @@ function setupGameWebSocket(server) {
         });
     });
 
-function handleTrapMessage(ws, gameId, trapName, playerId) {
-    try {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom || !Array.isArray(gameRoom.polygons)) return;
+    function handleTrapMessage(ws, gameId, trapName, playerId) {
+        try {
+            const gameRoom = gameRooms.get(gameId);
+            if (!gameRoom || !Array.isArray(gameRoom.polygons)) return;
 
-        const game = games.get(gameId);
-        if (!game) return;
+            const game = games.get(gameId);
+            if (!game) return;
 
-        if (game.trapper !== playerId) return;
+            if (game.trapper !== playerId) return;
 
-        const trap = gameRoom.polygons.find(p => p.name === trapName);
-        if (!trap || typeof trap.timer !== 'number' || trap.isActive) return;
+            const trap = gameRoom.polygons.find(p => p.name === trapName);
+            if (!trap || typeof trap.timer !== 'number' || trap.isActive) return;
 
-        trap.isActive = true;
-        broadcastToGame(gameId, {
-            type: 'trap_message',
-            name: trapName,
-            time: trap.timer,
-            result: true,
-            timestamp: new Date().toISOString()
-        });
-
-        setTimeout(() => {
-            try {
-                trap.isActive = false;
-                broadcastToGame(gameId, {
-                    type: 'trap_message',
-                    name: trapName,
-                    time: trap.timer,
-                    result: false,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (e) {
-                console.error('❌ Ошибка деактивации ловушки', e);
-            }
-        }, trap.timer);
-
-    } catch (error) {
-        console.error('❌ Ошибка в handleTrapMessage:', error);
-    }
-}
-
-
-async function handleInitGame(ws, gameId, playerId, isHost) {    
-    try {
-        let gameRoom = gameRooms.get(gameId);
-
-        if (!gameRoom) {
-            let lobby = lobbies.get(parseInt(gameId));
-            const map = await prisma.maps.findUnique({
-            where: { id: lobby.map },
-                select: {
-                    time_1: true,
-                    time_2: true,
-                    time_3: true,
-                },
+            trap.isActive = true;
+            broadcastToGame(gameId, {
+                type: 'trap_message',
+                name: trapName,
+                time: trap.timer,
+                result: true,
+                timestamp: new Date().toISOString()
             });
 
-            if (lobby.time === "easy"){
-                    gameRoom = {
-                players: new Map(),
-                hostId: null,
-                timer: {
-                    active: false,
-                    timeLeft: map.time_1,
-                    interval: null,
-                    totalTime: map.time_1,
-                    startTimeout: null
-                },
-                hasFirstPlayer: false,
-                playersWithSettings: new Map(),
-            };
-                    
-                } 
-                if (lobby.time === "normal"){
-                    gameRoom = {
-                players: new Map(),
-                hostId: null,
-                timer: {
-                    active: false,
-                    timeLeft: map.time_2,
-                    interval: null,
-                    totalTime: map.time_2,
-                    startTimeout: null
-                },
-                hasFirstPlayer: false,
-                playersWithSettings: new Map(),
-            };
-                }
-                if (lobby.time === "hard"){
-                    gameRoom = {
-                players: new Map(),
-                hostId: null,
-                timer: {
-                    active: false,
-                    timeLeft: map.time_3,
-                    interval: null,
-                    totalTime: map.time_3,
-                    startTimeout: null
-                },
-                hasFirstPlayer: false,
-                playersWithSettings: new Map(),
-            };
-            } 
-
-            console.log(gameRoom.timer.totalTime);
-            gameRooms.set(gameId, gameRoom);
-        }
-
-        if (isHost && !gameRoom.hostId) {
-            gameRoom.hostId = playerId;
-        }
-
-        // Добавляем/обновляем игрока
-        gameRoom.players.set(playerId, {
-            ws,
-            playerId,
-            isHost: playerId === gameRoom.hostId,
-            ready: false,
-            connected: true,
-        });
-
-        // Сохраняем данные в соединении
-        ws.gameId = gameId;
-        ws.playerId = playerId;
-
-        // Если это первый игрок, запускаем таймер через 10 секунд
-        if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
-            gameRoom.hasFirstPlayer = true;
-            console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
-
-            
-            gameRoom.timer.startTimeout = setTimeout(() => {
-                startGameTimer(gameId);
-                let game = games.get(parseInt(gameId));
-                console.log(game);
-                if (!gameRoom.polygons) {
-                    try {
-                        const mapName = game.map;
-                        const filePath = path.join(__dirname, "../../data", `map${mapName}.json`);
-
-                        const polygonsData = JSON.parse(fs.readFileSync(filePath));
-                        gameRoom.polygons = polygonsData.polygons;
-
-                        console.log(`🗺️ Полигоны карты "${mapName}"`);
-                    } catch (e) {
-                        console.error("❌ Ошибка загрузки полигона:", e);
-                    }
-                }
-                const spawn = getSpawnPoint(gameRoom.polygons); ////// SPAWN COORDS - spawn.x spawn.y
-
-                console.log(`Игрок заспавнится на координатах ${spawn.x} - - ${spawn.y}.`);
-                
-                if (!game) {
-                    //+ логика, игра не найдена
-                    return;
-                }
-
-                for (let i = 0; i < game.players.length; i++) {
-                    const player = game.players[i];
-                    console.log(player);
-                    if (game.trapper === player['id']){
-                        gameRoom.playersWithSettings.set(player['id'], {
-                        name: player['name'], 
-                        x: spawn.x,
-                        y: spawn.y,
-                        trapper: true,
-                        alive: null,
-                        time: null,
-                        lastImage: null,
+            setTimeout(() => {
+                try {
+                    trap.isActive = false;
+                    broadcastToGame(gameId, {
+                        type: 'trap_message',
+                        name: trapName,
+                        time: trap.timer,
+                        result: false,
+                        timestamp: new Date().toISOString()
                     });
-                    } else {
-                    gameRoom.playersWithSettings.set(player['id'], {
-                        name: player['name'], 
-                        x: spawn.x,
-                        y: spawn.y,
-                        trapper: false,
-                        alive: true,
-                        time: null,
-                        lastImage: null,
-                    });
+                } catch (e) {
+                    console.error('❌ Ошибка деактивации ловушки', e);
                 }
+            }, trap.timer);
+
+        } catch (error) {
+            console.error('❌ Ошибка в handleTrapMessage:', error);
+        }
+    }
+
+
+    async function handleInitGame(ws, gameId, playerId, isHost) {
+        try {
+            let gameRoom = gameRooms.get(gameId);
+
+            if (!gameRoom) {
+                let lobby = lobbies.get(parseInt(gameId));
+                const map = await prisma.maps.findUnique({
+                    where: { id: lobby.map },
+                    select: {
+                        time_1: true,
+                        time_2: true,
+                        time_3: true,
+                    },
+                });
+
+                if (lobby.time === "easy") {
+                    gameRoom = {
+                        players: new Map(),
+                        hostId: null,
+                        timer: {
+                            active: false,
+                            timeLeft: map.time_1,
+                            interval: null,
+                            totalTime: map.time_1,
+                            startTimeout: null
+                        },
+                        hasFirstPlayer: false,
+                        playersWithSettings: new Map(),
+                        finished: false
+                    };
+
+                }
+                if (lobby.time === "normal") {
+                    gameRoom = {
+                        players: new Map(),
+                        hostId: null,
+                        timer: {
+                            active: false,
+                            timeLeft: map.time_2,
+                            interval: null,
+                            totalTime: map.time_2,
+                            startTimeout: null
+                        },
+                        hasFirstPlayer: false,
+                        playersWithSettings: new Map(),
+                        finished: false
+                    };
+                }
+                if (lobby.time === "hard") {
+                    gameRoom = {
+                        players: new Map(),
+                        hostId: null,
+                        timer: {
+                            active: false,
+                            timeLeft: map.time_3,
+                            interval: null,
+                            totalTime: map.time_3,
+                            startTimeout: null
+                        },
+                        hasFirstPlayer: false,
+                        playersWithSettings: new Map(),
+                        finished: false
+                    };
+                }
+
+                console.log(gameRoom.timer.totalTime);
+                gameRooms.set(gameId, gameRoom);
             }
-            console.log(`Хранение координат инициализировано`);
-            console.log(gameRoom.playersWithSettings);
-            }, 10000);
-        }
 
-        // Если таймер уже активен, отправляем текущее состояние новому игроку
-        if (gameRoom.timer.active) {
-            ws.send(JSON.stringify({
-                type: 'timer_update',
-                timeLeft: gameRoom.timer.timeLeft,
-                totalTime: gameRoom.timer.totalTime,
-                active: true
-            }));
-        }
+            if (isHost && !gameRoom.hostId) {
+                gameRoom.hostId = playerId;
+            }
 
-        // Уведомляем всех о новом подключении
-        broadcastToGame(gameId, {
-            type: 'player_joined',
-            playerId,
-            isHost: playerId === gameRoom.hostId,
-            playersCount: gameRoom.players.size,
-            message: `🎮 Игрок ${playerId} присоединился к игре`
-        });
+            // Добавляем/обновляем игрока
+            gameRoom.players.set(playerId, {
+                ws,
+                playerId,
+                isHost: playerId === gameRoom.hostId,
+                ready: false,
+                connected: true,
+            });
 
-        console.log(`👤 Игрок ${playerId} присоединился к игре ${gameId} (${isHost ? 'Хост' : 'Игрок'})`);
+            // Сохраняем данные в соединении
+            ws.gameId = gameId;
+            ws.playerId = playerId;
+
+            // Если это первый игрок, запускаем таймер через 10 секунд
+            if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
+                gameRoom.hasFirstPlayer = true;
+                console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
+
+
+                gameRoom.timer.startTimeout = setTimeout(() => {
+                    startGameTimer(gameId);
+                    let game = games.get(parseInt(gameId));
+                    console.log(game);
+                    if (!gameRoom.polygons) {
+                        try {
+                            const mapName = game.map;
+                            const filePath = path.join(__dirname, "../../data", `map${mapName}.json`);
+
+                            const polygonsData = JSON.parse(fs.readFileSync(filePath));
+                            gameRoom.polygons = polygonsData.polygons;
+
+                            console.log(`🗺️ Полигоны карты "${mapName}"`);
+                        } catch (e) {
+                            console.error("❌ Ошибка загрузки полигона:", e);
+                        }
+                    }
+                    const spawn = getSpawnPoint(gameRoom.polygons); ////// SPAWN COORDS - spawn.x spawn.y
+
+                    console.log(`Игрок заспавнится на координатах ${spawn.x} - - ${spawn.y}.`);
+
+                    if (!game) {
+                        //+ логика, игра не найдена
+                        return;
+                    }
+
+                    for (let i = 0; i < game.players.length; i++) {
+                        const player = game.players[i];
+                        console.log(player);
+                        if (game.trapper === player['id']) {
+                            gameRoom.playersWithSettings.set(player['id'], {
+                                name: player['name'],
+                                x: spawn.x,
+                                y: spawn.y,
+                                trapper: true,
+                                alive: null,
+                                time: null,
+                                lastImage: null,
+                            });
+                        } else {
+                            gameRoom.playersWithSettings.set(player['id'], {
+                                name: player['name'],
+                                x: spawn.x,
+                                y: spawn.y,
+                                trapper: false,
+                                alive: true,
+                                time: null,
+                                lastImage: null,
+                            });
+                        }
+                    }
+                    console.log(`Хранение координат инициализировано`);
+                    console.log(gameRoom.playersWithSettings);
+                }, 10000);
+            }
+
+            // Если таймер уже активен, отправляем текущее состояние новому игроку
+            if (gameRoom.timer.active) {
+                ws.send(JSON.stringify({
+                    type: 'timer_update',
+                    timeLeft: gameRoom.timer.timeLeft,
+                    totalTime: gameRoom.timer.totalTime,
+                    active: true
+                }));
+            }
+
+            // Уведомляем всех о новом подключении
+            broadcastToGame(gameId, {
+                type: 'player_joined',
+                playerId,
+                isHost: playerId === gameRoom.hostId,
+                playersCount: gameRoom.players.size,
+                message: `🎮 Игрок ${playerId} присоединился к игре`
+            });
+
+            console.log(`👤 Игрок ${playerId} присоединился к игре ${gameId} (${isHost ? 'Хост' : 'Игрок'})`);
         } catch (error) {
             console.error('❌ Ошибка в handleInitGame:', error);
         }
@@ -478,21 +574,21 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
                         reason: trapType,
                         timestamp: new Date().toISOString()
                     });
-
+                    checkAllRunnersDone(gameId);
                     console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
                     return;
                 }
-                
+
                 const finish = checkFinishCollision(settings.x, settings.y, polygons);
                 if (finish) {
                     player.alive = null;
-                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    // handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
                     broadcastToGame(gameId, {
                         type: "win",
                         playerId,
                         timestamp: new Date().toISOString()
                     });
-
+                    checkAllRunnersDone(gameId);
                     console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     return;
                 }
@@ -520,187 +616,186 @@ async function handleInitGame(ws, gameId, playerId, isHost) {
         console.log(playersArray);
     }
 
-function handleCoordMessage(ws, gameId, intervalMs = 100) {
-    const gameRoom = gameRooms.get(gameId);
-    if (!gameRoom) return;
-
-
-    stopCoordBroadcast(gameId);
-
-    const interval = setInterval(() => {
-        const currentGameRoom = gameRooms.get(gameId);
-        if (!currentGameRoom) {
-            stopCoordBroadcast(gameId);
-            return;
-        }
-
-        const playersArray = Array.from(currentGameRoom.playersWithSettings.entries()).map(([id, player]) => ({
-            id: id,
-            ...player
-        }));
-
-        broadcastToGame(gameId, {
-            type: 'coord_message',
-            coords: playersArray,
-            timestamp: new Date().toISOString(),
-        });
-
-        console.log(`Координаты отправлены в ${new Date().toISOString()}`);
-        console.log(playersArray);
-    }, intervalMs);
-
-    coordIntervals.set(gameId, interval);
-
-    console.log(`Запущена периодическая отправка координатов для игры ${gameId} каждые ${intervalMs}мс`);
-}
-
-function stopCoordBroadcast(gameId) {
-    if (coordIntervals.has(gameId)) {
-        clearInterval(coordIntervals.get(gameId));
-        coordIntervals.delete(gameId);
-        console.log(`Остановлена отправка координатов для игры ${gameId}`);
-    }
-}
-
-
-    function handleAllStats(ws, gameId) {
-        const game = games.get(parseInt(gameId));
-        if (!game) {
-                    //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
-
-        broadcastToGame(gameId, {
-            type: 'all_stats',
-            stats: game.stats,
-            timestamp: new Date().toISOString()
-        });
-    }
-
-async function saveStatistic(data) {
-  const { id_user, id_map, time, role } = data;
-
-  // Валидация входных данных
-  if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
-    throw {
-      error: 'Обязательные поля: id_user, id_map, time, role',
-    };
-  }
-
-  const userId = parseInt(id_user);
-  const mapId = parseInt(id_map);
-  const timeValue = parseInt(time);
-
-  if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
-    throw {
-      error: 'Поля id_user, id_map и time должны быть числами',
-    };
-  }
-
-  if (typeof role !== 'boolean') {
-    throw {
-      error: 'Поле role должно быть булевым значением',
-    };
-  }
-
-  try {
-    // Проверка существующей статистики
-    const existingStat = await prisma.stats.findFirst({
-      where: {
-        id_user: userId,
-        id_map: mapId,
-        role: role,
-      },
-    });
-
-    let result;
-    let action;
-
-    if (existingStat) {
-      if (existingStat.time > timeValue) {
-        result = await prisma.stats.update({
-          where: { id: existingStat.id },
-          data: { time: timeValue },
-        });
-        action = 'updated';
-        console.log('Статистика обновлена:', result);
-      } else {
-        console.log('Статистика не требует обновлений');
-        result = existingStat;
-        action = 'unchanged';
-      }
-    } else {
-      result = await prisma.stats.create({
-        data: {
-          id_user: userId,
-          id_map: mapId,
-          time: timeValue,
-          role: role,
-        },
-      });
-      action = 'created';
-      console.log('Новая статистика создана:', result);
-    }
-
-    // Форматирование результата
-    const formattedResult = {
-      id: result.id,
-      id_user: result.id_user,
-      id_map: result.id_map,
-      time: result.time,
-      role: result.role,
-    };
-
-    return {
-      success: true,
-      action: action,
-      data: formattedResult,
-    };
-
-  } catch (error) {
-    console.error('Ошибка при сохранении статистики:', error);
-
-    if (error.code === 'P2003') {
-      throw {
-        error: 'Неверный id_user или id_map',
-        details: 'Указанный пользователь или карта не существует'
-      };
-    }
-
-    throw {
-      error: 'Ошибка сервера при сохранении статистики',
-      details: error.message
-    };
-  }
-}
-
-    function handleStats(gameId, playerId) {
-        try {
+    function handleCoordMessage(ws, gameId, intervalMs = 100) {
         const gameRoom = gameRooms.get(gameId);
         if (!gameRoom) return;
-        const game = games.get(parseInt(gameId));
-        if (!game || game.trapper === playerId) {
-                  //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
-        game.stats.set(playerId, {
-            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
-            map: game.map,
-            role: true,
-        });
-        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
 
+        stopCoordBroadcast(gameId);
 
-        broadcastToGame(gameId, {
-            type: 'stats',
-            stats: game.stats,
-            timestamp: new Date().toISOString()
-        });
-        console.log(game.stats);
-        } catch (error) {
-            console.error('❌ Ошибка в handleStats:', error);
+        const interval = setInterval(() => {
+            const currentGameRoom = gameRooms.get(gameId);
+            if (!currentGameRoom) {
+                stopCoordBroadcast(gameId);
+                return;
+            }
+
+            const playersArray = Array.from(currentGameRoom.playersWithSettings.entries()).map(([id, player]) => ({
+                id: id,
+                ...player
+            }));
+
+            broadcastToGame(gameId, {
+                type: 'coord_message',
+                coords: playersArray,
+                timestamp: new Date().toISOString(),
+            });
+
+            console.log(`Координаты отправлены в ${new Date().toISOString()}`);
+            console.log(playersArray);
+        }, intervalMs);
+
+        coordIntervals.set(gameId, interval);
+
+        console.log(`Запущена периодическая отправка координатов для игры ${gameId} каждые ${intervalMs}мс`);
+    }
+
+    function stopCoordBroadcast(gameId) {
+        if (coordIntervals.has(gameId)) {
+            clearInterval(coordIntervals.get(gameId));
+            coordIntervals.delete(gameId);
+            console.log(`Остановлена отправка координатов для игры ${gameId}`);
         }
     }
+
+
+    // function handleAllStats(ws, gameId) {
+    //     const game = games.get(parseInt(gameId));
+    //     if (!game) {
+    //                 //+ логика, игра не найдена + проверка что игрок не траппер
+    //         return;
+    //     }
+
+    //     broadcastToGame(gameId, {
+    //         type: 'all_stats',
+    //         stats: game.stats,
+    //         timestamp: new Date().toISOString()
+    //     });
+    // }
+
+    async function saveStatistic(data) {
+        const { id_user, id_map, time, role } = data;
+
+        // Валидация входных данных
+        if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
+            throw {
+                error: 'Обязательные поля: id_user, id_map, time, role',
+            };
+        }
+
+        const userId = parseInt(id_user);
+        const mapId = parseInt(id_map);
+        const timeValue = parseInt(time);
+
+        if (isNaN(userId) || isNaN(mapId) || isNaN(timeValue)) {
+            throw {
+                error: 'Поля id_user, id_map и time должны быть числами',
+            };
+        }
+
+        if (typeof role !== 'boolean') {
+            throw {
+                error: 'Поле role должно быть булевым значением',
+            };
+        }
+
+        try {
+            // Проверка существующей статистики
+            const existingStat = await prisma.stats.findFirst({
+                where: {
+                    id_user: userId,
+                    id_map: mapId,
+                    role: role,
+                },
+            });
+
+            let result;
+            let action;
+
+            if (existingStat) {
+                if (existingStat.time > timeValue) {
+                    result = await prisma.stats.update({
+                        where: { id: existingStat.id },
+                        data: { time: timeValue },
+                    });
+                    action = 'updated';
+                    console.log('Статистика обновлена:', result);
+                } else {
+                    console.log('Статистика не требует обновлений');
+                    result = existingStat;
+                    action = 'unchanged';
+                }
+            } else {
+                result = await prisma.stats.create({
+                    data: {
+                        id_user: userId,
+                        id_map: mapId,
+                        time: timeValue,
+                        role: role,
+                    },
+                });
+                action = 'created';
+                console.log('Новая статистика создана:', result);
+            }
+
+            // Форматирование результата
+            const formattedResult = {
+                id: result.id,
+                id_user: result.id_user,
+                id_map: result.id_map,
+                time: result.time,
+                role: result.role,
+            };
+
+            return {
+                success: true,
+                action: action,
+                data: formattedResult,
+            };
+
+        } catch (error) {
+            console.error('Ошибка при сохранении статистики:', error);
+
+            if (error.code === 'P2003') {
+                throw {
+                    error: 'Неверный id_user или id_map',
+                    details: 'Указанный пользователь или карта не существует'
+                };
+            }
+
+            throw {
+                error: 'Ошибка сервера при сохранении статистики',
+                details: error.message
+            };
+        }
+    }
+
+    // function handleStats(gameId, playerId) {
+    //     try {
+    //     const gameRoom = gameRooms.get(gameId);
+    //     if (!gameRoom) return;
+    //     const game = games.get(parseInt(gameId));
+    //     if (!game || game.trapper === playerId) {
+    //               //+ логика, игра не найдена + проверка что игрок не траппер
+    //         return;
+    //     }
+    //     game.stats.set(playerId, {
+    //         time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+    //         map: game.map,
+    //         role: true,
+    //     });
+    //     saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
+
+
+    //     broadcastToGame(gameId, {
+    //         type: 'stats',
+    //         stats: game.stats,
+    //         timestamp: new Date().toISOString()
+    //     });
+    //     console.log(game.stats);
+    //     } catch (error) {
+    //         console.error('❌ Ошибка в handleStats:', error);
+    //     }
+    // }
 
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
@@ -733,6 +828,14 @@ async function saveStatistic(data) {
             }
             gameRoom.hasFirstPlayer = false;
         }
+
+        if (ws.playerId === gameRoom.hostId) {
+            const lobby = lobbies.get(parseInt(gameId));
+            if (lobby && lobby.status === "finished") {
+                lobby.status = "waiting";
+                console.log(`🔁 Host left finished game → lobby ${gameId} waiting`);
+            }
+        }        
     }
     // Очистка пустых комнат
     setInterval(() => {
@@ -743,7 +846,10 @@ async function saveStatistic(data) {
                 if (gameRoom.timer.startTimeout) {
                     clearTimeout(gameRoom.timer.startTimeout);
                 }
-                gameRooms.delete(gameId);
+                setTimeout(() => {
+                    gameRooms.delete(gameId);
+                }, 500);
+
                 console.log(`🧹 Очищена пустая игровая комната ${gameId}`);
             }
         }

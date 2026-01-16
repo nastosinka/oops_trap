@@ -8,6 +8,8 @@ export const useUserStore = defineStore("user", () => {
   const currentGameId = ref(null); // Текущая игра
   const currentLobbyId = ref(null); // Текущее лобби
   const myRole = ref("runner");
+  const gameMap = ref(2);
+  const isAlive = ref(true);
 
   const userId = computed(() => user.value?.id || null);
   const userName = computed(() => user.value?.name || "Guest");
@@ -16,6 +18,10 @@ export const useUserStore = defineStore("user", () => {
     () => !!gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN
   );
   const getGameSocket = computed(() => gameSocket.value);
+
+  const setIsAlive = (alive) => {
+    isAlive.value = alive;
+  };
 
   const initializeUser = () => {
     if (!sessionId.value) {
@@ -76,6 +82,8 @@ export const useUserStore = defineStore("user", () => {
     currentGameId,
     currentLobbyId,
     myRole,
+    gameMap,
+    isAlive,
 
     // Computed свойства
     userId,
@@ -89,6 +97,7 @@ export const useUserStore = defineStore("user", () => {
     login,
     logout,
     setMyRole,
+    setIsAlive,
 
     // Методы управления игровым сокетом
     setGameSocket,

@@ -32,7 +32,7 @@ export default {
   emits: ["player-move"],
   data() {
     return {
-      pos: { x: 1850, y: 910 },
+      pos: { x: 1850, y: 950 },
       velocity: { x: 0, y: 0 },
       speed: 3,
       gravity: 0.4,
@@ -41,11 +41,10 @@ export default {
       dir: "right",
       keys: new Set(),
       animationFrame: null,
-      SPAWN_POINT: { x: 1850, y: 910 },
       respawnTimeout: null,
       currentFrame: 0,
 
-      lastSentPos: { x: 1850, y: 910 },
+      lastSentPos: { x: 0, y: 0 },
       lastSendTime: 0,
       sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
 
@@ -72,12 +71,17 @@ export default {
       };
     },
     playerStyle() {
+      const scale = this.gameArea.scale;
+
+      const screenX = Math.round(this.pos.x * scale) / scale;
+      const screenY = Math.round(this.pos.y * scale) / scale;
+
+      const flip = this.dir === "left" ? -1 : 1;
+
       return {
-        left: Math.round(this.pos.x * this.gameArea.scale) + "px",
-        top: Math.round(this.pos.y * this.gameArea.scale) + "px",
-        width: Math.round(24 * this.gameArea.scale) + "px",
-        height: Math.round(48 * this.gameArea.scale) + "px",
-        transform: `scaleX(${this.dir === "left" ? -1 : 1})`,
+        transform: `translate(${screenX}px, ${screenY}px) scaleX(${flip})`,
+        width: "24px",
+        height: "48px",
       };
     },
   },
@@ -86,7 +90,7 @@ export default {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
-
+    this.setSpawnFromPolygon();
     // Отправляем начальные координаты
     this.sendCoords();
   },
@@ -96,6 +100,31 @@ export default {
     cancelAnimationFrame(this.animationFrame);
   },
   methods: {
+    // Новые вспомогательные методы
+    addToY(value) {
+      this.pos.y = parseFloat((this.pos.y + value).toFixed(2));
+    },
+
+    subtractFromY(value) {
+      this.pos.y = parseFloat((this.pos.y - value).toFixed(2));
+    },
+
+    addToX(value) {
+      this.pos.x = parseFloat((this.pos.x + value).toFixed(2));
+    },
+    setSpawnFromPolygon() {
+      const spawnPoly = this.polygons.find((p) => p.type === "spawn");
+      if (!spawnPoly || !spawnPoly.points.length) return;
+
+      const center = this.getPolygonCenter(spawnPoly.points);
+      const pos = this.spawnToPos(center);
+
+      this.pos.x = pos.x;
+      this.pos.y = pos.y;
+      this.velocity.y = 0;
+
+      this.sendCoords(true);
+    },
     handleKeyDown(e) {
       const key = e.key.toLowerCase();
 
@@ -105,6 +134,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
+        q: ["q", "й"],
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -123,6 +153,7 @@ export default {
         a: ["a", "ф"],
         s: ["s", "ы"],
         d: ["d", "в"],
+        q: ["q", "й"],
       };
 
       for (const [action, keys] of Object.entries(mapping)) {
@@ -224,12 +255,17 @@ export default {
         });
       }
     },
-
     loop() {
       // ===== X =====
       let moveX = 0;
-      if (this.keys.has("a")) moveX = -this.speed;
-      if (this.keys.has("d")) moveX = this.speed;
+      if (this.keys.has("a")) {
+        moveX = -this.speed;
+        this.dir = "left";
+      }
+      if (this.keys.has("d")) {
+        moveX = this.speed;
+        this.dir = "right";
+      }
 
       if (moveX !== 0) {
         const dir = moveX < 0 ? "left" : "right";
@@ -258,40 +294,52 @@ export default {
       const onVine = this.polygonUnderPlayer("vine");
       const onRope = this.polygonUnderPlayer("rope");
 
-      this.onVine = onVine || onRope;
-
       const hittingCeiling = this.checkCeiling();
       const hittingGround = this.checkGround();
 
+      // прыжок с каната по q
+      if (this.keys.has("q") && (onVine || onRope)) {
+        this.onVine = false;
+        this.isOnGround = false;
+        this.pos.x -= 1; // даём шанс набрать импульс
+        this.velocity.y = -6.7;
+        this.velocity.x = -9;
+        this.dir = "left";
+        this.sendCoords();
+        this.animationFrame = requestAnimationFrame(this.loop);
+        return;
+      }
+
       if (onVine || onRope) {
+        this.onVine = true;
         if (this.keys.has("w")) this.pos.y -= this.speed;
         if (this.keys.has("s")) this.pos.y += this.speed;
-
-        if (onRope && (this.keys.has("a") || this.keys.has("d"))) {
-          this.onVine = false;
-          this.velocity.y = 1;
-        } else {
-          this.velocity.y = 0;
-        }
-
+        this.velocity.y = 0;
+        this.velocity.x = 0;
         this.isOnGround = false;
       } else if (inWater && !hittingGround) {
         if (this.keys.has("w")) this.pos.y -= this.speed / 2;
         if (this.keys.has("s")) this.pos.y += this.speed / 2;
-
-        if (this.keys.has(" ") || this.keys.has("Spacebar")) {
-          this.velocity.y = -6.7;
-          this.isOnGround = false;
-        } else {
-          this.velocity.y = 0;
-        }
       } else {
-        if ((this.keys.has("w") || this.keys.has(" ")) && this.isOnGround) {
+        if ((this.keys.has("w") || this.keys.has("q")) && this.isOnGround) {
           this.velocity.y = -6.7;
           this.isOnGround = false;
         }
 
         this.velocity.y += this.gravity;
+
+        // Горизонтальное движение от velocity (например, после прыжка с каната)
+        if (this.velocity.x !== 0) {
+          this.pos.x += this.velocity.x;
+
+          // Плавное замедление
+          if (this.velocity.x > 0) {
+            this.velocity.x = Math.max(0, this.velocity.x - 0.5);
+          } else if (this.velocity.x < 0) {
+            this.velocity.x = Math.min(0, this.velocity.x + 0.5);
+          }
+        }
+
         this.pos.y += this.velocity.y;
 
         if (this.velocity.y < 0 && hittingCeiling) {
@@ -303,6 +351,7 @@ export default {
           if (hittingGround) {
             this.isOnGround = true;
             this.velocity.y = 0;
+            this.velocity.x = 0;
 
             let snap = 0;
             while (this.checkGround() && snap++ < 10) {
@@ -314,13 +363,8 @@ export default {
         }
       }
 
-      this.pos.x = Math.round(this.pos.x);
-      this.pos.y = Math.round(this.pos.y);
-
-      // ✅ ИСПРАВЛЕНО: отправляем координаты с троттлингом
       this.sendCoords();
 
-      // Обновляем кадр анимации
       if (this.isWalking) {
         this.currentFrame = (this.currentFrame + 1) % 3;
       }
@@ -332,30 +376,7 @@ export default {
         !this.respawnTimeout
       ) {
         this.respawnTimeout = setTimeout(() => {
-          const spawnPoly = this.polygons.find((p) => p.type === "spawn");
-          if (spawnPoly && spawnPoly.points.length) {
-            const sum = spawnPoly.points.reduce(
-              (acc, p) => {
-                acc.x += p.x;
-                acc.y += p.y;
-                return acc;
-              },
-              { x: 0, y: 0 }
-            );
-
-            const center = {
-              x: sum.x / spawnPoly.points.length,
-              y: sum.y / spawnPoly.points.length,
-            };
-
-            this.pos.x = center.x - HITBOX.offsetX - HITBOX.width / 2;
-            this.pos.y = center.y - HITBOX.offsetY - HITBOX.height / 2;
-            this.velocity.y = 0;
-
-            // ✅ ИСПРАВЛЕНО: отправляем координаты после респавна с форсированием
-            this.sendCoords(true);
-          }
-
+          this.setSpawnFromPolygon();
           this.respawnTimeout = null;
         }, 500);
       }
@@ -366,14 +387,12 @@ export default {
 
 <style scoped>
 .player {
-  position: absolute;
-  transform-origin: center;
-  width: 24px;
-  height: 48px;
-  image-rendering: pixelated;
   background-image: url("@/assets/images/players/1/bp1.png");
   background-size: contain;
   background-repeat: no-repeat;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  backface-visibility: hidden;
   z-index: 200;
 }
 

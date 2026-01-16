@@ -52,11 +52,12 @@ import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import { Modal } from "ant-design-vue";
 import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
+import { useGameResultsStore } from "@/stores/gameResults";
 
+const resultsStore = useGameResultsStore();
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
@@ -73,9 +74,13 @@ const showSplash = ref(true);
 -------------------------------------------------------------------*/
 const myRole = computed(() => userStore.myRole);
 
+const isAlive = computed(() => userStore.isAlive);
+
 const playerImage = computed(() =>
   myRole.value === "mafia" ? mafiaImg : runnerImg
 );
+
+const allPlayers = ref([]);
 
 // Идентификатор текущей игры
 const gameId = computed(() => route.params.id || currentGameId.value || 1);
@@ -135,6 +140,7 @@ const connectionStatusClass = computed(() => ({
  * @param {number} lastImage - идентификатор последнего спрайта
  */
 const sendPlayerMove = (x, y, lastImage = 1) => {
+  if (!isAlive.value) return;
   const socket = getGameSocket.value;
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
@@ -168,6 +174,7 @@ function setupCoordsListener() {
 
 onMounted(async () => {
   userStore.initializeUser();
+  userStore.setIsAlive(true);
 
   await checkIfUserIsHost();
   setupGameWebSocket();
@@ -222,57 +229,50 @@ const checkIfUserIsHost = async () => {
  * Возвращает пользователя в лобби.
  * Хост дополнительно переводит лобби в состояние ожидания.
  */
-const returnToLobby = async () => {
-  if (isGameActive.value) {
-    Modal.warning({
-      title: "Game in Progress",
-      content:
-        "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-      okText: "OK",
-    });
-    return;
-  }
+// const returnToLobby = async () => {
+//   userStore.setIsAlive(true);
+//   if (isGameActive.value) {
+//     Modal.warning({
+//       title: "Game in Progress",
+//       content:
+//         "Cannot return to lobby while the game is active. Please wait for the game to finish.",
+//       okText: "OK",
+//     });
+//     return;
+//   }
 
-  if (!lobbyId.value) {
-    Modal.error({
-      title: "Cannot Return to Lobby",
-      content: "Lobby information is not available",
-    });
-    return;
-  }
+//   if (!lobbyId.value) {
+//     Modal.error({
+//       title: "Cannot Return to Lobby",
+//       content: "Lobby information is not available",
+//     });
+//     return;
+//   }
 
-  try {
-    if (isHost.value) {
-      await updateLobbyStatus("waiting");
-    }
-  } catch (error) {
-    console.error("Error updating lobby status:", error);
-  }
-
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-};
+//   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+// };
 
 /**
  * Обновляет статус лобби на сервере.
  *
  * @param {string} newStatus - новый статус лобби
  */
-const updateLobbyStatus = async (newStatus) => {
-  try {
-    const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newStatus }),
-      credentials: "include",
-    });
+// const updateLobbyStatus = async (newStatus) => {
+//   try {
+//     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ newStatus }),
+//       credentials: "include",
+//     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error updating lobby status:", error);
-    throw error;
-  }
-};
+//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//     return await response.json();
+//   } catch (error) {
+//     console.error("Error updating lobby status:", error);
+//     throw error;
+//   }
+// };
 
 /* ------------------------------------------------------------------
    WebSocket и обработка сообщений игры
@@ -347,11 +347,6 @@ const handleGameMessage = (message) => {
     case "timer_update":
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
-
-      if (message.timeLeft <= 0 && isHost.value) {
-        updateLobbyStatus("finished");
-        gameEnded.value = true;
-      }
       break;
 
     case "coord_message":
@@ -369,16 +364,26 @@ const handleGameMessage = (message) => {
             lastImage: Number(player.lastImage) || 1,
             isHost: Boolean(player.isHost),
             trapper: isTrapper,
+            alive: player.alive,
           };
         });
 
+        // Для карты — только видимые игроки
         otherPlayers.value = normalized.filter(
-          (p) => p.id !== String(userId.value) && p.trapper === false
+          (p) =>
+            p.id !== String(userId.value) &&
+            p.trapper === false &&
+            p.alive === true
+        );
+
+        // Для логики конца игры — все игроки
+        allPlayers.value = normalized.filter(
+          (p) => p.id !== String(userId.value)
         );
 
         const me = normalized.find((p) => p.id === String(userId.value));
-        console.table(normalized);
-        console.table(otherPlayers.value);
+        // console.table(normalized);
+        // console.table(otherPlayers.value);
 
         if (me) {
           playerCoords.x = me.x;
@@ -399,6 +404,48 @@ const handleGameMessage = (message) => {
       otherPlayers.value = otherPlayers.value.filter(
         (p) => p.id !== String(message.playerId)
       );
+      allPlayers.value = allPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
+      break;
+
+    case "died":
+      if (String(message.playerId) === String(userId.value)) {
+        userStore.setIsAlive(false);
+      }
+
+      otherPlayers.value = otherPlayers.value.filter(
+        (p) => p.id !== String(message.playerId)
+      );
+      allPlayers.value = allPlayers.value.map((p) =>
+        p.id === String(message.playerId) ? { ...p, alive: false } : p
+      );
+      break;
+
+    case "all_stats":
+      if (!message.stats) return;
+
+      const results = Object.entries(message.stats).map(([id, stat]) => ({
+        id: String(id),
+        name: stat.name,
+        role: stat.role,
+        alive: stat.alive,
+        win: stat.win,
+        time: stat.time,
+        map: stat.map,
+      }));
+
+      resultsStore.setResults(results, results[0]?.map ?? null);
+
+      gameEnded.value = true;
+      timerActive.value = false;
+
+      router.push({
+        path: "/results",
+        query: {
+          lobbyId: lobbyId.value,
+        },
+      });
       break;
 
     default:
