@@ -152,8 +152,7 @@ function setupGameWebSocket(server) {
 
         // --- RUNNERS ---
         for (const [id, p] of runners) {
-            const finished = p.alive === null;
-            if (!game.stats[id]) {
+            if (!game.stats.has(id)) {
             game.stats.set(id, {
                 name: p.name,
                 role: 'runner',
@@ -551,6 +550,25 @@ function setupGameWebSocket(server) {
                     }));
                     return;
                 }
+                let finish = checkFinishCollision(settings.x, settings.y, polygons);
+                if (finish) {
+                    player.alive = null;
+                    const game = games.get(parseInt(gameId));
+                    game.stats.set(playerId, {
+                        name: player.name,
+                        role: 'runner',
+            win: true,
+            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+            map: game.map,
+        });
+        console.log(game);
+        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
+        console.log(game.stats); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
+                    checkAllRunnersDone(gameId);
+                    return;
+                }
+
 
                 const trapType = checkTrapCollision(settings.x, settings.y, polygons);
                 if (trapType) {
@@ -563,20 +581,7 @@ function setupGameWebSocket(server) {
                     });
                     checkAllRunnersDone(gameId);
                     console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
-                    return;
-                }
-
-                const finish = checkFinishCollision(settings.x, settings.y, polygons);
-                if (finish) {
-                    player.alive = null;
-                    handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
-                    broadcastToGame(gameId, {
-                        type: "win",
-                        playerId,
-                        timestamp: new Date().toISOString()
-                    });
                     checkAllRunnersDone(gameId);
-                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     return;
                 }
 
@@ -735,29 +740,6 @@ function setupGameWebSocket(server) {
                 error: 'Ошибка сервера при сохранении статистики',
                 details: error.message
             };
-        }
-    }
-
-    function handleStats(gameId, playerId) {
-        try {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-        const game = games.get(parseInt(gameId));
-        if (!game || game.trapper === playerId) {
-                  //+ логика, игра не найдена + проверка что игрок не траппер
-            return;
-        }
-        game.stats.set(playerId, {
-            name: p.name,
-            role: 'runner',
-            win: true,
-            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
-            map: game.map,
-        });
-        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
-        console.log(game.stats);
-        } catch (error) {
-            console.error('❌ Ошибка в handleStats:', error);
         }
     }
 

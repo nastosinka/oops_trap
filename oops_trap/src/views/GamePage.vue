@@ -456,7 +456,6 @@ const handleGameMessage = (message) => {
         id: String(id),
         name: stat.name,
         role: stat.role,
-        alive: stat.alive,
         win: stat.win,
         time: stat.time,
         map: stat.map,
