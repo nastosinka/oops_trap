@@ -69,7 +69,7 @@ function getSpawnPoint(polygons) {
 
 function checkFinishCollision(x, y, polygons) {
     for (const poly of polygons) {
-        if (poly.type === "finish") {
+        if (poly.name === "finish") {
             if (pointInPolygon(x, y, poly.points)) {
                 console.log(`Finish collision (${poly.type}) at ${x},${y}`);
                 return poly.type;
