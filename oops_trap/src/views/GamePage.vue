@@ -154,6 +154,19 @@ const sendPlayerMove = (x, y, lastImage = 1) => {
   );
 };
 
+const sendTrapMove = (trap) => {
+  const socket = getGameSocket.value;
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(
+    JSON.stringify({
+      type: "trap_message",
+      gameId: gameId.value,
+      playerId: userId.value,
+      trap: trap,
+    })
+  );
+};
+
 /**
  * Подписывается на глобальное событие обновления координат игрока,
  * которое отправляется из компонента карты.
@@ -165,6 +178,11 @@ function setupCoordsListener() {
     playerCoords.y = newCoords.y;
 
     sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+  });
+
+  window.addEventListener("player-traps-update", (event) => {
+    const trap = event.detail;
+    sendTrapMove(trap);
   });
 }
 
@@ -348,6 +366,15 @@ const handleGameMessage = (message) => {
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
       break;
+            // broadcastToGame(gameId, {
+            //     type: 'trap_message',
+            //     name: trapName,
+            //     time: trap.timer,
+            //     result: true,
+            //     timestamp: new Date().toISOString()
+            // });
+    case "trap_message":
+      console.log(message.result);
 
     case "coord_message":
     case "player_move":
