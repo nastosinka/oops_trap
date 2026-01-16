@@ -1890,7 +1890,7 @@
         }
       ],
       "timer": 0,
-      "isActive": true
+      "isActive": false
     },
     {
       "name": "stone-break-1",
