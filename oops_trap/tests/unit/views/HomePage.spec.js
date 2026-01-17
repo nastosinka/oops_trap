@@ -268,9 +268,8 @@ describe("HomePage.vue", () => {
         credentials: "include",
       });
 
-
       expect(mockRouter.push).toHaveBeenCalledWith("/createLobby");
-      
+
       expect(showSuccess).toHaveBeenCalled();
     });
   });

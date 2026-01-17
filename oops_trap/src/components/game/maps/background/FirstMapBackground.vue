@@ -28,9 +28,12 @@ import st4 from "@/assets/images/maps/Map1/st/st4.png";
 
 <style scoped>
 .game-map {
-  position: relative;
+  position: absolute; /* Добавьте это! */
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  z-index: 0; /* Убедитесь, что фон ниже полигонов */
 }
 
 .map-layer {
@@ -42,6 +45,7 @@ import st4 from "@/assets/images/maps/Map1/st/st4.png";
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  pointer-events: none; /* Чтобы не мешали кликам */
 }
 
 .st1-layer {
@@ -53,6 +57,7 @@ import st4 from "@/assets/images/maps/Map1/st/st4.png";
   background-size: contain;
   z-index: 2;
 }
+
 .st3-layer {
   background-size: cover;
   z-index: 3;

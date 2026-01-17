@@ -24,7 +24,7 @@ const HITBOX = {
 const STEP_HEIGHT = 6;
 
 export default {
-  name: "RunnerPhysics",
+  name: "CurrentPlayer",
   props: {
     gameArea: { type: Object, required: true },
     polygons: { type: Array, default: () => [] },
