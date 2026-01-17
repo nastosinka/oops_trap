@@ -69,7 +69,7 @@ function getSpawnPoint(polygons) {
 
 function checkFinishCollision(x, y, polygons) {
     for (const poly of polygons) {
-        if (poly.type === "finish") {
+        if (poly.name === "finish") {
             if (pointInPolygon(x, y, poly.points)) {
                 console.log(`Finish collision (${poly.type}) at ${x},${y}`);
                 return poly.type;
@@ -131,7 +131,7 @@ function setupGameWebSocket(server) {
     }
 
     async function finalizeGame(gameId) {
-        console.log("HUIIII");
+        console.log("Game finish");
         const gameRoom = gameRooms.get(gameId);
         const game = games.get(parseInt(gameId));
         if (!gameRoom || !game) return;
@@ -152,36 +152,24 @@ function setupGameWebSocket(server) {
 
         // --- RUNNERS ---
         for (const [id, p] of runners) {
-            const finished = p.alive === null;
-
+            if (!game.stats.has(id)) {
             game.stats.set(id, {
                 name: p.name,
                 role: 'runner',
-                alive: p.alive,
-                win: finished,
-                time: finished
-                    ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
-                    : null,
+                win: false,
+                time: null,
                 map: game.map
-            });
-
-            if (finished) {
-                await saveStatistic({
-                    id_user: id,
-                    id_map: game.map,
-                    time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
-                    role: true
-                });
-            }
+            });}
         }
 
         // --- MAFIA ---
         const mafiaWin = !anyRunnerFinished;
-
+        if (mafiaWin){
+            saveStatistic({ id_user: mafiaId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: false});
+        }
         game.stats.set(mafiaId, {
             name: game.players.find(p => p.id === mafiaId)?.name,
             role: 'mafia',
-            alive: true,
             win: mafiaWin,
             time: mafiaWin
             ? gameRoom.timer.totalTime - gameRoom.timer.timeLeft
@@ -296,9 +284,6 @@ function setupGameWebSocket(server) {
                     case 'init': // важное наследие
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    // case 'all_stats': // получить статистику по игре
-                    //     await finalizeGame(message.gameId);
-                    //     break;
                     case 'player_move': // поменять координаты игрока (проверено работает)
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings);
                         break;
@@ -327,8 +312,7 @@ function setupGameWebSocket(server) {
         try {
             const gameRoom = gameRooms.get(gameId);
             if (!gameRoom || !Array.isArray(gameRoom.polygons)) return;
-
-            const game = games.get(gameId);
+            const game = games.get(parseInt(gameId));
             if (!game) return;
 
             if (game.trapper !== playerId) return;
@@ -337,6 +321,7 @@ function setupGameWebSocket(server) {
             if (!trap || typeof trap.timer !== 'number' || trap.isActive) return;
 
             trap.isActive = true;
+            console.log(`Ловушка активирована ${trapName}`);
             broadcastToGame(gameId, {
                 type: 'trap_message',
                 name: trapName,
@@ -355,10 +340,11 @@ function setupGameWebSocket(server) {
                         result: false,
                         timestamp: new Date().toISOString()
                     });
+                    console.log(`Ловушка дезактивирована ${trapName}`);
                 } catch (e) {
                     console.error('❌ Ошибка деактивации ловушки', e);
                 }
-            }, trap.timer);
+            }, trap.timer*1000);
 
         } catch (error) {
             console.error('❌ Ошибка в handleTrapMessage:', error);
@@ -564,6 +550,25 @@ function setupGameWebSocket(server) {
                     }));
                     return;
                 }
+                let finish = checkFinishCollision(settings.x, settings.y, polygons);
+                if (finish) {
+                    player.alive = null;
+                    const game = games.get(parseInt(gameId));
+                    game.stats.set(playerId, {
+                        name: player.name,
+                        role: 'runner',
+            win: true,
+            time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
+            map: game.map,
+        });
+        console.log(game);
+        saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
+        console.log(game.stats); // добавить при попадании в полигон финиша тут чисто чтобы показать
+                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
+                    checkAllRunnersDone(gameId);
+                    return;
+                }
+
 
                 const trapType = checkTrapCollision(settings.x, settings.y, polygons);
                 if (trapType) {
@@ -576,20 +581,7 @@ function setupGameWebSocket(server) {
                     });
                     checkAllRunnersDone(gameId);
                     console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
-                    return;
-                }
-
-                const finish = checkFinishCollision(settings.x, settings.y, polygons);
-                if (finish) {
-                    player.alive = null;
-                    // handleStats(ws, gameId, playerId); // добавить при попадании в полигон финиша тут чисто чтобы показать
-                    broadcastToGame(gameId, {
-                        type: "win",
-                        playerId,
-                        timestamp: new Date().toISOString()
-                    });
                     checkAllRunnersDone(gameId);
-                    console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     return;
                 }
 
@@ -612,8 +604,6 @@ function setupGameWebSocket(server) {
             timestamp: new Date().toISOString(),
         });
 
-        console.log(`Координаты отправлены`);
-        console.log(playersArray);
     }
 
     function handleCoordMessage(ws, gameId, intervalMs = 100) {
@@ -640,8 +630,6 @@ function setupGameWebSocket(server) {
                 timestamp: new Date().toISOString(),
             });
 
-            console.log(`Координаты отправлены в ${new Date().toISOString()}`);
-            console.log(playersArray);
         }, intervalMs);
 
         coordIntervals.set(gameId, interval);
@@ -657,20 +645,6 @@ function setupGameWebSocket(server) {
         }
     }
 
-
-    // function handleAllStats(ws, gameId) {
-    //     const game = games.get(parseInt(gameId));
-    //     if (!game) {
-    //                 //+ логика, игра не найдена + проверка что игрок не траппер
-    //         return;
-    //     }
-
-    //     broadcastToGame(gameId, {
-    //         type: 'all_stats',
-    //         stats: game.stats,
-    //         timestamp: new Date().toISOString()
-    //     });
-    // }
 
     async function saveStatistic(data) {
         const { id_user, id_map, time, role } = data;
@@ -768,34 +742,6 @@ function setupGameWebSocket(server) {
             };
         }
     }
-
-    // function handleStats(gameId, playerId) {
-    //     try {
-    //     const gameRoom = gameRooms.get(gameId);
-    //     if (!gameRoom) return;
-    //     const game = games.get(parseInt(gameId));
-    //     if (!game || game.trapper === playerId) {
-    //               //+ логика, игра не найдена + проверка что игрок не траппер
-    //         return;
-    //     }
-    //     game.stats.set(playerId, {
-    //         time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft,
-    //         map: game.map,
-    //         role: true,
-    //     });
-    //     saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
-
-
-    //     broadcastToGame(gameId, {
-    //         type: 'stats',
-    //         stats: game.stats,
-    //         timestamp: new Date().toISOString()
-    //     });
-    //     console.log(game.stats);
-    //     } catch (error) {
-    //         console.error('❌ Ошибка в handleStats:', error);
-    //     }
-    // }
 
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;

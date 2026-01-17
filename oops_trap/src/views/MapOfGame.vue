@@ -91,6 +91,9 @@ watchEffect(() => {
 
 function onTrapActivate(trap) {
   trapsState[trap.name] = true;
+  window.dispatchEvent(
+    new CustomEvent("player-traps-update", { detail: trap.name })
+  );
 
   setTimeout(() => {
     trapsState[trap.name] = false;

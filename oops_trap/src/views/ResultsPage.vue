@@ -105,14 +105,14 @@ const sortedPlayers = computed(() => {
   const stats = resultsStore.stats.map((p) => ({ ...p }));
 
   const allDead = stats.every(
-    (p) => p.role === "mafia" || !p.alive || p.time === null
+    (p) => p.role === "mafia" || p.win === false
   );
 
   return stats
     .map((p) => {
       if (p.role === "mafia") {
         p.result = allDead ? "Won 🎉" : "Lost ❌";
-      } else if (!p.alive || p.time === null) {
+      } else if (p.time === null) {
         p.result = "Lost ❌";
       } else {
         p.result = "Finished 🏁";
@@ -141,6 +141,12 @@ const playerResult = computed(() => {
   }
 
   if (me.result.includes("Won")) {
+    return {
+      text: "You Win",
+      status: "win",
+    };
+  }
+  if (me.result.includes("Finished")) {
     return {
       text: "You Win",
       status: "win",
