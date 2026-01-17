@@ -128,6 +128,9 @@ const connectionStatusClass = computed(() => ({
   "status-disconnected": connectionError.value,
 }));
 
+// Ref для доступа к компоненту карты
+const mapRef = ref(null);
+
 /* ------------------------------------------------------------------
    Работа с координатами игрока
 -------------------------------------------------------------------*/
@@ -166,6 +169,49 @@ const sendTrapMove = (trap) => {
     })
   );
 };
+
+/**
+ * Обрабатывает входящее сообщение об активации ловушки
+ */
+function handleIncomingTrap(message) {
+  // Определяем имя ловушки из сообщения
+  const trapName = message.name || message.trap;
+  
+  if (!trapName) {
+    console.error("Trap message missing trap name:", message);
+    return;
+  }
+
+  // Проверяем, не наш ли это собственный триггер ловушки
+  if (message.playerId && message.playerId === userId.value) {
+    console.log("Ignoring own trap activation:", trapName);
+    return; // Игнорируем свои же сообщения
+  }
+
+  console.log("Activating trap from server:", trapName);
+
+  if (mapRef.value && mapRef.value.onTrapActivate) {
+    mapRef.value.onTrapActivate({ name: trapName });
+  }
+}
+
+/**
+ * Обрабатывает входящее сообщение о деактивации ловушки
+ */
+function handleTrapDeactivation(message) {
+  const trapName = message.name || message.trap;
+  
+  if (!trapName) {
+    console.error("Trap deactivation message missing trap name:", message);
+    return;
+  }
+
+  console.log("Deactivating trap from server:", trapName);
+
+  if (mapRef.value && mapRef.value.onTrapDisactive) {
+    mapRef.value.onTrapDisactive({ name: trapName });
+  }
+}
 
 /**
  * Подписывается на глобальное событие обновления координат игрока,
@@ -243,54 +289,20 @@ const checkIfUserIsHost = async () => {
   }
 };
 
-/**
- * Возвращает пользователя в лобби.
- * Хост дополнительно переводит лобби в состояние ожидания.
- */
-// const returnToLobby = async () => {
-//   userStore.setIsAlive(true);
-//   if (isGameActive.value) {
-//     Modal.warning({
-//       title: "Game in Progress",
-//       content:
-//         "Cannot return to lobby while the game is active. Please wait for the game to finish.",
-//       okText: "OK",
-//     });
-//     return;
-//   }
+const returnToLobby = async () => {
+  userStore.setIsAlive(true);
+  if (isGameActive.value) {
+    alert("Cannot return to lobby while the game is active. Please wait for the game to finish.");
+    return;
+  }
 
-//   if (!lobbyId.value) {
-//     Modal.error({
-//       title: "Cannot Return to Lobby",
-//       content: "Lobby information is not available",
-//     });
-//     return;
-//   }
+  if (!lobbyId.value) {
+    alert("Lobby information is not available");
+    return;
+  }
 
-//   router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-// };
-
-/**
- * Обновляет статус лобби на сервере.
- *
- * @param {string} newStatus - новый статус лобби
- */
-// const updateLobbyStatus = async (newStatus) => {
-//   try {
-//     const response = await fetch(`/api/lobby/lobbies/${lobbyId.value}/status`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ newStatus }),
-//       credentials: "include",
-//     });
-
-//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-//     return await response.json();
-//   } catch (error) {
-//     console.error("Error updating lobby status:", error);
-//     throw error;
-//   }
-// };
+  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
+};
 
 /* ------------------------------------------------------------------
    WebSocket и обработка сообщений игры
@@ -366,15 +378,18 @@ const handleGameMessage = (message) => {
       timerActive.value = message.active;
       timeLeft.value = message.timeLeft;
       break;
-            // broadcastToGame(gameId, {
-            //     type: 'trap_message',
-            //     name: trapName,
-            //     time: trap.timer,
-            //     result: true,
-            //     timestamp: new Date().toISOString()
-            // });
+
     case "trap_message":
-      console.log(message.result);
+      console.log("Trap message received:", message);
+      // Обрабатываем сообщение о ловушке
+      if (message.result) {
+        // Если ловушка активируется
+        handleIncomingTrap(message);
+      } else {
+        // Если ловушка деактивируется
+        handleTrapDeactivation(message);
+      }
+      break;
 
     case "coord_message":
     case "player_move":

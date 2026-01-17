@@ -45,6 +45,8 @@ import {
   onMounted,
   onUnmounted,
   provide,
+  defineExpose,
+  watch,
 } from "vue";
 
 import { useUserStore } from "@/stores/user";
@@ -94,21 +96,46 @@ function onTrapActivate(trap) {
   window.dispatchEvent(
     new CustomEvent("player-traps-update", { detail: trap.name })
   );
-
-  setTimeout(() => {
-    trapsState[trap.name] = false;
-  }, trap.cooldown);
 }
+
+function onTrapDisactive(trap){
+    trapsState[trap.name] = false;
+}
+
+
+// Экспортируем функции для родительского компонента
+defineExpose({
+  onTrapActivate,
+  onTrapDisactive
+});
 
 /* ----------------------------------
    Props
 ---------------------------------- */
 
-defineProps({
+
+const props = defineProps({
   otherPlayers: {
     type: Array,
     default: () => [],
   },
+  
+  // Добавляем пропсы для внешнего управления ловушками
+  trapToActivate: Object,
+  trapToDeactivate: Object,
+});
+
+// Следим за изменением пропсов для внешнего управления
+watch(() => props.trapToActivate, (trap) => {
+  if (trap && trap.name) {
+    onTrapActivate(trap);
+  }
+});
+
+watch(() => props.trapToDeactivate, (trap) => {
+  if (trap && trap.name) {
+    onTrapDisactive(trap);
+  }
 });
 
 /* ----------------------------------
