@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "@/App.vue";
 
 vi.mock("@sentry/vue", () => ({
@@ -7,7 +7,21 @@ vi.mock("@sentry/vue", () => ({
   captureException: vi.fn(),
 }));
 
+// Мокаем аудио менеджер
+vi.mock("@/tools/audioManager", () => ({
+  audioManager: {
+    load: vi.fn().mockResolvedValue(undefined),
+    unlock: vi.fn().mockResolvedValue(undefined),
+    init: vi.fn(),
+  },
+}));
+
 describe("App.vue", () => {
+  beforeEach(() => {
+    // Очищаем моки перед каждым тестом
+    vi.clearAllMocks();
+  });
+
   it("renders without errors", () => {
     const wrapper = mount(App, {
       global: {
