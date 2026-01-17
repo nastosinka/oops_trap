@@ -128,7 +128,6 @@ const mapRef = ref(null);
 
 import { audioManager } from "@/tools/audioManager";
 import gameMusic from "@/assets/music/game-music.mp3";
-import winSound from "@/assets/music/win.mp3";
 import stepsSound from "@/assets/music/steps.mp3";
 
 const MAX_STEP_DISTANCE = 20000; // радиус слышимости шагов
@@ -232,20 +231,28 @@ function handleTrapDeactivation(message) {
  * Подписывается на глобальное событие обновления координат игрока,
  * которое отправляется из компонента карты.
  */
-function setupCoordsListener() {
-  window.addEventListener("player-coords-update", (event) => {
-    const newCoords = event.detail;
-    playerCoords.x = newCoords.x;
-    playerCoords.y = newCoords.y;
-
-    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
-  });
-
-  window.addEventListener("player-traps-update", (event) => {
-    const trap = event.detail;
-    sendTrapMove(trap);
-  });
+ function setupCoordsListener() {
+  window.addEventListener("player-coords-update", playerCoordsHandler);
+  window.addEventListener("player-traps-update", trapHandler);
 }
+
+function cleanupCoordsListener() {
+  window.removeEventListener("player-coords-update", playerCoordsHandler);
+  window.removeEventListener("player-traps-update", trapHandler);
+}
+
+ const playerCoordsHandler = (event) => {
+  const newCoords = event.detail;
+  playerCoords.x = newCoords.x;
+  playerCoords.y = newCoords.y;
+  sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+};
+
+const trapHandler = (event) => {
+  const trap = event.detail;
+  sendTrapMove(trap);
+};
+
 
 /* ------------------------------------------------------------------
    Жизненный цикл компонента
@@ -254,13 +261,15 @@ function setupCoordsListener() {
 onMounted(async () => {
   // Загрузка файлов
   await audioManager.load("game", gameMusic);
-  await audioManager.load("win", winSound);
   await audioManager.load("steps", stepsSound);
 
   // Разблокировка после клика
   const unlock = async () => {
     await audioManager.unlock();
-    // audioManager.playMusic("game");
+    audioManager.playMusic("game", {
+      loop: true,
+      volume: 0.15,
+    });
     window.removeEventListener("click", unlock);
   };
 
@@ -281,7 +290,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupWebSocket();
-  window.removeEventListener("player-coords-update", setupCoordsListener);
+  cleanupCoordsListener();
 });
 
 /* ------------------------------------------------------------------
@@ -402,7 +411,6 @@ const lastEnemyPositions = new Map();
 const handleGameMessage = (message) => {
   switch (message.type) {
     case "timer_started":
-      // audioManager.playMusic("game");
       showSplash.value = false;
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
@@ -541,8 +549,15 @@ const handleGameMessage = (message) => {
       break;
 
     case "all_stats":
-      // audioManager.fadeOutMusic(1.5);
-      // audioManager.playSfx("win", { volume: 0.8 });
+      audioManager.fadeOutMusic(1.2);
+
+      setTimeout(() => {
+        audioManager.playMusic("background", {
+          loop: true,
+          volume: 0.3,
+        });
+      }, 1200);
+
       if (!message.stats) return;
 
       const results = Object.entries(message.stats).map(([id, stat]) => ({

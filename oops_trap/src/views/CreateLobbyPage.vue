@@ -11,39 +11,18 @@
       <div class="buttons-container">
         <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
         <BaseButton size="large" label="Create a lobby" @click="createLobby" />
-        <BaseButton
-          size="large"
-          label="Join the lobby"
-          @click="showJoinLobby = true"
-        />
+        <BaseButton size="large" label="Join the lobby" @click="showJoinLobby = true" />
         <BaseButton size="large" label="Exit" @click="showExitConfirm" />
       </div>
     </div>
   </div>
 
-  <UniversalModal
-    v-if="showStatsModal"
-    title=""
-    type="stats"
-    :stats-data="statsData"
-    @close="showStatsModal = false"
-  />
+  <UniversalModal v-if="showStatsModal" title="" type="stats" :stats-data="statsData" @close="showStatsModal = false" />
 
-  <UniversalModal
-    v-if="showJoinLobby"
-    title="Join Lobby"
-    :fields="['lobbyCode']"
-    submit-text="Join"
-    @close="showJoinLobby = false"
-    @submit="joinLobby"
-  />
+  <UniversalModal v-if="showJoinLobby" title="Join Lobby" :fields="['lobbyCode']" submit-text="Join"
+    @close="showJoinLobby = false" @submit="joinLobby" />
 
-  <UniversalModal
-    v-if="showRulesModal"
-    title=""
-    type="rules"
-    @close="showRulesModal = false"
-  />
+  <UniversalModal v-if="showRulesModal" title="" type="rules" @close="showRulesModal = false" />
 </template>
 
 <script>
@@ -53,6 +32,7 @@ import { Modal } from "ant-design-vue";
 import { apiFetch } from "@/utils/api-auth.js";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import { audioManager } from "@/tools/audioManager";
 
 export default {
   name: "CreateLobbyPage",
@@ -85,6 +65,13 @@ export default {
   },
 
   mounted() {
+    if (audioManager.currentMusicName !== "background") {
+      audioManager.playMusic("background", {
+        loop: true,
+        volume: 0.3,
+      });
+    }
+
     this.userStore.initializeUser();
     this.fetchStats();
   },
@@ -265,6 +252,7 @@ export default {
   from {
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
+
   to {
     text-shadow: 0 2px 16px rgba(255, 215, 0, 1);
   }
@@ -297,6 +285,7 @@ export default {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
 .buttons-container {
   display: flex;
   flex-direction: column;

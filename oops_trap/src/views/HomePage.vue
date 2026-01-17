@@ -8,30 +8,13 @@
       </div>
     </div>
 
-    <UniversalModal
-      v-if="showSignUpModal"
-      title="Sign Up"
-      :fields="['name', 'password', 'confirmPassword']"
-      submit-text="Sign Up"
-      @close="showSignUpModal = false"
-      @submit="handleSignUp"
-    />
+    <UniversalModal v-if="showSignUpModal" title="Sign Up" :fields="['name', 'password', 'confirmPassword']"
+      submit-text="Sign Up" @close="showSignUpModal = false" @submit="handleSignUp" />
 
-    <UniversalModal
-      v-if="showSignInModal"
-      title="Sign In"
-      :fields="['name', 'password']"
-      submit-text="Sign In"
-      @close="showSignInModal = false"
-      @submit="handleSignIn"
-    />
+    <UniversalModal v-if="showSignInModal" title="Sign In" :fields="['name', 'password']" submit-text="Sign In"
+      @close="showSignInModal = false" @submit="handleSignIn" />
 
-    <UniversalModal
-      v-if="showRulesModal"
-      title=""
-      type="rules"
-      @close="showRulesModal = false"
-    />
+    <UniversalModal v-if="showRulesModal" title="" type="rules" @close="showRulesModal = false" />
   </div>
 </template>
 
@@ -50,6 +33,15 @@ export default {
     UniversalModal,
   },
 
+  mounted() {
+    if (audioManager.currentMusicName !== "background") {
+      audioManager.playMusic("background", {
+        loop: true,
+        volume: 0.3,
+      });
+    }
+  },
+
   data() {
     return {
       showSignUpModal: false,
@@ -58,21 +50,7 @@ export default {
     };
   },
 
-  mounted() {
-    this.unlockSound();
-  },
-
   methods: {
-    async unlockSound() {
-      try {
-        await audioManager.unlock(); // Разблокировка аудио
-        await audioManager.load("background-music", "@/assets/music/background.mp3"); // Загрузить музыку
-        audioManager.playMusic("background-music", { loop: true, volume: 0.3 }); // Включить музыку на фоне
-      } catch (error) {
-        console.error("Ошибка при загрузке или воспроизведении музыки:", error);
-      }
-    },
-
     async handleSignUp(formData) {
       try {
         const userStore = useUserStore();

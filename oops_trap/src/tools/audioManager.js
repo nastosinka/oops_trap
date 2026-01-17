@@ -7,6 +7,7 @@ class AudioManager {
   
       this.buffers = new Map();
       this.currentMusic = null;
+      this.currentMusicName = null;
   
       this.unlocked = false;
     }
@@ -58,6 +59,9 @@ class AudioManager {
     --------------------------------------------- */
     async playMusic(name, { loop = true, volume = 0.3 } = {}) {
       if (!this.unlocked) return;
+
+      if (this.currentMusicName === name) return;
+      
       if (!this.buffers.has(name)) {
         console.warn(`Audio "${name}" not loaded`);
         return;
@@ -79,6 +83,7 @@ class AudioManager {
       source.start();
   
       this.currentMusic = { source, gain };
+      this.currentMusicName = name;
     }
   
     /* --------------------------------------------
@@ -92,6 +97,7 @@ class AudioManager {
       this.currentMusic.gain.disconnect();
   
       this.currentMusic = null;
+      this.currentMusicName = null;
     }
   
     /* --------------------------------------------
