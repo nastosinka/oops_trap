@@ -231,7 +231,7 @@ function handleTrapDeactivation(message) {
  * Подписывается на глобальное событие обновления координат игрока,
  * которое отправляется из компонента карты.
  */
- function setupCoordsListener() {
+function setupCoordsListener() {
   window.addEventListener("player-coords-update", playerCoordsHandler);
   window.addEventListener("player-traps-update", trapHandler);
 }
@@ -241,7 +241,7 @@ function cleanupCoordsListener() {
   window.removeEventListener("player-traps-update", trapHandler);
 }
 
- const playerCoordsHandler = (event) => {
+const playerCoordsHandler = (event) => {
   const newCoords = event.detail;
   playerCoords.x = newCoords.x;
   playerCoords.y = newCoords.y;
@@ -259,21 +259,29 @@ const trapHandler = (event) => {
 -------------------------------------------------------------------*/
 
 onMounted(async () => {
-  // Загрузка файлов
+  // Загружаем аудио
   await audioManager.load("game", gameMusic);
   await audioManager.load("steps", stepsSound);
 
-  // Разблокировка после клика
-  const unlock = async () => {
-    await audioManager.unlock();
-    audioManager.playMusic("game", {
-      loop: true,
-      volume: 0.15,
-    });
-    window.removeEventListener("click", unlock);
-  };
-
-  window.addEventListener("click", unlock);
+  // Сразу запускаем музыку, без unlock
+  // Если браузер блокирует, тогда повесим fallback на клик
+  try {
+    // Если сейчас играет что-то (menu), плавно убавим
+    audioManager.fadeOutMusic(1.2); // затухание 1.2 секунды
+    // Ждём окончания fade-out
+    setTimeout(() => {
+      audioManager.playMusic("game", { loop: true, volume: 0.15 });
+    }, 1200);
+  } catch {
+    const unlock = async () => {
+      await audioManager.unlock();
+      audioManager.playMusic("game", { loop: true, volume: 0.15 });
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("click", unlock);
+    window.addEventListener("keydown", unlock);
+  }
 
   userStore.initializeUser();
   userStore.setIsAlive(true);

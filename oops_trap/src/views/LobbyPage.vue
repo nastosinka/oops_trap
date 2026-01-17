@@ -139,7 +139,6 @@ export default {
   beforeUnmount() {
     this.stopPolling();
     this.stopHeartbeat();
-    audioManager.fadeOutMusic(0.5);
   },
 
   methods: {
