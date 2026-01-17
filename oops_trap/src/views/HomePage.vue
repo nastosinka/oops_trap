@@ -41,6 +41,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
+import { audioManager } from "@/tools/audioManager";
 
 export default {
   name: "HomePage",
@@ -58,6 +59,16 @@ export default {
   },
 
   methods: {
+    // async unlockSound() {
+    //   try {
+    //     await audioManager.unlock(); // Разблокировка аудио
+    //     await audioManager.load("background-music", "/path/to/music-file.mp3"); // Загрузить музыку
+    //     audioManager.playMusic("background-music", { loop: true, volume: 0.3 }); // Включить музыку на фоне
+    //   } catch (error) {
+    //     console.error("Ошибка при загрузке или воспроизведении музыки:", error);
+    //   }
+    // },
+
     async handleSignUp(formData) {
       try {
         const userStore = useUserStore();

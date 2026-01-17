@@ -23,17 +23,10 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
+          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
+            ? 'Cannot return to lobby during active game'
+            : 'Return to lobby'
+            " @click="returnToLobby">
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -131,6 +124,28 @@ const connectionStatusClass = computed(() => ({
 // Ref для доступа к компоненту карты
 const mapRef = ref(null);
 
+//ТУТ НАЧИНАЕТСЯ АУДИО
+
+import { audioManager } from "@/tools/audioManager";
+import gameMusic from "@/assets/music/game-music.mp3";
+import winSound from "@/assets/music/win.mp3";
+import stepsSound from "@/assets/music/steps.mp3";
+
+const MAX_STEP_DISTANCE = 20000; // радиус слышимости шагов
+
+function calcStepVolume(player, enemy) {
+  const dx = enemy.x - player.x;
+  const dy = enemy.y - player.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance >= MAX_STEP_DISTANCE) return 0;
+
+  // линейное затухание
+  return 1 - distance / MAX_STEP_DISTANCE;
+}
+
+//ТУТ ЗАКАНЧИВАЕТСЯ АУДИО
+
 /* ------------------------------------------------------------------
    Работа с координатами игрока
 -------------------------------------------------------------------*/
@@ -176,7 +191,7 @@ const sendTrapMove = (trap) => {
 function handleIncomingTrap(message) {
   // Определяем имя ловушки из сообщения
   const trapName = message.name || message.trap;
-  
+
   if (!trapName) {
     console.error("Trap message missing trap name:", message);
     return;
@@ -200,7 +215,7 @@ function handleIncomingTrap(message) {
  */
 function handleTrapDeactivation(message) {
   const trapName = message.name || message.trap;
-  
+
   if (!trapName) {
     console.error("Trap deactivation message missing trap name:", message);
     return;
@@ -237,6 +252,20 @@ function setupCoordsListener() {
 -------------------------------------------------------------------*/
 
 onMounted(async () => {
+  // Загрузка файлов
+  await audioManager.load("game", gameMusic);
+  await audioManager.load("win", winSound);
+  await audioManager.load("steps", stepsSound);
+
+  // Разблокировка после клика
+  const unlock = async () => {
+    await audioManager.unlock();
+    // audioManager.playMusic("game");
+    window.removeEventListener("click", unlock);
+  };
+
+  window.addEventListener("click", unlock);
+
   userStore.initializeUser();
   userStore.setIsAlive(true);
 
@@ -361,6 +390,10 @@ const cleanupWebSocket = () => {
   isConnected.value = false;
 };
 
+const STEP_DISTANCE = 40; // сколько пикселей = 1 шаг
+const stepProgressByPlayer = new Map();
+const lastEnemyPositions = new Map();
+
 /**
  * Обрабатывает входящие сообщения от игрового сервера.
  *
@@ -369,6 +402,7 @@ const cleanupWebSocket = () => {
 const handleGameMessage = (message) => {
   switch (message.type) {
     case "timer_started":
+      // audioManager.playMusic("game");
       showSplash.value = false;
       timerActive.value = true;
       timeLeft.value = message.timeLeft;
@@ -418,6 +452,48 @@ const handleGameMessage = (message) => {
             p.alive === true
         );
 
+        // Звуки шагов
+
+        const now = performance.now();
+
+        otherPlayers.value.forEach((enemy) => {
+          const prev = lastEnemyPositions.get(enemy.id);
+
+          // сохраняем позицию
+          lastEnemyPositions.set(enemy.id, { x: enemy.x, y: enemy.y });
+
+          if (!prev) return;
+
+          const dx = enemy.x - prev.x;
+          const dy = enemy.y - prev.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 1) return; // микродрожание — игнор
+
+          // накапливаем пройденную дистанцию
+          const acc = (stepProgressByPlayer.get(enemy.id) || 0) + dist;
+
+          if (acc < STEP_DISTANCE) {
+            stepProgressByPlayer.set(enemy.id, acc);
+            return;
+          }
+
+          // шаг "совершён"
+          stepProgressByPlayer.set(enemy.id, acc % STEP_DISTANCE);
+
+          const volume = calcStepVolume(playerCoords, enemy);
+          if (volume <= 0.05) return;
+
+          // небольшая рандомизация
+          const pitch = 0.9 + Math.random() * 0.2;
+          const gain = volume * (0.5 + Math.random() * 0.2);
+
+          audioManager.playSfx("steps", {
+            volume: gain,
+            playbackRate: pitch,
+          });
+        });
+
         // Для логики конца игры — все игроки
         allPlayers.value = normalized.filter(
           (p) => p.id !== String(userId.value)
@@ -465,6 +541,8 @@ const handleGameMessage = (message) => {
       break;
 
     case "all_stats":
+      // audioManager.fadeOutMusic(1.5);
+      // audioManager.playSfx("win", { volume: 0.8 });
       if (!message.stats) return;
 
       const results = Object.entries(message.stats).map(([id, stat]) => ({
