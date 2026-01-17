@@ -96,7 +96,6 @@ export default {
       pollInterval: null,
       lobbyOwnerId: null,
       currentGameId: null,
-      lobbyOwnerId: null, // ID владельца лобби
       heartbeatInterval: null,
     };
   },
