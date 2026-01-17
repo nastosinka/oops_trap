@@ -1,9 +1,12 @@
 <template>
   <div class="results-page">
-    <h1 class="results-title" :class="{
-      'results-title--win': playerResult.status === 'win',
-      'results-title--lose': playerResult.status === 'lose',
-    }">
+    <h1
+      class="results-title"
+      :class="{
+        'results-title--win': playerResult.status === 'win',
+        'results-title--lose': playerResult.status === 'lose',
+      }"
+    >
       {{ playerResult.text }}
     </h1>
 
@@ -18,7 +21,11 @@
           </tr>
         </thead>
         <tbody class="stats-table__body">
-          <tr v-for="player in sortedPlayers" :key="player.id" class="stats-table__row">
+          <tr
+            v-for="player in sortedPlayers"
+            :key="player.id"
+            class="stats-table__row"
+          >
             <td class="stats-table__cell">{{ player.name }}</td>
             <td class="stats-table__cell">{{ player.role }}</td>
             <td class="stats-table__cell">
@@ -49,6 +56,7 @@ import { useRouter } from "vue-router";
 import { Modal } from "ant-design-vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
+import { audioManager } from "@/tools/audioManager";
 
 const route = useRoute();
 const heartbeatInterval = ref(null);
@@ -104,9 +112,7 @@ onUnmounted(() => {
 const sortedPlayers = computed(() => {
   const stats = resultsStore.stats.map((p) => ({ ...p }));
 
-  const allDead = stats.every(
-    (p) => p.role === "mafia" || p.win === false
-  );
+  const allDead = stats.every((p) => p.role === "mafia" || p.win === false);
 
   return stats
     .map((p) => {

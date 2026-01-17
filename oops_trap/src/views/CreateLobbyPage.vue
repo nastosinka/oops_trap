@@ -11,18 +11,39 @@
       <div class="buttons-container">
         <BaseButton label="Rules" size="large" @click="showRulesModal = true" />
         <BaseButton size="large" label="Create a lobby" @click="createLobby" />
-        <BaseButton size="large" label="Join the lobby" @click="showJoinLobby = true" />
+        <BaseButton
+          size="large"
+          label="Join the lobby"
+          @click="showJoinLobby = true"
+        />
         <BaseButton size="large" label="Exit" @click="showExitConfirm" />
       </div>
     </div>
   </div>
 
-  <UniversalModal v-if="showStatsModal" title="" type="stats" :stats-data="statsData" @close="showStatsModal = false" />
+  <UniversalModal
+    v-if="showStatsModal"
+    title=""
+    type="stats"
+    :stats-data="statsData"
+    @close="showStatsModal = false"
+  />
 
-  <UniversalModal v-if="showJoinLobby" title="Join Lobby" :fields="['lobbyCode']" submit-text="Join"
-    @close="showJoinLobby = false" @submit="joinLobby" />
+  <UniversalModal
+    v-if="showJoinLobby"
+    title="Join Lobby"
+    :fields="['lobbyCode']"
+    submit-text="Join"
+    @close="showJoinLobby = false"
+    @submit="joinLobby"
+  />
 
-  <UniversalModal v-if="showRulesModal" title="" type="rules" @close="showRulesModal = false" />
+  <UniversalModal
+    v-if="showRulesModal"
+    title=""
+    type="rules"
+    @close="showRulesModal = false"
+  />
 </template>
 
 <script>

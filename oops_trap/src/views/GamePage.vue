@@ -23,10 +23,17 @@
 
         <!-- Кнопки управления -->
         <div class="hud-buttons">
-          <button v-if="lobbyId" class="lobby-btn" :disabled="isGameActive" :title="isGameActive
-            ? 'Cannot return to lobby during active game'
-            : 'Return to lobby'
-            " @click="returnToLobby">
+          <button
+            v-if="lobbyId"
+            class="lobby-btn"
+            :disabled="isGameActive"
+            :title="
+              isGameActive
+                ? 'Cannot return to lobby during active game'
+                : 'Return to lobby'
+            "
+            @click="returnToLobby"
+          >
             {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
           </button>
         </div>
@@ -179,7 +186,7 @@ const sendTrapMove = (trap) => {
       type: "trap_message",
       gameId: gameId.value,
       playerId: userId.value,
-      trap: trap,
+      trap,
     })
   );
 };
@@ -252,7 +259,6 @@ const trapHandler = (event) => {
   const trap = event.detail;
   sendTrapMove(trap);
 };
-
 
 /* ------------------------------------------------------------------
    Жизненный цикл компонента
@@ -338,7 +344,9 @@ const checkIfUserIsHost = async () => {
 const returnToLobby = async () => {
   userStore.setIsAlive(true);
   if (isGameActive.value) {
-    alert("Cannot return to lobby while the game is active. Please wait for the game to finish.");
+    alert(
+      "Cannot return to lobby while the game is active. Please wait for the game to finish."
+    );
     return;
   }
 
@@ -557,37 +565,39 @@ const handleGameMessage = (message) => {
       break;
 
     case "all_stats":
-      audioManager.fadeOutMusic(1.2);
+      {
+        audioManager.fadeOutMusic(1.2);
 
-      setTimeout(() => {
-        audioManager.playMusic("background", {
-          loop: true,
-          volume: 0.3,
+        setTimeout(() => {
+          audioManager.playMusic("background", {
+            loop: true,
+            volume: 0.3,
+          });
+        }, 1200);
+
+        if (!message.stats) return;
+
+        const results = Object.entries(message.stats).map(([id, stat]) => ({
+          id: String(id),
+          name: stat.name,
+          role: stat.role,
+          win: stat.win,
+          time: stat.time,
+          map: stat.map,
+        }));
+
+        resultsStore.setResults(results, results[0]?.map ?? null);
+
+        gameEnded.value = true;
+        timerActive.value = false;
+
+        router.push({
+          path: "/results",
+          query: {
+            lobbyId: lobbyId.value,
+          },
         });
-      }, 1200);
-
-      if (!message.stats) return;
-
-      const results = Object.entries(message.stats).map(([id, stat]) => ({
-        id: String(id),
-        name: stat.name,
-        role: stat.role,
-        win: stat.win,
-        time: stat.time,
-        map: stat.map,
-      }));
-
-      resultsStore.setResults(results, results[0]?.map ?? null);
-
-      gameEnded.value = true;
-      timerActive.value = false;
-
-      router.push({
-        path: "/results",
-        query: {
-          lobbyId: lobbyId.value,
-        },
-      });
+      }
       break;
 
     default:

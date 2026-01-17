@@ -71,15 +71,6 @@ export default {
   name: "LobbyPage",
   components: { BaseButton, UniversalModal },
 
-  mounted() {
-    if (audioManager.currentMusicName !== "background") {
-      audioManager.playMusic("background", {
-        loop: true,
-        volume: 0.3,
-      });
-    }
-  },
-
   setup() {
     const userStore = useUserStore();
     const { user, userId, userName, lobbySettings } = storeToRefs(userStore);
@@ -124,6 +115,15 @@ export default {
     hasPlayers() {
       return this.players && this.players.length > 0;
     },
+  },
+
+  mounted() {
+    if (audioManager.currentMusicName !== "background") {
+      audioManager.playMusic("background", {
+        loop: true,
+        volume: 0.3,
+      });
+    }
   },
 
   async created() {

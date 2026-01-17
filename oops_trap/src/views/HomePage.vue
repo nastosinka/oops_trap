@@ -8,13 +8,30 @@
       </div>
     </div>
 
-    <UniversalModal v-if="showSignUpModal" title="Sign Up" :fields="['name', 'password', 'confirmPassword']"
-      submit-text="Sign Up" @close="showSignUpModal = false" @submit="handleSignUp" />
+    <UniversalModal
+      v-if="showSignUpModal"
+      title="Sign Up"
+      :fields="['name', 'password', 'confirmPassword']"
+      submit-text="Sign Up"
+      @close="showSignUpModal = false"
+      @submit="handleSignUp"
+    />
 
-    <UniversalModal v-if="showSignInModal" title="Sign In" :fields="['name', 'password']" submit-text="Sign In"
-      @close="showSignInModal = false" @submit="handleSignIn" />
+    <UniversalModal
+      v-if="showSignInModal"
+      title="Sign In"
+      :fields="['name', 'password']"
+      submit-text="Sign In"
+      @close="showSignInModal = false"
+      @submit="handleSignIn"
+    />
 
-    <UniversalModal v-if="showRulesModal" title="" type="rules" @close="showRulesModal = false" />
+    <UniversalModal
+      v-if="showRulesModal"
+      title=""
+      type="rules"
+      @close="showRulesModal = false"
+    />
   </div>
 </template>
 
@@ -33,6 +50,14 @@ export default {
     UniversalModal,
   },
 
+  data() {
+    return {
+      showSignUpModal: false,
+      showSignInModal: false,
+      showRulesModal: false,
+    };
+  },
+
   mounted() {
     if (audioManager.currentMusicName !== "background") {
       audioManager.playMusic("background", {
@@ -40,14 +65,6 @@ export default {
         volume: 0.3,
       });
     }
-  },
-
-  data() {
-    return {
-      showSignUpModal: false,
-      showSignInModal: false,
-      showRulesModal: false,
-    };
   },
 
   methods: {
