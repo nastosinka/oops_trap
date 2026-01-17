@@ -58,16 +58,20 @@ export default {
     };
   },
 
+  mounted() {
+    this.unlockSound();
+  },
+
   methods: {
-    // async unlockSound() {
-    //   try {
-    //     await audioManager.unlock(); // Разблокировка аудио
-    //     await audioManager.load("background-music", "/path/to/music-file.mp3"); // Загрузить музыку
-    //     audioManager.playMusic("background-music", { loop: true, volume: 0.3 }); // Включить музыку на фоне
-    //   } catch (error) {
-    //     console.error("Ошибка при загрузке или воспроизведении музыки:", error);
-    //   }
-    // },
+    async unlockSound() {
+      try {
+        await audioManager.unlock(); // Разблокировка аудио
+        await audioManager.load("background-music", "@/assets/music/background.mp3"); // Загрузить музыку
+        audioManager.playMusic("background-music", { loop: true, volume: 0.3 }); // Включить музыку на фоне
+      } catch (error) {
+        console.error("Ошибка при загрузке или воспроизведении музыки:", error);
+      }
+    },
 
     async handleSignUp(formData) {
       try {
