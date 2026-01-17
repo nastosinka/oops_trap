@@ -31,7 +31,7 @@ export const TRAPS_BY_MAP = {
     },
     {
       id: "trap4",
-      name: "Trap 4",
+      name: "rock",
       component: TrapNum4,
       cooldown: 7000,
     },
