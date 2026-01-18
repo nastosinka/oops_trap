@@ -16,6 +16,10 @@
       class="map-layer st4-layer"
       :style="{ backgroundImage: `url(${st4})` }"
     ></div>
+    <div
+      class="map-layer li1-layer"
+      :style="{ backgroundImage: `url(${li1})` }"
+    ></div>
   </div>
 </template>
 
@@ -24,6 +28,7 @@ import st1 from "@/assets/images/maps/Map1/st/st1.png";
 import st2 from "@/assets/images/maps/Map1/st/st2.png";
 import st3 from "@/assets/images/maps/Map1/st/st3.png";
 import st4 from "@/assets/images/maps/Map1/st/st4.png";
+import li1 from "@/assets/images/maps/Map1/li/1.png";
 </script>
 
 <style scoped>
@@ -66,5 +71,10 @@ import st4 from "@/assets/images/maps/Map1/st/st4.png";
 .st4-layer {
   background-size: contain;
   z-index: 4;
+}
+
+.li1-layer {
+  background-size: contain;
+  z-index: 5;
 }
 </style>

@@ -15,7 +15,6 @@ import TrapNum2_2_1 from "@/components/game/traps/map1/TrapNum2_2.vue";
 import TrapNum5_1_1 from "@/components/game/traps/map1/TrapNum5_1.vue";
 import TrapNum5_2_1 from "@/components/game/traps/map1/TrapNum5_2.vue";
 import TrapNum6_1 from "@/components/game/traps/map1/TrapNum6.vue";
-import TrapNum7_1 from "@/components/game/traps/map1/TrapNum7.vue";
 import TrapNum8_1_1 from "@/components/game/traps/map1/TrapNum8_1.vue";
 import TrapNum8_2_1 from "@/components/game/traps/map1/TrapNum8_2.vue";
 
@@ -99,16 +98,11 @@ export const TRAPS_BY_MAP = {
       name: "tablet-5",
       component: TrapNum5_2_1,
     },
-    // {
-    //   id: "trap6",
-    //   name: "stone down",
-    //   component: TrapNum6_1,
-    // },
-    // {
-    //   id: "trap7",
-    //   name: "stone",
-    //   component: TrapNum7_1,
-    // },
+    {
+      id: "trap6",
+      name: "falling-rocks2",
+      component: TrapNum6_1,
+    },
     {
       id: "trap8_1",
       name: "pit-1",
