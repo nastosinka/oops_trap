@@ -212,23 +212,23 @@ describe("GamePage.vue - минимальные тесты", () => {
       wrapper = createWrapper();
       await wrapper.vm.$nextTick();
 
-      const message = { type: "timer_started", timeLeft: 300 };
+      const message = { type: "timer_started", timeLeft: 3 };
       wrapper.vm.handleGameMessage(message);
 
       expect(wrapper.vm.showSplash).toBe(false);
       expect(wrapper.vm.timerActive).toBe(true);
-      expect(wrapper.vm.timeLeft).toBe(300);
+      expect(wrapper.vm.timeLeft).toBe(3);
     });
 
     it("handleGameMessage обрабатывает timer_update", async () => {
       wrapper = createWrapper();
       await wrapper.vm.$nextTick();
 
-      const message = { type: "timer_update", active: true, timeLeft: 250 };
+      const message = { type: "timer_update", active: true, timeLeft: 2 };
       wrapper.vm.handleGameMessage(message);
 
       expect(wrapper.vm.timerActive).toBe(true);
-      expect(wrapper.vm.timeLeft).toBe(250);
+      expect(wrapper.vm.timeLeft).toBe(2);
     });
 
     it("handleGameMessage обрабатывает all_stats", async () => {
@@ -358,7 +358,7 @@ describe("GamePage.vue - минимальные тесты", () => {
 
       expect(wrapper.vm.showSplash).toBe(true);
 
-      wrapper.vm.handleGameMessage({ type: "timer_started", timeLeft: 300 });
+      wrapper.vm.handleGameMessage({ type: "timer_started", timeLeft: 3 });
 
       expect(wrapper.vm.showSplash).toBe(false);
     });

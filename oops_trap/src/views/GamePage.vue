@@ -477,8 +477,6 @@ const handleGameMessage = (message) => {
 
         // Звуки шагов
 
-        const now = performance.now();
-
         otherPlayers.value.forEach((enemy) => {
           const prev = lastEnemyPositions.get(enemy.id);
 

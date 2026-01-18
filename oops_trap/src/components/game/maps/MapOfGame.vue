@@ -117,9 +117,16 @@ const props = defineProps({
     default: () => [],
   },
 
-  // Добавляем пропсы для внешнего управления ловушками
-  trapToActivate: Object,
-  trapToDeactivate: Object,
+  // Внешнее управление ловушками
+  trapToActivate: {
+    type: Object,
+    default: null,
+  },
+
+  trapToDeactivate: {
+    type: Object,
+    default: null,
+  },
 });
 
 // Следим за изменением пропсов для внешнего управления
