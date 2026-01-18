@@ -52,7 +52,7 @@ import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import MapOfGame from "@/test/MapOfGameTest.vue";
+import MapOfGame from "@/views/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
 import { useGameResultsStore } from "@/stores/gameResults";
