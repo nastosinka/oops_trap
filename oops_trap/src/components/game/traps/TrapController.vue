@@ -39,42 +39,22 @@ function activateTrap(trap) {
 </script>
 
 <style scoped>
-/* .trap-controller {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  z-index: 300;
-  max-width: 300px;
-}
-
-.trap-controller ::v-deep(.base-button) {
-  min-height: 36px;
-  max-width: 140px;
-  font-size: 14px;   
-  padding: 6px 12px; 
-} */
 .trap-controller {
   position: absolute;
   bottom: 10px;
   left: 0px;
   right: 0px;
-  /* left: 30%; */
-  /* transform: translateX(-50%); */
   display: flex;
-  flex-direction: row; /* ряд */
-  flex-wrap: wrap;     /* перенос строк при необходимости */
+  flex-direction: row;
+  flex-wrap: wrap;   
   gap: 8px;
   justify-content: center;
   align-items: center;
   z-index: 300;
 }
 
-/* Переопределяем display кнопок на inline-flex */
 .trap-controller ::v-deep(.base-button) {
-  display: inline-flex !important; /* чтобы не занимали всю ширину */
+  display: inline-flex !important; 
   min-height: 36px;
   max-width: 120px;
   font-size: 14px;
