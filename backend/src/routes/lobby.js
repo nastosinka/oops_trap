@@ -313,9 +313,6 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
       if (!lobby.time) {
         errors.push('Time setting is not selected');
       }
-      if (lobby.players.length > 5) {
-        errors.push('Too many players (max 5 allowed)');
-      }
 
       if (errors.length > 0) {
         return res.status(400).json({ 
