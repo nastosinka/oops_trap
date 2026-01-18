@@ -65,7 +65,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { createGameSocket } from "@/utils/websocket";
-import { audioManager } from "@/tools/audioManager";
+import { audioManager } from "@/utils/audioManager";
 
 export default {
   name: "LobbyPage",
