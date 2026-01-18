@@ -365,7 +365,7 @@
       "isActive": true
     },
     {
-      "name": "rope",
+      "name": "rope_trap",
       "type": "trap",
       "points": [
         {
