@@ -1,6 +1,6 @@
 <template>
   <div class="map-editor">
-    <h1>Редактор карты.</h1>
+    <h1>Редактор карты</h1>
 
     <div class="controls">
       <label>Загрузить карту (изображение):</label>
