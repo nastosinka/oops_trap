@@ -99,16 +99,16 @@ export const TRAPS_BY_MAP = {
       name: "tablet-5",
       component: TrapNum5_2_1,
     },
-    {
-      id: "trap6",
-      name: "stone down",
-      component: TrapNum6_1,
-    },
-    {
-      id: "trap7",
-      name: "stone",
-      component: TrapNum7_1,
-    },
+    // {
+    //   id: "trap6",
+    //   name: "stone down",
+    //   component: TrapNum6_1,
+    // },
+    // {
+    //   id: "trap7",
+    //   name: "stone",
+    //   component: TrapNum7_1,
+    // },
     {
       id: "trap8_1",
       name: "pit-1",
