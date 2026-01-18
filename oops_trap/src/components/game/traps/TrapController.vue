@@ -1,17 +1,18 @@
 <template>
   <div class="trap-controller">
-    <button
+    <BaseButton
       v-for="trap in traps"
       :key="trap.id"
       :disabled="cooldowns[trap.id]"
       @click="activateTrap(trap)"
     >
       {{ trap.name }}
-    </button>
+    </BaseButton>
   </div>
 </template>
 
 <script setup>
+import BaseButton from "@/components/base/BaseButton.vue";
 import { reactive } from "vue";
 
 const props = defineProps({
@@ -47,5 +48,12 @@ function activateTrap(trap) {
   gap: 8px;
   z-index: 300;
   max-width: 300px;
+}
+
+.trap-controller ::v-deep(.base-button) {
+  min-height: 36px;
+  max-width: 140px;
+  font-size: 14px;   
+  padding: 6px 12px; 
 }
 </style>
