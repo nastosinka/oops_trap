@@ -46,7 +46,7 @@ function activateTrap(trap) {
   right: 0px;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;   
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
   align-items: center;
@@ -54,7 +54,7 @@ function activateTrap(trap) {
 }
 
 .trap-controller ::v-deep(.base-button) {
-  display: inline-flex !important; 
+  display: inline-flex !important;
   min-height: 36px;
   max-width: 120px;
   font-size: 14px;
@@ -62,5 +62,4 @@ function activateTrap(trap) {
   align-items: center;
   justify-content: center;
 }
-
 </style>
