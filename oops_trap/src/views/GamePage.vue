@@ -11,31 +11,16 @@
       <div class="hud">
         <div class="hud-info">
           <p>Time left: {{ timeLeft }}s</p>
-          <p>Game ID: {{ gameId }}</p>
-          <p>User ID: {{ userId }}</p>
+          <p>
+            <VolumeControl />
+          </p>
+          <!-- <p>User ID: {{ userId }}</p>
           <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
           <p>Role: {{ isHost ? "Host" : "Player" }}</p>
           <p>
             Connection:
             <span :class="connectionStatusClass">{{ connectionStatus }}</span>
-          </p>
-        </div>
-
-        <!-- Кнопки управления -->
-        <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
-            {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
-          </button>
+          </p> -->
         </div>
       </div>
 
@@ -59,6 +44,7 @@ import { useGameResultsStore } from "@/stores/gameResults";
 import { audioManager } from "@/utils/audioManager";
 import gameMusic from "@/assets/music/game-music.mp3";
 import stepsSound from "@/assets/music/steps.mp3";
+import VolumeControl from '@/components/base/VolumeControl.vue';
 
 const resultsStore = useGameResultsStore();
 const route = useRoute();
@@ -711,10 +697,8 @@ button:disabled {
   top: 10px;
   left: 10px;
   background: rgba(0, 0, 0, 0.8);
-  color: white;
   padding: 15px;
   border-radius: 8px;
-  font-family: "Courier New", monospace;
   min-width: 200px;
   border: 1px solid #333;
   z-index: 50;
@@ -723,9 +707,12 @@ button:disabled {
 .hud-info p {
   margin: 5px 0;
   font-size: 14px;
+  font-family: "Irish Grover", system-ui;
+  font-size: 20px;
+  color: #ffcc00;
 }
 
-.hud-buttons {
+/* .hud-buttons {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
@@ -778,7 +765,7 @@ button:disabled {
 
 .status-waiting {
   color: #ff9800;
-}
+} */
 
 .overlay {
   position: absolute;

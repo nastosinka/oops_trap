@@ -3,6 +3,9 @@
     <div class="nickname">
       {{ userName }} (ID: {{ userId }}) {{ isHost ? "👑" : "" }}
     </div>
+    <div class="volume">
+      <VolumeControl />
+    </div>
     <div class="content">
       <div class="lobby-code">Code: {{ lobbyCode }}</div>
       <div class="lobby-status" :class="statusClass">
@@ -66,10 +69,11 @@ import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { createGameSocket } from "@/utils/websocket";
 import { audioManager } from "@/utils/audioManager";
+import VolumeControl from '@/components/base/VolumeControl.vue';
 
 export default {
   name: "LobbyPage",
-  components: { BaseButton, UniversalModal },
+  components: { BaseButton, UniversalModal, VolumeControl },
 
   setup() {
     const userStore = useUserStore();
@@ -510,12 +514,29 @@ export default {
   font-weight: bold;
   position: absolute;
   top: 30px;
-  right: 30px;
-  font-size: 28px;
+  right: 20px;
+  font-size: 24px;
   color: #ffcc00;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   z-index: 100;
   background: rgba(0, 0, 0, 0.15);
+  padding: 10px 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.volume {
+  font-weight: bold;
+  position: absolute;
+  top: 32px;
+  left: 20px;
+  color: #ffcc00;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  background: rgba(166, 222, 207, 0.15);
   padding: 10px 15px;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);

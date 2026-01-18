@@ -1,5 +1,3 @@
-// src/tools/audioManager.js
-
 class AudioManager {
   constructor() {
     this.audioContext = null;
