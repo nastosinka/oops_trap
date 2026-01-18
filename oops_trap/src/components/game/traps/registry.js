@@ -43,7 +43,7 @@ export const TRAPS_BY_MAP = {
     },
     {
       id: "trap6",
-      name: "rope",
+      name: "rope_trap",
       component: TrapNum6,
       cooldown: 6000,
     },
