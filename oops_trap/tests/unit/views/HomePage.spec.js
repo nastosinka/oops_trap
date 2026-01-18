@@ -5,6 +5,12 @@ import BaseButton from "@/components/base/BaseButton.vue";
 import UniversalModal from "@/components/base/UniversalModal.vue";
 import { createPinia, setActivePinia } from "pinia";
 
+vi.mock("@/components/base/VolumeControl.vue", () => ({
+  default: {
+    template: "<div class='volume-control-stub' />",
+  },
+}));
+
 vi.mock("@/utils/notification-wrapper", () => ({
   showSuccess: vi.fn(),
 }));

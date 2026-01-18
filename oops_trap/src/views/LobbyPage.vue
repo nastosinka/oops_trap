@@ -69,7 +69,7 @@ import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { createGameSocket } from "@/utils/websocket";
 import { audioManager } from "@/utils/audioManager";
-import VolumeControl from '@/components/base/VolumeControl.vue';
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 export default {
   name: "LobbyPage",

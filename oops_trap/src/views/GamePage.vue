@@ -14,13 +14,6 @@
           <p>
             <VolumeControl />
           </p>
-          <!-- <p>User ID: {{ userId }}</p>
-          <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-          <p>Role: {{ isHost ? "Host" : "Player" }}</p>
-          <p>
-            Connection:
-            <span :class="connectionStatusClass">{{ connectionStatus }}</span>
-          </p> -->
         </div>
       </div>
 
@@ -44,7 +37,7 @@ import { useGameResultsStore } from "@/stores/gameResults";
 import { audioManager } from "@/utils/audioManager";
 import gameMusic from "@/assets/music/game-music.mp3";
 import stepsSound from "@/assets/music/steps.mp3";
-import VolumeControl from '@/components/base/VolumeControl.vue';
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 const resultsStore = useGameResultsStore();
 const route = useRoute();
@@ -99,23 +92,6 @@ const connectionError = ref(null);
 
 // Флаг завершения игры
 const gameEnded = ref(false);
-
-// Активна ли сейчас игра
-const isGameActive = computed(
-  () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
-);
-
-// Текстовое состояние соединения
-const connectionStatus = computed(() => {
-  if (connectionError.value) return "Disconnected";
-  return isConnected.value ? "Connected" : "Connecting...";
-});
-
-// CSS-классы для статуса соединения
-const connectionStatusClass = computed(() => ({
-  "status-connected": isConnected.value,
-  "status-disconnected": connectionError.value,
-}));
 
 // Ref для доступа к компоненту карты
 const mapRef = ref(null);
@@ -324,23 +300,6 @@ const checkIfUserIsHost = async () => {
     console.error("Error checking host status:", error);
     isHost.value = false;
   }
-};
-
-const returnToLobby = async () => {
-  userStore.setIsAlive(true);
-  if (isGameActive.value) {
-    alert(
-      "Cannot return to lobby while the game is active. Please wait for the game to finish."
-    );
-    return;
-  }
-
-  if (!lobbyId.value) {
-    alert("Lobby information is not available");
-    return;
-  }
-
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
 };
 
 /* ------------------------------------------------------------------

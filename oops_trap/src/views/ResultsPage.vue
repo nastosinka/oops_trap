@@ -43,7 +43,7 @@
       </table>
     </div>
 
-    <div class="volume"> <VolumeControl /> </div>
+    <div class="volume"><VolumeControl /></div>
 
     <BaseButton label="Back to Lobby" @click="returnToLobby" />
   </div>
@@ -59,7 +59,7 @@ import { Modal } from "ant-design-vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
 import { audioManager } from "@/utils/audioManager";
-import VolumeControl from '@/components/base/VolumeControl.vue';
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 const route = useRoute();
 const heartbeatInterval = ref(null);

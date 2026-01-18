@@ -55,7 +55,7 @@ import { apiFetch } from "@/utils/api-auth.js";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { audioManager } from "@/utils/audioManager";
-import VolumeControl from '@/components/base/VolumeControl.vue';
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 export default {
   name: "CreateLobbyPage",
@@ -63,7 +63,7 @@ export default {
   components: {
     BaseButton,
     UniversalModal,
-    VolumeControl
+    VolumeControl,
   },
 
   setup() {

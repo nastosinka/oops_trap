@@ -4,6 +4,12 @@ import { createPinia, setActivePinia } from "pinia";
 import ResultsPage from "@/views/ResultsPage.vue";
 
 // Мокаем модули
+vi.mock("@/components/base/VolumeControl.vue", () => ({
+  default: {
+    template: "<div class='volume-control-stub' />",
+  },
+}));
+
 vi.mock("@/stores/gameResults", () => ({
   useGameResultsStore: vi.fn(),
 }));

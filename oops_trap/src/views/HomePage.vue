@@ -43,14 +43,14 @@ import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
 import { audioManager } from "@/utils/audioManager";
-import VolumeControl from '@/components/base/VolumeControl.vue';
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 export default {
   name: "HomePage",
   components: {
     BaseButton,
     UniversalModal,
-    VolumeControl
+    VolumeControl,
   },
 
   data() {
@@ -62,10 +62,10 @@ export default {
   },
 
   mounted() {
-  audioManager.playMusic("background", {
-        loop: true,
-        volume: 0.3,
-      });
+    audioManager.playMusic("background", {
+      loop: true,
+      volume: 0.3,
+    });
   },
 
   methods: {

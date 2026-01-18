@@ -105,16 +105,16 @@ describe("GamePage.vue - минимальные тесты", () => {
     if (wrapper) wrapper.unmount();
   });
 
-  const createWrapper = () => {
-    return mount(GamePage, {
+  const createWrapper = () =>
+    mount(GamePage, {
       global: {
         stubs: {
           MapOfGame: true,
+          VolumeControl: true,
         },
         plugins: [createPinia()],
       },
     });
-  };
 
   // Только самые базовые тесты
   describe("Базовые тесты", () => {
@@ -172,25 +172,6 @@ describe("GamePage.vue - минимальные тесты", () => {
 
       expect(wrapper.vm.lobbyId).toBe("test-lobby-456");
     });
-
-    it("определяет isGameActive", async () => {
-      wrapper = createWrapper();
-      await wrapper.vm.$nextTick();
-
-      // Изначально игра не активна
-      expect(wrapper.vm.isGameActive).toBe(false);
-
-      // Симулируем активную игру
-      wrapper.vm.timerActive = true;
-      wrapper.vm.timeLeft = 10;
-      wrapper.vm.gameEnded = false;
-
-      // Нужно обновить computed свойство
-      await wrapper.vm.$nextTick();
-
-      // isGameActive должно быть true
-      expect(wrapper.vm.isGameActive).toBe(true);
-    });
   });
 
   describe("Методы", () => {
@@ -212,23 +193,23 @@ describe("GamePage.vue - минимальные тесты", () => {
       wrapper = createWrapper();
       await wrapper.vm.$nextTick();
 
-      const message = { type: "timer_started", timeLeft: 3 };
+      const message = { type: "timer_started", timeLeft: 300 };
       wrapper.vm.handleGameMessage(message);
 
       expect(wrapper.vm.showSplash).toBe(false);
       expect(wrapper.vm.timerActive).toBe(true);
-      expect(wrapper.vm.timeLeft).toBe(3);
+      expect(wrapper.vm.timeLeft).toBe(300);
     });
 
     it("handleGameMessage обрабатывает timer_update", async () => {
       wrapper = createWrapper();
       await wrapper.vm.$nextTick();
 
-      const message = { type: "timer_update", active: true, timeLeft: 2 };
+      const message = { type: "timer_update", active: true, timeLeft: 250 };
       wrapper.vm.handleGameMessage(message);
 
       expect(wrapper.vm.timerActive).toBe(true);
-      expect(wrapper.vm.timeLeft).toBe(2);
+      expect(wrapper.vm.timeLeft).toBe(250);
     });
 
     it("handleGameMessage обрабатывает all_stats", async () => {
@@ -358,25 +339,9 @@ describe("GamePage.vue - минимальные тесты", () => {
 
       expect(wrapper.vm.showSplash).toBe(true);
 
-      wrapper.vm.handleGameMessage({ type: "timer_started", timeLeft: 3 });
+      wrapper.vm.handleGameMessage({ type: "timer_started", timeLeft: 300 });
 
       expect(wrapper.vm.showSplash).toBe(false);
-    });
-
-    it("обновляет connectionStatus", async () => {
-      wrapper = createWrapper();
-      await wrapper.vm.$nextTick();
-
-      // Изначально Connecting...
-      expect(wrapper.vm.connectionStatus).toBe("Connecting...");
-
-      // При подключении
-      wrapper.vm.isConnected = true;
-      expect(wrapper.vm.connectionStatus).toBe("Connected");
-
-      // При ошибке
-      wrapper.vm.connectionError = "Disconnected";
-      expect(wrapper.vm.connectionStatus).toBe("Disconnected");
     });
   });
 });
