@@ -5,22 +5,66 @@ const path = require("path");
 
 const coordIntervals = new Map();
 
+const HITBOX = {
+  offsetX: 6,
+  offsetY: 10,
+  width: 12,
+  height: 32,
+};
+
 function pointInPolygon(x, y, points) {
-    let inside = false;
-    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-        const xi = points[i].x, yi = points[i].y;
-        const xj = points[j].x, yj = points[j].y;
+    const testPoints = [
+        // центр
+        {
+            x: x + HITBOX.offsetX + HITBOX.width / 2,
+            y: y + HITBOX.offsetY + HITBOX.height / 2,
+        },
 
-        // Проверка пересечения луча с ребром
-        const intersect = ((yi > y) !== (yj > y)) &&
-            (x < (xj - xi) * (y - yi) / (yj - yi + 0.0000001) + xi);
-        // + маленькая поправка чтобы не делить на ноль
+        // верх
+        {
+            x: x + HITBOX.offsetX + HITBOX.width / 2,
+            y: y + HITBOX.offsetY,
+        },
 
-        if (intersect) inside = !inside;
+        // низ
+        {
+            x: x + HITBOX.offsetX + HITBOX.width / 2,
+            y: y + HITBOX.offsetY + HITBOX.height,
+        },
+
+        // лево
+        {
+            x: x + HITBOX.offsetX,
+            y: y + HITBOX.offsetY + HITBOX.height / 2,
+        },
+
+        // право
+        {
+            x: x + HITBOX.offsetX + HITBOX.width,
+            y: y + HITBOX.offsetY + HITBOX.height / 2,
+        },
+    ];
+
+    for (const p of testPoints) {
+        let inside = false;
+
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+            const xi = points[i].x, yi = points[i].y;
+            const xj = points[j].x, yj = points[j].y;
+
+            const intersect =
+                (yi > p.y) !== (yj > p.y) &&
+                (p.x < (xj - xi) * (p.y - yi) / (yj - yi + 1e-7) + xi);
+
+            if (intersect) inside = !inside;
+        }
+
+        if (inside) return true;
     }
-    //console.log(`pointInPolygon: x=${x}, y=${y}, inside=${inside}`);
-    return inside;
+
+    return false;
 }
+
 
 // Проверка всех boundary полигонов
 function isInsideBoundaries(x, y, polygons) {
