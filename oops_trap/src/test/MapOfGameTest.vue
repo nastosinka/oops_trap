@@ -4,34 +4,19 @@
       <!-- Фон -->
       <component :is="CurrentMap" />
 
-      <!-- Контроллер ловушек -->
-      <div class="trap-controller-wrapper">
-        <TrapController
-          v-if="isMafia"
-          :traps="traps"
-          @activate="onTrapActivate"
-        />
-      </div>
-
       <!-- Ловушки -->
-      <component
-        :is="trap.component"
-        v-for="trap in traps"
-        :key="trap.id"
-        :active="trapsState[trap.name]"
-      />
+      <component :is="trap.component" v-for="trap in traps" :key="trap.id" :active="trapsState[trap.name]" />
 
       <!-- Другие игроки -->
       <OtherPlayers :players="otherPlayers" />
 
       <!-- Текущий игрок -->
-      <CurrentPlayer
-        v-if="!isMafia && isAlive"
-        ref="physicsPlayerRef"
-        :game-area="gameArea"
-        :polygons="polygons"
-        @player-move="handlePlayerMove"
-      />
+      <CurrentPlayer v-if="!isMafia && isAlive" ref="physicsPlayerRef" :game-area="gameArea" :polygons="polygons"
+        @player-move="handlePlayerMove" />
+    </div>
+    <!-- Контроллер ловушек -->
+    <div class="trap-controller-wrapper">
+      <TrapController v-if="isMafia" :traps="traps" @activate="onTrapActivate" />
     </div>
   </div>
 </template>
@@ -227,9 +212,8 @@ function updateScreenSize() {
   gameContentRef.value.style.width = `${BASE_WIDTH}px`;
   gameContentRef.value.style.height = `${BASE_HEIGHT}px`;
 
-  gameContentRef.value.style.transform = `scale(${scale}) translate(${
-    ml / scale
-  }px, ${mt / scale}px)`;
+  gameContentRef.value.style.transform = `scale(${scale}) translate(${ml / scale
+    }px, ${mt / scale}px)`;
 
   gameArea.value = {
     baseWidth: BASE_WIDTH,
