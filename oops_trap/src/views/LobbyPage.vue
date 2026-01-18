@@ -283,7 +283,7 @@ export default {
 
     updatePlayers(players) {
       console.log("[LobbyPage] updatePlayers - updating list");
-
+      this.checkIfUserIsHost();
       const updated = players.map((p, idx) => ({
         ...p,
         color: this.getPlayerColor(idx),
