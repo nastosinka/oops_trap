@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from "vue";
+import { computed } from "vue";
 
 /* ----------------------------------
    Props
@@ -35,12 +35,6 @@ const props = defineProps({
     default: true,
   },
 });
-
-/* ----------------------------------
-   Inject (🔥 РЕАКТИВНО)
----------------------------------- */
-
-const gameArea = inject("gameArea", ref({ scale: 1 }));
 
 /* ----------------------------------
    Constants

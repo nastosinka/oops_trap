@@ -3,9 +3,15 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  type: String,
-  active: Boolean,
+defineProps({
+  type: {
+    type: String,
+    default: "",
+  },
+  active: {
+    type: Boolean,
+    default: false,
+  },
 });
 </script>
 

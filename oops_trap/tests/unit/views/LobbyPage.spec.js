@@ -3,6 +3,12 @@ import LobbyPage from "@/views/LobbyPage.vue";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Моки
+vi.mock("@/components/base/VolumeControl.vue", () => ({
+  default: {
+    template: "<div class='volume-control-stub' />",
+  },
+}));
+
 vi.mock("@/stores/user", () => {
   const { ref } = require("vue");
   return {

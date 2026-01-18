@@ -15,7 +15,7 @@
 import BaseButton from "@/components/base/BaseButton.vue";
 import { reactive } from "vue";
 
-const props = defineProps({
+defineProps({
   traps: {
     type: Array,
     required: true,
