@@ -23,27 +23,7 @@ const routes = [
     path: "/game/:id?",
     name: "Game",
     component: () => import("@/views/GamePage.vue"),
-  },
-  {
-    path: "/gametest",
-    name: "GameTest",
-    component: () => import("@/test/GameTest.vue"),
-  },
-  {
-    path: "/test-run", // только движение ;(
-    name: "TestRunnerr",
-    component: () => import("@/components/game/RunnerTest.vue"),
-  },
-  {
-    path: "/map", // нет полигонов, спавн по таймеру, шикшакшок
-    name: "MapOfGame",
-    component: () => import("@/views/MapOfGame.vue"),
-  },
-  {
-    path: "/physics-runner", // только падение
-    name: "TestPhysics",
-    component: () =>
-      import("@/components/game/player/test/RunnerPhysicsEdited.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/map-edit", // редактура полигонов
@@ -52,14 +32,10 @@ const routes = [
     //meta: { devOnly: true }
   },
   {
-    path: "/test",
-    name: "Test",
-    component: () => import("@/views/MapOfGame.vue"),
-  },
-  {
     path: "/results",
     name: "Results",
     component: () => import("@/views/ResultsPage.vue"),
+    meta: { requiresAuth: true },
   },
 ];
 

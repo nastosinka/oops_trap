@@ -19,7 +19,7 @@ export default {
 
 <script setup>
 import { onMounted } from "vue";
-import { audioManager } from "@/tools/audioManager";
+import { audioManager } from "@/utils/audioManager";
 
 import backgroundMusic from "@/assets/music/background.mp3";
 import gameMusic from "@/assets/music/game-music.mp3";

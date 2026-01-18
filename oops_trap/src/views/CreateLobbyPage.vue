@@ -53,7 +53,7 @@ import { Modal } from "ant-design-vue";
 import { apiFetch } from "@/utils/api-auth.js";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import { audioManager } from "@/tools/audioManager";
+import { audioManager } from "@/utils/audioManager";
 
 export default {
   name: "CreateLobbyPage",

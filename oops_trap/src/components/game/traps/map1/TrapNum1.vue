@@ -1,0 +1,36 @@
+<template>
+  <div class="trap-image" :class="{ active }" />
+</template>
+
+<script setup>
+const props = defineProps({
+  type: String,
+  active: Boolean,
+});
+</script>
+
+<style scoped>
+.trap-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.trap-image.active {
+  animation: trapAnim 0.75s steps(1) forwards;
+}
+
+@keyframes trapAnim {
+  0%,
+  100% {
+    background-image: url("@/assets/images/maps/Map1/tr1_1/1.png");
+  }
+}
+</style>

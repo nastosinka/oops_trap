@@ -41,7 +41,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
-import { audioManager } from "@/tools/audioManager";
+import { audioManager } from "@/utils/audioManager";
 
 export default {
   name: "HomePage",

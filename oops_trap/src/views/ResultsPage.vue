@@ -56,7 +56,7 @@ import { useRouter } from "vue-router";
 import { Modal } from "ant-design-vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
-import { audioManager } from "@/tools/audioManager";
+import { audioManager } from "@/utils/audioManager";
 
 const route = useRoute();
 const heartbeatInterval = ref(null);
