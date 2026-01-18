@@ -287,9 +287,6 @@ function setupGameWebSocket(server) {
                     case 'player_move': // поменять координаты игрока (проверено работает)
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings);
                         break;
-                    case 'coord_message': // получить координаты
-                        handleCoordMessage(ws, message.gameId);
-                        break;
                     case 'trap_message': // активировать ловушку
                         handleTrapMessage(ws, message.gameId, message.trap, message.playerId);
                         break;
@@ -329,6 +326,22 @@ function setupGameWebSocket(server) {
                 result: true,
                 timestamp: new Date().toISOString()
             });
+
+            gameRoom.playersWithSettings.forEach((player, playerId) => {
+                console.log("Запущена проверка попадания всех игроков в ловушки");
+                const trapType = checkTrapCollision(player.x, player.y, gameRoom.polygons);
+                if (trapType) {
+                    player.alive = false;
+                    broadcastToGame(gameId, {
+                        type: "died",
+                        playerId: playerId,
+                        reason: trapType,
+                        timestamp: new Date().toISOString()
+                    });
+                    console.log(`☠️ Игрок ${playerId} погиб от ${trapType}`);
+                }
+            });
+            checkAllRunnersDone(gameId);
 
             setTimeout(() => {
                 try {
@@ -605,46 +618,6 @@ function setupGameWebSocket(server) {
         });
 
     }
-
-    function handleCoordMessage(ws, gameId, intervalMs = 100) {
-        const gameRoom = gameRooms.get(gameId);
-        if (!gameRoom) return;
-
-        stopCoordBroadcast(gameId);
-
-        const interval = setInterval(() => {
-            const currentGameRoom = gameRooms.get(gameId);
-            if (!currentGameRoom) {
-                stopCoordBroadcast(gameId);
-                return;
-            }
-
-            const playersArray = Array.from(currentGameRoom.playersWithSettings.entries()).map(([id, player]) => ({
-                id: id,
-                ...player
-            }));
-
-            broadcastToGame(gameId, {
-                type: 'coord_message',
-                coords: playersArray,
-                timestamp: new Date().toISOString(),
-            });
-
-        }, intervalMs);
-
-        coordIntervals.set(gameId, interval);
-
-        console.log(`Запущена периодическая отправка координатов для игры ${gameId} каждые ${intervalMs}мс`);
-    }
-
-    function stopCoordBroadcast(gameId) {
-        if (coordIntervals.has(gameId)) {
-            clearInterval(coordIntervals.get(gameId));
-            coordIntervals.delete(gameId);
-            console.log(`Остановлена отправка координатов для игры ${gameId}`);
-        }
-    }
-
 
     async function saveStatistic(data) {
         const { id_user, id_map, time, role } = data;
