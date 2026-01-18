@@ -98,45 +98,49 @@ function onTrapActivate(trap) {
   );
 }
 
-function onTrapDisactive(trap){
-    trapsState[trap.name] = false;
+function onTrapDisactive(trap) {
+  trapsState[trap.name] = false;
 }
-
 
 // Экспортируем функции для родительского компонента
 defineExpose({
   onTrapActivate,
-  onTrapDisactive
+  onTrapDisactive,
 });
 
 /* ----------------------------------
    Props
 ---------------------------------- */
 
-
 const props = defineProps({
   otherPlayers: {
     type: Array,
     default: () => [],
   },
-  
+
   // Добавляем пропсы для внешнего управления ловушками
   trapToActivate: Object,
   trapToDeactivate: Object,
 });
 
 // Следим за изменением пропсов для внешнего управления
-watch(() => props.trapToActivate, (trap) => {
-  if (trap && trap.name) {
-    onTrapActivate(trap);
+watch(
+  () => props.trapToActivate,
+  (trap) => {
+    if (trap && trap.name) {
+      onTrapActivate(trap);
+    }
   }
-});
+);
 
-watch(() => props.trapToDeactivate, (trap) => {
-  if (trap && trap.name) {
-    onTrapDisactive(trap);
+watch(
+  () => props.trapToDeactivate,
+  (trap) => {
+    if (trap && trap.name) {
+      onTrapDisactive(trap);
+    }
   }
-});
+);
 
 /* ----------------------------------
    Refs

@@ -131,6 +131,27 @@ const connectionStatusClass = computed(() => ({
 // Ref для доступа к компоненту карты
 const mapRef = ref(null);
 
+//ТУТ НАЧИНАЕТСЯ АУДИО
+
+import { audioManager } from "@/tools/audioManager";
+import gameMusic from "@/assets/music/game-music.mp3";
+import stepsSound from "@/assets/music/steps.mp3";
+
+const MAX_STEP_DISTANCE = 20000; // радиус слышимости шагов
+
+function calcStepVolume(player, enemy) {
+  const dx = enemy.x - player.x;
+  const dy = enemy.y - player.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (distance >= MAX_STEP_DISTANCE) return 0;
+
+  // линейное затухание
+  return 1 - distance / MAX_STEP_DISTANCE;
+}
+
+//ТУТ ЗАКАНЧИВАЕТСЯ АУДИО
+
 /* ------------------------------------------------------------------
    Работа с координатами игрока
 -------------------------------------------------------------------*/
@@ -165,7 +186,7 @@ const sendTrapMove = (trap) => {
       type: "trap_message",
       gameId: gameId.value,
       playerId: userId.value,
-      trap: trap,
+      trap,
     })
   );
 };
@@ -176,7 +197,7 @@ const sendTrapMove = (trap) => {
 function handleIncomingTrap(message) {
   // Определяем имя ловушки из сообщения
   const trapName = message.name || message.trap;
-  
+
   if (!trapName) {
     console.error("Trap message missing trap name:", message);
     return;
@@ -200,7 +221,7 @@ function handleIncomingTrap(message) {
  */
 function handleTrapDeactivation(message) {
   const trapName = message.name || message.trap;
-  
+
   if (!trapName) {
     console.error("Trap deactivation message missing trap name:", message);
     return;
@@ -218,25 +239,56 @@ function handleTrapDeactivation(message) {
  * которое отправляется из компонента карты.
  */
 function setupCoordsListener() {
-  window.addEventListener("player-coords-update", (event) => {
-    const newCoords = event.detail;
-    playerCoords.x = newCoords.x;
-    playerCoords.y = newCoords.y;
-
-    sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
-  });
-
-  window.addEventListener("player-traps-update", (event) => {
-    const trap = event.detail;
-    sendTrapMove(trap);
-  });
+  window.addEventListener("player-coords-update", playerCoordsHandler);
+  window.addEventListener("player-traps-update", trapHandler);
 }
+
+function cleanupCoordsListener() {
+  window.removeEventListener("player-coords-update", playerCoordsHandler);
+  window.removeEventListener("player-traps-update", trapHandler);
+}
+
+const playerCoordsHandler = (event) => {
+  const newCoords = event.detail;
+  playerCoords.x = newCoords.x;
+  playerCoords.y = newCoords.y;
+  sendPlayerMove(playerCoords.x, playerCoords.y, newCoords.lastImage || 1);
+};
+
+const trapHandler = (event) => {
+  const trap = event.detail;
+  sendTrapMove(trap);
+};
 
 /* ------------------------------------------------------------------
    Жизненный цикл компонента
 -------------------------------------------------------------------*/
 
 onMounted(async () => {
+  // Загружаем аудио
+  await audioManager.load("game", gameMusic);
+  await audioManager.load("steps", stepsSound);
+
+  // Сразу запускаем музыку, без unlock
+  // Если браузер блокирует, тогда повесим fallback на клик
+  try {
+    // Если сейчас играет что-то (background), плавно убавим
+    audioManager.fadeOutMusic(1.2); // затухание 1.2 секунды
+    // Ждём окончания fade-out
+    setTimeout(() => {
+      audioManager.playMusic("game", { loop: true, volume: 0.15 });
+    }, 1200);
+  } catch {
+    const unlock = async () => {
+      await audioManager.unlock();
+      audioManager.playMusic("game", { loop: true, volume: 0.15 });
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    window.addEventListener("click", unlock);
+    window.addEventListener("keydown", unlock);
+  }
+
   userStore.initializeUser();
   userStore.setIsAlive(true);
 
@@ -252,7 +304,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupWebSocket();
-  window.removeEventListener("player-coords-update", setupCoordsListener);
+  cleanupCoordsListener();
 });
 
 /* ------------------------------------------------------------------
@@ -292,7 +344,9 @@ const checkIfUserIsHost = async () => {
 const returnToLobby = async () => {
   userStore.setIsAlive(true);
   if (isGameActive.value) {
-    alert("Cannot return to lobby while the game is active. Please wait for the game to finish.");
+    alert(
+      "Cannot return to lobby while the game is active. Please wait for the game to finish."
+    );
     return;
   }
 
@@ -361,6 +415,10 @@ const cleanupWebSocket = () => {
   isConnected.value = false;
 };
 
+const STEP_DISTANCE = 40; // сколько пикселей = 1 шаг
+const stepProgressByPlayer = new Map();
+const lastEnemyPositions = new Map();
+
 /**
  * Обрабатывает входящие сообщения от игрового сервера.
  *
@@ -418,6 +476,48 @@ const handleGameMessage = (message) => {
             p.alive === true
         );
 
+        // Звуки шагов
+
+        const now = performance.now();
+
+        otherPlayers.value.forEach((enemy) => {
+          const prev = lastEnemyPositions.get(enemy.id);
+
+          // сохраняем позицию
+          lastEnemyPositions.set(enemy.id, { x: enemy.x, y: enemy.y });
+
+          if (!prev) return;
+
+          const dx = enemy.x - prev.x;
+          const dy = enemy.y - prev.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 1) return; // микродрожание — игнор
+
+          // накапливаем пройденную дистанцию
+          const acc = (stepProgressByPlayer.get(enemy.id) || 0) + dist;
+
+          if (acc < STEP_DISTANCE) {
+            stepProgressByPlayer.set(enemy.id, acc);
+            return;
+          }
+
+          // шаг "совершён"
+          stepProgressByPlayer.set(enemy.id, acc % STEP_DISTANCE);
+
+          const volume = calcStepVolume(playerCoords, enemy);
+          if (volume <= 0.05) return;
+
+          // небольшая рандомизация
+          const pitch = 0.9 + Math.random() * 0.2;
+          const gain = volume * (0.5 + Math.random() * 0.2);
+
+          audioManager.playSfx("steps", {
+            volume: gain,
+            playbackRate: pitch,
+          });
+        });
+
         // Для логики конца игры — все игроки
         allPlayers.value = normalized.filter(
           (p) => p.id !== String(userId.value)
@@ -465,28 +565,39 @@ const handleGameMessage = (message) => {
       break;
 
     case "all_stats":
-      if (!message.stats) return;
+      {
+        audioManager.fadeOutMusic(1.2);
 
-      const results = Object.entries(message.stats).map(([id, stat]) => ({
-        id: String(id),
-        name: stat.name,
-        role: stat.role,
-        win: stat.win,
-        time: stat.time,
-        map: stat.map,
-      }));
+        setTimeout(() => {
+          audioManager.playMusic("background", {
+            loop: true,
+            volume: 0.3,
+          });
+        }, 1200);
 
-      resultsStore.setResults(results, results[0]?.map ?? null);
+        if (!message.stats) return;
 
-      gameEnded.value = true;
-      timerActive.value = false;
+        const results = Object.entries(message.stats).map(([id, stat]) => ({
+          id: String(id),
+          name: stat.name,
+          role: stat.role,
+          win: stat.win,
+          time: stat.time,
+          map: stat.map,
+        }));
 
-      router.push({
-        path: "/results",
-        query: {
-          lobbyId: lobbyId.value,
-        },
-      });
+        resultsStore.setResults(results, results[0]?.map ?? null);
+
+        gameEnded.value = true;
+        timerActive.value = false;
+
+        router.push({
+          path: "/results",
+          query: {
+            lobbyId: lobbyId.value,
+          },
+        });
+      }
       break;
 
     default:

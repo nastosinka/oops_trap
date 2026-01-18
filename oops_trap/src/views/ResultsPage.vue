@@ -56,6 +56,7 @@ import { useRouter } from "vue-router";
 import { Modal } from "ant-design-vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
+import { audioManager } from "@/tools/audioManager";
 
 const route = useRoute();
 const heartbeatInterval = ref(null);
@@ -87,6 +88,13 @@ const stopHeartbeat = () => {
 };
 
 onMounted(() => {
+  if (audioManager.currentMusicName !== "background") {
+    audioManager.playMusic("background", {
+      loop: true,
+      volume: 0.3,
+    });
+  }
+
   startHeartbeat();
 });
 
@@ -104,9 +112,7 @@ onUnmounted(() => {
 const sortedPlayers = computed(() => {
   const stats = resultsStore.stats.map((p) => ({ ...p }));
 
-  const allDead = stats.every(
-    (p) => p.role === "mafia" || p.win === false
-  );
+  const allDead = stats.every((p) => p.role === "mafia" || p.win === false);
 
   return stats
     .map((p) => {

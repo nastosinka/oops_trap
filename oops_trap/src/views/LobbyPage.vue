@@ -65,6 +65,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { createGameSocket } from "@/utils/websocket";
+import { audioManager } from "@/tools/audioManager";
 
 export default {
   name: "LobbyPage",
@@ -114,6 +115,15 @@ export default {
     hasPlayers() {
       return this.players && this.players.length > 0;
     },
+  },
+
+  mounted() {
+    if (audioManager.currentMusicName !== "background") {
+      audioManager.playMusic("background", {
+        loop: true,
+        volume: 0.3,
+      });
+    }
   },
 
   async created() {

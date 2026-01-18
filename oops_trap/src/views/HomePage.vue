@@ -41,6 +41,7 @@ import UniversalModal from "@/components/base/UniversalModal.vue";
 import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
+import { audioManager } from "@/tools/audioManager";
 
 export default {
   name: "HomePage",
@@ -55,6 +56,15 @@ export default {
       showSignInModal: false,
       showRulesModal: false,
     };
+  },
+
+  mounted() {
+    if (audioManager.currentMusicName !== "background") {
+      audioManager.playMusic("background", {
+        loop: true,
+        volume: 0.3,
+      });
+    }
   },
 
   methods: {
