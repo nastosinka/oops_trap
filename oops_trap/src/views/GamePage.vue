@@ -52,10 +52,13 @@ import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
-import MapOfGame from "@/views/MapOfGame.vue";
+import MapOfGame from "@/components/game/maps/MapOfGame.vue";
 import runnerImg from "@/assets/images/1_R.png";
 import mafiaImg from "@/assets/images/1_T.png";
 import { useGameResultsStore } from "@/stores/gameResults";
+import { audioManager } from "@/utils/audioManager";
+import gameMusic from "@/assets/music/game-music.mp3";
+import stepsSound from "@/assets/music/steps.mp3";
 
 const resultsStore = useGameResultsStore();
 const route = useRoute();
@@ -132,10 +135,6 @@ const connectionStatusClass = computed(() => ({
 const mapRef = ref(null);
 
 //ТУТ НАЧИНАЕТСЯ АУДИО
-
-import { audioManager } from "@/tools/audioManager";
-import gameMusic from "@/assets/music/game-music.mp3";
-import stepsSound from "@/assets/music/steps.mp3";
 
 const MAX_STEP_DISTANCE = 20000; // радиус слышимости шагов
 

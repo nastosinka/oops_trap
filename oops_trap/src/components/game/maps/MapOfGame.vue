@@ -4,15 +4,6 @@
       <!-- Фон -->
       <component :is="CurrentMap" />
 
-      <!-- Контроллер ловушек -->
-      <div class="trap-controller-wrapper">
-        <TrapController
-          v-if="isMafia"
-          :traps="traps"
-          @activate="onTrapActivate"
-        />
-      </div>
-
       <!-- Ловушки -->
       <component
         :is="trap.component"
@@ -31,6 +22,14 @@
         :game-area="gameArea"
         :polygons="polygons"
         @player-move="handlePlayerMove"
+      />
+    </div>
+    <!-- Контроллер ловушек -->
+    <div class="trap-controller-wrapper">
+      <TrapController
+        v-if="isMafia"
+        :traps="traps"
+        @activate="onTrapActivate"
       />
     </div>
   </div>

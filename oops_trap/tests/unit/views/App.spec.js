@@ -8,7 +8,7 @@ vi.mock("@sentry/vue", () => ({
 }));
 
 // Мокаем аудио менеджер
-vi.mock("@/tools/audioManager", () => ({
+vi.mock("@/utils/audioManager", () => ({
   audioManager: {
     load: vi.fn().mockResolvedValue(undefined),
     unlock: vi.fn().mockResolvedValue(undefined),
