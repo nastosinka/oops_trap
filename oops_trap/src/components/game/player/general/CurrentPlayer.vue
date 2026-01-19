@@ -1,5 +1,10 @@
 <template>
-  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
+  <div
+    v-if="gameArea"
+    class="player"
+    :class="playerClasses"
+    :style="playerStyle"
+  ></div>
 </template>
 
 <script>
@@ -245,16 +250,16 @@ export default {
         // Логика для отправки данных о позиции и анимации
         const lastImage = this.isWalking
           ? this.dir === "left"
-            ? (this.currentFrame % 3)  // для левого направления от 0 до 2
+            ? this.currentFrame % 3 // для левого направления от 0 до 2
             : 3 + (this.currentFrame % 3) // для правого направления от 3 до 5
           : this.dir === "left"
-            ? 7 // если не двигается и смотрит влево
-            : 8; // если не двигается и смотрит вправо
+          ? 7 // если не двигается и смотрит влево
+          : 8; // если не двигается и смотрит вправо
 
         this.$emit("player-move", {
           x: this.pos.x,
           y: this.pos.y,
-          lastImage,  // отправляем правильное значение lastImage
+          lastImage, // отправляем правильное значение lastImage
         });
       }
     },

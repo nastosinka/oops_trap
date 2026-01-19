@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
   players: {
@@ -41,8 +41,6 @@ const processedPlayers = computed(() =>
     ? props.players.map((p) => {
         const id = String(p.id);
         const x = Number(p.x) || 0;
-
-        const prevX = prevXMap.get(id);
         let face = "right";
 
         // Определяем направление игрока на основе lastImage
@@ -91,7 +89,7 @@ function playerClasses(player) {
     "face-left": player.face === "left",
     "face-right": player.face === "right",
     walking: player.lastImage < 7 || player.lastImage > 8, // если lastImage не 7 или 8, значит игрок двигается
-    "mirror": player.face === "left", // зеркалирование при движении влево
+    mirror: player.face === "left", // зеркалирование при движении влево
   };
 }
 </script>
