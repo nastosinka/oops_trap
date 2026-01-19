@@ -72,6 +72,12 @@ export default {
       loop: true,
       volume: 0.3,
     });
+    if (this.ym) {
+      console.log("YM OK");
+      this.ym.reachGoal("homepage_open");
+    } else {
+      console.warn("YM NOT READY", window.ym);
+    }
   },
 
   methods: {
