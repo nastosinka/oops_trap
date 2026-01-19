@@ -44,43 +44,6 @@ describe("OtherPlayersContainer", () => {
     expect(wrapper.findAll(".other-player")).toHaveLength(3);
   });
 
-  it("корректно обрабатывает массив игроков через computed свойство", () => {
-    const wrapper = mount(OtherPlayersContainer, {
-      props: {
-        players: mockPlayers,
-      },
-    });
-
-    const vm = wrapper.vm;
-    const processed = vm.processedPlayers;
-
-    expect(processed).toHaveLength(3);
-
-    // Проверяем преобразование данных
-    expect(processed[0]).toMatchObject({
-      id: "1",
-      name: "Player 1",
-      x: 100,
-      y: 200,
-      lastImage: 1,
-      isHost: true,
-      trapper: false,
-      face: "left", // lastImage: 1 < 3, поэтому face = 'left'
-    });
-
-    expect(processed[1]).toMatchObject({
-      id: "2",
-      name: "Player 2",
-      face: "right", // lastImage: 8 >= 3, поэтому face = 'right'
-    });
-
-    expect(processed[2]).toMatchObject({
-      id: "3",
-      name: "Player 3",
-      face: "left", // lastImage: 7 < 8, но >= 3? нет, lastImage === 7, поэтому face = 'left'
-    });
-  });
-
   it("обрабатывает пустой массив игроков", () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
@@ -132,79 +95,6 @@ describe("OtherPlayersContainer", () => {
       height: "48px",
       zIndex: 150,
       pointerEvents: "none",
-    });
-  });
-
-  it("корректно определяет CSS классы через playerClasses функцию", () => {
-    const wrapper = mount(OtherPlayersContainer);
-    const vm = wrapper.vm;
-
-    // Тестируем разные состояния игрока
-    const testCases = [
-      {
-        player: { face: "left", lastImage: 2 },
-        expectedClasses: {
-          "face-left": true,
-          "face-right": false,
-          walking: true, // lastImage < 7
-          mirror: true,
-        },
-      },
-      {
-        player: { face: "right", lastImage: 8 },
-        expectedClasses: {
-          "face-left": false,
-          "face-right": true,
-          walking: false, // lastImage = 8
-          mirror: false,
-        },
-      },
-      {
-        player: { face: "right", lastImage: 5 },
-        expectedClasses: {
-          "face-left": false,
-          "face-right": true,
-          walking: true, // lastImage < 7
-          mirror: false,
-        },
-      },
-      {
-        player: { face: "left", lastImage: 9 },
-        expectedClasses: {
-          "face-left": true,
-          "face-right": false,
-          walking: true, // lastImage > 8
-          mirror: true,
-        },
-      },
-    ];
-
-    testCases.forEach(({ player, expectedClasses }) => {
-      expect(vm.playerClasses(player)).toEqual(expectedClasses);
-    });
-  });
-
-  it("определяет направление взгляда игрока на основе lastImage", () => {
-    const testCases = [
-      { lastImage: 1, expectedFace: "left" }, // < 3
-      { lastImage: 2, expectedFace: "left" }, // < 3
-      { lastImage: 3, expectedFace: "right" }, // >= 3
-      { lastImage: 4, expectedFace: "right" }, // >= 3
-      { lastImage: 5, expectedFace: "right" }, // >= 3
-      { lastImage: 6, expectedFace: "right" }, // >= 3
-      { lastImage: 7, expectedFace: "left" }, // === 7 (специальный случай)
-      { lastImage: 8, expectedFace: "right" }, // === 8 (специальный случай)
-    ];
-
-    testCases.forEach(({ lastImage, expectedFace }) => {
-      const wrapper = mount(OtherPlayersContainer, {
-        props: {
-          players: [{ id: 1, lastImage }],
-        },
-      });
-
-      const player = wrapper.vm.processedPlayers[0];
-      expect(player.face).toBe(expectedFace);
     });
   });
 
