@@ -43,6 +43,8 @@
       </table>
     </div>
 
+    <div class="volume"><VolumeControl /></div>
+
     <BaseButton label="Back to Lobby" @click="returnToLobby" />
   </div>
 </template>
@@ -57,6 +59,7 @@ import { Modal } from "ant-design-vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import { useRoute } from "vue-router";
 import { audioManager } from "@/utils/audioManager";
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 const route = useRoute();
 const heartbeatInterval = ref(null);
@@ -294,5 +297,21 @@ const returnToLobby = async () => {
 
 .results-title--lose {
   color: #e74c3c;
+}
+.volume {
+  font-weight: bold;
+  position: absolute;
+  top: 32px;
+  left: 40px;
+  color: #ffcc00;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  background: rgba(166, 222, 207, 0.15);
+  padding: 10px 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>

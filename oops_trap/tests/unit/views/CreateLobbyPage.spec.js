@@ -4,6 +4,12 @@ import { createPinia, setActivePinia } from "pinia";
 import CreateLobbyPage from "@/views/CreateLobbyPage.vue";
 
 // Моки компонентов
+vi.mock("@/components/base/VolumeControl.vue", () => ({
+  default: {
+    template: "<div class='volume-control-stub' />",
+  },
+}));
+
 vi.mock("@/components/base/BaseButton.vue", () => ({
   default: {
     template: "<button><slot></slot></button>",

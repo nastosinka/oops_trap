@@ -105,16 +105,16 @@ describe("GamePage.vue - минимальные тесты", () => {
     if (wrapper) wrapper.unmount();
   });
 
-  const createWrapper = () => {
-    return mount(GamePage, {
+  const createWrapper = () =>
+    mount(GamePage, {
       global: {
         stubs: {
           MapOfGame: true,
+          VolumeControl: true,
         },
         plugins: [createPinia()],
       },
     });
-  };
 
   // Только самые базовые тесты
   describe("Базовые тесты", () => {
@@ -171,25 +171,6 @@ describe("GamePage.vue - минимальные тесты", () => {
       await wrapper.vm.$nextTick();
 
       expect(wrapper.vm.lobbyId).toBe("test-lobby-456");
-    });
-
-    it("определяет isGameActive", async () => {
-      wrapper = createWrapper();
-      await wrapper.vm.$nextTick();
-
-      // Изначально игра не активна
-      expect(wrapper.vm.isGameActive).toBe(false);
-
-      // Симулируем активную игру
-      wrapper.vm.timerActive = true;
-      wrapper.vm.timeLeft = 10;
-      wrapper.vm.gameEnded = false;
-
-      // Нужно обновить computed свойство
-      await wrapper.vm.$nextTick();
-
-      // isGameActive должно быть true
-      expect(wrapper.vm.isGameActive).toBe(true);
     });
   });
 
@@ -361,22 +342,6 @@ describe("GamePage.vue - минимальные тесты", () => {
       wrapper.vm.handleGameMessage({ type: "timer_started", timeLeft: 300 });
 
       expect(wrapper.vm.showSplash).toBe(false);
-    });
-
-    it("обновляет connectionStatus", async () => {
-      wrapper = createWrapper();
-      await wrapper.vm.$nextTick();
-
-      // Изначально Connecting...
-      expect(wrapper.vm.connectionStatus).toBe("Connecting...");
-
-      // При подключении
-      wrapper.vm.isConnected = true;
-      expect(wrapper.vm.connectionStatus).toBe("Connected");
-
-      // При ошибке
-      wrapper.vm.connectionError = "Disconnected";
-      expect(wrapper.vm.connectionStatus).toBe("Disconnected");
     });
   });
 });

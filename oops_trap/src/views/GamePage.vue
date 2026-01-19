@@ -11,31 +11,9 @@
       <div class="hud">
         <div class="hud-info">
           <p>Time left: {{ timeLeft }}s</p>
-          <p>Game ID: {{ gameId }}</p>
-          <p>User ID: {{ userId }}</p>
-          <p v-if="lobbyId">Lobby ID: {{ lobbyId }}</p>
-          <p>Role: {{ isHost ? "Host" : "Player" }}</p>
           <p>
-            Connection:
-            <span :class="connectionStatusClass">{{ connectionStatus }}</span>
+            <VolumeControl />
           </p>
-        </div>
-
-        <!-- Кнопки управления -->
-        <div class="hud-buttons">
-          <button
-            v-if="lobbyId"
-            class="lobby-btn"
-            :disabled="isGameActive"
-            :title="
-              isGameActive
-                ? 'Cannot return to lobby during active game'
-                : 'Return to lobby'
-            "
-            @click="returnToLobby"
-          >
-            {{ isGameActive ? "Game in Progress..." : "Return to Lobby" }}
-          </button>
         </div>
       </div>
 
@@ -59,6 +37,7 @@ import { useGameResultsStore } from "@/stores/gameResults";
 import { audioManager } from "@/utils/audioManager";
 import gameMusic from "@/assets/music/game-music.mp3";
 import stepsSound from "@/assets/music/steps.mp3";
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 const resultsStore = useGameResultsStore();
 const route = useRoute();
@@ -113,23 +92,6 @@ const connectionError = ref(null);
 
 // Флаг завершения игры
 const gameEnded = ref(false);
-
-// Активна ли сейчас игра
-const isGameActive = computed(
-  () => timerActive.value && timeLeft.value > 0 && !gameEnded.value
-);
-
-// Текстовое состояние соединения
-const connectionStatus = computed(() => {
-  if (connectionError.value) return "Disconnected";
-  return isConnected.value ? "Connected" : "Connecting...";
-});
-
-// CSS-классы для статуса соединения
-const connectionStatusClass = computed(() => ({
-  "status-connected": isConnected.value,
-  "status-disconnected": connectionError.value,
-}));
 
 // Ref для доступа к компоненту карты
 const mapRef = ref(null);
@@ -340,23 +302,6 @@ const checkIfUserIsHost = async () => {
   }
 };
 
-const returnToLobby = async () => {
-  userStore.setIsAlive(true);
-  if (isGameActive.value) {
-    alert(
-      "Cannot return to lobby while the game is active. Please wait for the game to finish."
-    );
-    return;
-  }
-
-  if (!lobbyId.value) {
-    alert("Lobby information is not available");
-    return;
-  }
-
-  router.push(`/lobby?id=${lobbyId.value}&mode=join`);
-};
-
 /* ------------------------------------------------------------------
    WebSocket и обработка сообщений игры
 -------------------------------------------------------------------*/
@@ -476,8 +421,6 @@ const handleGameMessage = (message) => {
         );
 
         // Звуки шагов
-
-        const now = performance.now();
 
         otherPlayers.value.forEach((enemy) => {
           const prev = lastEnemyPositions.get(enemy.id);
@@ -713,10 +656,8 @@ button:disabled {
   top: 10px;
   left: 10px;
   background: rgba(0, 0, 0, 0.8);
-  color: white;
   padding: 15px;
   border-radius: 8px;
-  font-family: "Courier New", monospace;
   min-width: 200px;
   border: 1px solid #333;
   z-index: 50;
@@ -725,9 +666,12 @@ button:disabled {
 .hud-info p {
   margin: 5px 0;
   font-size: 14px;
+  font-family: "Irish Grover", system-ui;
+  font-size: 20px;
+  color: #ffcc00;
 }
 
-.hud-buttons {
+/* .hud-buttons {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
@@ -780,7 +724,7 @@ button:disabled {
 
 .status-waiting {
   color: #ff9800;
-}
+} */
 
 .overlay {
   position: absolute;

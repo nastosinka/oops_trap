@@ -2,6 +2,7 @@
   <div class="home-page">
     <div class="home-container">
       <div class="buttons-container">
+        <div class="volume"><VolumeControl /></div>
         <BaseButton label="Sign Up" @click="showSignUpModal = true" />
         <BaseButton label="Sign In" @click="showSignInModal = true" />
         <BaseButton label="Rules" @click="showRulesModal = true" />
@@ -42,12 +43,14 @@ import { Modal } from "ant-design-vue";
 import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
 import { audioManager } from "@/utils/audioManager";
+import VolumeControl from "@/components/base/VolumeControl.vue";
 
 export default {
   name: "HomePage",
   components: {
     BaseButton,
     UniversalModal,
+    VolumeControl,
   },
 
   data() {
@@ -59,12 +62,10 @@ export default {
   },
 
   mounted() {
-    if (audioManager.currentMusicName !== "background") {
-      audioManager.playMusic("background", {
-        loop: true,
-        volume: 0.3,
-      });
-    }
+    audioManager.playMusic("background", {
+      loop: true,
+      volume: 0.3,
+    });
   },
 
   methods: {
@@ -206,6 +207,20 @@ export default {
   gap: 16px;
   align-items: center;
   justify-content: center;
+}
+
+.volume {
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  background: rgba(69, 114, 112);
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 @media (max-width: 767px) {
