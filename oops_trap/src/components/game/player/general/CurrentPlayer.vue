@@ -1,10 +1,5 @@
 <template>
-  <div
-    v-if="gameArea"
-    class="player"
-    :class="playerClasses"
-    :style="playerStyle"
-  ></div>
+  <div v-if="gameArea" class="player" :class="playerClasses" :style="playerStyle"></div>
 </template>
 
 <script>
@@ -234,7 +229,6 @@ export default {
       );
     },
 
-    // ✅ ДОБАВЛЕНО: Метод отправки координат с троттлингом
     sendCoords(force = false) {
       const now = Date.now();
       const timePassed = now - this.lastSendTime;
@@ -248,13 +242,23 @@ export default {
         this.lastSentPos = { x: this.pos.x, y: this.pos.y };
         this.lastSendTime = now;
 
+        // Логика для отправки данных о позиции и анимации
+        const lastImage = this.isWalking
+          ? this.dir === "left"
+            ? (this.currentFrame % 3)  // для левого направления от 0 до 2
+            : 3 + (this.currentFrame % 3) // для правого направления от 3 до 5
+          : this.dir === "left"
+            ? 7 // если не двигается и смотрит влево
+            : 8; // если не двигается и смотрит вправо
+
         this.$emit("player-move", {
           x: this.pos.x,
           y: this.pos.y,
-          lastImage: this.isWalking ? (this.currentFrame % 3) + 1 : 1,
+          lastImage,  // отправляем правильное значение lastImage
         });
       }
     },
+
     loop() {
       // ===== X =====
       let moveX = 0;
