@@ -262,6 +262,12 @@ onMounted(() => {
   fetchPolygons();
   updateScreenSize();
   window.addEventListener("resize", onResize);
+  // window.addEventListener("click", (e) => {
+  //   const x = (e.clientX - gameArea.value.marginLeft) / gameArea.value.scale;
+  //   const y = (e.clientY - gameArea.value.marginTop) / gameArea.value.scale;
+
+  //   console.log("GAME COORDS", x.toFixed(1), y.toFixed(1));
+  // });
 });
 
 onUnmounted(() => {

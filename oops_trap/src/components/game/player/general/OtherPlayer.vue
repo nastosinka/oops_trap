@@ -21,6 +21,10 @@
 <script setup>
 import { computed } from "vue";
 
+/* ----------------------------------
+   Props
+---------------------------------- */
+
 const props = defineProps({
   players: {
     type: Array,
@@ -32,29 +36,31 @@ const props = defineProps({
   },
 });
 
+/* ----------------------------------
+   Constants
+---------------------------------- */
+
 const SPRITE_WIDTH = 24;
 const SPRITE_HEIGHT = 48;
 const prevXMap = new Map();
+
+/* ----------------------------------
+   Normalization
+---------------------------------- */
 
 const processedPlayers = computed(() =>
   Array.isArray(props.players)
     ? props.players.map((p) => {
         const id = String(p.id);
         const x = Number(p.x) || 0;
+
+        const prevX = prevXMap.get(id);
         let face = "right";
 
-        // Определяем направление игрока на основе lastImage
-        if (p.lastImage === 7) {
-          face = "left"; // Игрок стоит и смотрит влево
-        } else if (p.lastImage === 8) {
-          face = "right"; // Игрок стоит и смотрит вправо
-        } else if (p.lastImage < 3) {
-          face = "left"; // Если lastImage < 3, значит игрок смотрит влево
-        } else {
-          face = "right"; // Если lastImage >= 3, значит игрок смотрит вправо
+        if (prevX !== undefined) {
+          if (x > prevX) face = "right";
+          else if (x < prevX) face = "left";
         }
-
-        console.log(p.lastImage);
 
         prevXMap.set(id, x);
 
@@ -72,6 +78,10 @@ const processedPlayers = computed(() =>
     : []
 );
 
+/* ----------------------------------
+   Styles
+---------------------------------- */
+
 function playerStyle(player) {
   return {
     position: "absolute",
@@ -84,27 +94,42 @@ function playerStyle(player) {
   };
 }
 
+/* ----------------------------------
+   Classes
+---------------------------------- */
+
 function playerClasses(player) {
   return {
+    [`player-${player.lastImage}`]: true,
     "face-left": player.face === "left",
     "face-right": player.face === "right",
-    walking: player.lastImage < 7 || player.lastImage > 8, // если lastImage не 7 или 8, значит игрок двигается
-    mirror: player.face === "left", // зеркалирование при движении влево
   };
 }
 </script>
 
 <style scoped>
+/* ------------------------------------------------------------------
+   Контейнер
+-------------------------------------------------------------------*/
+
 .other-players-container {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------------
+   Игрок
+-------------------------------------------------------------------*/
+
 .other-player {
   position: absolute;
   image-rendering: pixelated;
 }
+
+/* ------------------------------------------------------------------
+   Спрайт
+-------------------------------------------------------------------*/
 
 .player-sprite {
   width: 100%;
@@ -114,58 +139,34 @@ function playerClasses(player) {
   background-position: center;
 }
 
-/* Статичный спрайт, если игрок стоит */
-.face-right .player-sprite:not(.walking) {
+/* Спрайты по кадрам */
+.other-player.player-1 .player-sprite {
+  background-image: url("@/assets/images/players/1/bp1.png");
+}
+
+.other-player.player-2 .player-sprite {
+  background-image: url("@/assets/images/players/1/bp1.png");
+}
+
+.other-player.player-3 .player-sprite {
   background-image: url("@/assets/images/players/1/bp2.png");
 }
 
-.face-left .player-sprite:not(.walking) {
-  background-image: url("@/assets/images/players/1/bp2.png");
+.other-player.player-4 .player-sprite {
+  background-image: url("@/assets/images/players/1/bp3.png");
 }
 
-/* Анимация для движения вправо */
-@keyframes walkRight {
-  0% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
-  33% {
-    background-image: url("@/assets/images/players/1/bp2.png");
-  }
-  66% {
-    background-image: url("@/assets/images/players/1/bp3.png");
-  }
-  100% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
-}
-
-/* Анимация для движения влево */
-@keyframes walkLeft {
-  0% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
-  33% {
-    background-image: url("@/assets/images/players/1/bp2.png");
-  }
-  66% {
-    background-image: url("@/assets/images/players/1/bp3.png");
-  }
-  100% {
-    background-image: url("@/assets/images/players/1/bp1.png");
-  }
-}
-
-.face-right .player-sprite {
-  animation: walkRight 0.6s steps(3) infinite;
-}
-
-.face-left .player-sprite {
-  animation: walkLeft 0.6s steps(3) infinite;
-}
-
-.mirror .player-sprite {
+.other-player.face-left .player-sprite {
   transform: scaleX(-1);
 }
+
+.other-player.face-right .player-sprite {
+  transform: scaleX(1);
+}
+
+/* ------------------------------------------------------------------
+   Хост и траппер
+-------------------------------------------------------------------*/
 
 .other-player.is-host .player-sprite {
   filter: drop-shadow(0 0 5px gold);
@@ -174,6 +175,10 @@ function playerClasses(player) {
 .other-player.is-trapper .player-sprite {
   filter: drop-shadow(0 0 5px red);
 }
+
+/* ------------------------------------------------------------------
+   Имя игрока
+-------------------------------------------------------------------*/
 
 .player-name {
   position: absolute;
@@ -188,5 +193,22 @@ function playerClasses(player) {
   white-space: nowrap;
   pointer-events: auto;
   font-weight: bold;
+}
+
+/* ------------------------------------------------------------------
+   Отладка
+-------------------------------------------------------------------*/
+
+.debug-coords {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: monospace;
 }
 </style>
