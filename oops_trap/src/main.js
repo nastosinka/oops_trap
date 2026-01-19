@@ -77,14 +77,13 @@ app.config.errorHandler = (err) => {
 
 app.use(createPinia());
 
+app.use(router);
+
 app.use(initYandexMetrika, {
   id: 106318124,
   router,
   webvisor: true,
   clickmap: true
 });
-
-
-app.use(router);
 
 app.mount("#app");
