@@ -45,6 +45,7 @@ import App from "./App.vue";
 import router from "./router";
 import "@mdi/font/css/materialdesignicons.css";
 
+
 import * as Sentry from "@sentry/vue";
 
 vkBridge.send("VKWebAppInit");
@@ -74,6 +75,7 @@ app.config.errorHandler = (err) => {
 };
 
 app.use(createPinia());
+
 app.use(router);
 
 app.mount("#app");
