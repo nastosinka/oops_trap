@@ -1,16 +1,11 @@
-import { createYandexMetrika } from 'yandex-metrika-vue3'
+import { initYandexMetrika } from 'yandex-metrika-vue3';
 
-const yandexMetrika = createYandexMetrika({
-  id: YOUR_COUNTER_ID, // замените на ваш ID счетчика
-  router, // передаем router для отслеживания переходов
-  env: process.env.NODE_ENV,
-  options: {
-    clickmap: true,
-    trackLinks: true,
-    accurateTrackBounce: true,
-    webvisor: true,
-    ecommerce: true
-  }
-})
+// Инициализация
+const yandexMetrika = initYandexMetrika({
+  id: 106318124, // ваш ID счётчика
+  webvisor: true,
+  router: router, // передаём экземпляр router
+  // другие опции
+});
 
-export default yandexMetrika
+export default yandexMetrika;

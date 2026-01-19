@@ -44,7 +44,7 @@ import vkBridge from "@vkontakte/vk-bridge";
 import App from "./App.vue";
 import router from "./router";
 import "@mdi/font/css/materialdesignicons.css";
-import { yandexMetrika } from "@/utils/yandex-metrika";
+import { initYandexMetrika } from 'yandex-metrika-vue3';
 
 
 import * as Sentry from "@sentry/vue";
@@ -76,7 +76,15 @@ app.config.errorHandler = (err) => {
 };
 
 app.use(createPinia());
+
+app.use(initYandexMetrika, {
+  id: 106318124,
+  router,
+  webvisor: true,
+  clickmap: true
+});
+
+
 app.use(router);
-app.use(yandexMetrika);
 
 app.mount("#app");
