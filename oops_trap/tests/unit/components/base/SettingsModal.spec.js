@@ -68,8 +68,8 @@ describe("SettingsModal.vue", () => {
 
       expect(options).toHaveLength(3);
       expect(options[0].text()).toBe("select map type");
-      expect(options[1].text()).toBe("city");
-      expect(options[2].text()).toBe("village");
+      expect(options[1].text()).toBe("I see the light");
+      expect(options[2].text()).toBe("Deep caves");
       expect(options[1].attributes("value")).toBe("1");
       expect(options[2].attributes("value")).toBe("2");
     });
