@@ -745,7 +745,8 @@ function setupGameWebSocket(server) {
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
 
-        const gameId = ws.gameId; 
+        const gameId = ws.gameId;
+        const gameRoom = gameRooms.get(gameId); 
         if (!gameRoom) return;
 
         const player = gameRoom.players.get(ws.playerId);
