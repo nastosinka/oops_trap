@@ -74,9 +74,9 @@ jobs:
         working-directory: ./oops_trap
         run: npm run test:unit
 
-      #- name: run tests with coverage
-      #  working-directory: ./oops_trap
-      #  run: npm run test:coverage
+      - name: run tests with coverage
+        working-directory: ./oops_trap
+        run: npm run test:coverage
 
       - name: upload coverage report
         uses: actions/upload-artifact@v4
@@ -150,6 +150,6 @@ jobs:
         working-directory: ./backend
         run: npm ci
 
-      # - name: run tests
-      #   working-directory: ./backend
-      #   run: npm run test
+      - name: run tests
+        working-directory: ./backend
+        run: npm run test

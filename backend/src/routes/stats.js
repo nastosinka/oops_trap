@@ -11,7 +11,6 @@ const router = express.Router();
  * Получить статистику игрока по всем картам
  */
 router.get('/:id_user', requireAuth, async (req, res) => {
-  //const { id_user } = req.params;
   const id_user = req.user.id;
 
   try {

@@ -1,15 +1,13 @@
 const request = require('supertest');
 const express = require('express');
 
-// Заглушка для requireAuth
 jest.mock('../src/middleware/auth', () => ({
   requireAuth: jest.fn((req, res, next) => {
-    req.user = { id: 1 }; // дефолтный пользователь
+    req.user = { id: 1 };
     next();
   }),
 }));
 
-// Мок Prisma
 jest.mock('../src/db/prismaClient', () => ({
   stats: { findMany: jest.fn() },
 }));
@@ -41,7 +39,6 @@ describe('Stats API', () => {
     console.error.mockRestore();
   });
 
-  /* GET /api/stats/:id_user */
   test('GET /api/stats/:id_user — позитивное тестирование', async () => {
     prisma.stats.findMany.mockResolvedValue([
       { id_map: 1, time: 36, role: true },

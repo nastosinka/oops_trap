@@ -3,8 +3,6 @@ const prisma = require('../db/prismaClient');
 const fs = require("fs");
 const path = require("path");
 
-const coordIntervals = new Map();
-
 const HITBOX = {
   offsetX: 6,
   offsetY: 10,
@@ -66,11 +64,10 @@ function pointInPolygon(x, y, points) {
 }
 
 
-// Проверка всех boundary полигонов
+
 function isInsideBoundaries(x, y, polygons) {
     for (const poly of polygons) {
         if (poly.type === "boundary") {
-            //console.log("Checking boundary polygon:", poly.points);
             if (pointInPolygon(x, y, poly.points)) {
                 console.log(`❌ Point ${x},${y} is inside polygon`);
                 return true;
@@ -126,7 +123,6 @@ function checkFinishCollision(x, y, polygons) {
 const gameRooms = new Map();
 
 const { lobbies, games } = require('./../routes/lobby');
-//const { console } = require('inspector'); // ❌❌РАСКОММЕНТИТЬ ЧТОБЫ УБРАТЬ ЛОГИ❌❌
 
 function validateCoord(lastSettings, settings) {
     //+ логика
@@ -249,14 +245,12 @@ function setupGameWebSocket(server) {
             await finalizeGame(gameId);
         }
 
-        // Закрываем все соединения в комнате
         gameRoom.players.forEach(async player => {
             if (player.connected && player.ws.readyState === player.ws.OPEN) {
                 player.ws.close(1000, 'Game finished - time is up');
             }
         });
 
-        // Удаляем комнату
         setTimeout(() => {
             gameRooms.delete(gameId);
         }, 500);
@@ -288,18 +282,15 @@ function setupGameWebSocket(server) {
 
         console.log(`⏰ Таймер запущен для игры ${gameId}`);
 
-        // Отправляем начальное состояние таймера
         broadcastToGame(gameId, {
             type: 'timer_started',
             timeLeft: gameRoom.timer.timeLeft,
             totalTime: gameRoom.timer.totalTime
         });
 
-        // Запускаем интервал обновления (каждую секунду)
         gameRoom.timer.interval = setInterval(async () => {
             gameRoom.timer.timeLeft--;
 
-            // Отправляем обновление времени всем игрокам
             broadcastToGame(gameId, {
                 type: 'timer_update',
                 timeLeft: gameRoom.timer.timeLeft,
@@ -309,7 +300,6 @@ function setupGameWebSocket(server) {
 
             console.log(`⏱️ Игра ${gameId}: осталось ${gameRoom.timer.timeLeft} секунд`);
 
-            // Если время вышло
             if (gameRoom.timer.timeLeft <= 0) {
                 await finalizeGame(gameId);
                 stopGameTimer(gameId);
@@ -325,13 +315,13 @@ function setupGameWebSocket(server) {
                 console.log('📨 Сообщение в игре:', message);
 
                 switch (message.type) {
-                    case 'init': // важное наследие
+                    case 'init': 
                         handleInitGame(ws, message.gameId, message.playerId, message.isHost);
                         break;
-                    case 'player_move': // поменять координаты игрока (проверено работает)
+                    case 'player_move':
                         handlePlayerMove(ws, message.gameId, message.playerId, message.settings);
                         break;
-                    case 'trap_message': // активировать ловушку
+                    case 'trap_message': 
                         handleTrapMessage(ws, message.gameId, message.trap, message.playerId);
                         break;
                 }
@@ -482,7 +472,6 @@ function setupGameWebSocket(server) {
                 gameRoom.hostId = playerId;
             }
 
-            // Добавляем/обновляем игрока
             gameRoom.players.set(playerId, {
                 ws,
                 playerId,
@@ -491,11 +480,10 @@ function setupGameWebSocket(server) {
                 connected: true,
             });
 
-            // Сохраняем данные в соединении
+
             ws.gameId = gameId;
             ws.playerId = playerId;
 
-            // Если это первый игрок, запускаем таймер через 10 секунд
             if (!gameRoom.hasFirstPlayer && gameRoom.players.size === 1) {
                 gameRoom.hasFirstPlayer = true;
                 console.log(`⏰ Первый игрок подключился к игре ${gameId}. Таймер запустится через 10 секунд`);
@@ -523,7 +511,6 @@ function setupGameWebSocket(server) {
                     console.log(`Игрок заспавнится на координатах ${spawn.x} - - ${spawn.y}.`);
 
                     if (!game) {
-                        //+ логика, игра не найдена
                         return;
                     }
 
@@ -557,7 +544,6 @@ function setupGameWebSocket(server) {
                 }, 10000);
             }
 
-            // Если таймер уже активен, отправляем текущее состояние новому игроку
             if (gameRoom.timer.active) {
                 ws.send(JSON.stringify({
                     type: 'timer_update',
@@ -567,7 +553,6 @@ function setupGameWebSocket(server) {
                 }));
             }
 
-            // Уведомляем всех о новом подключении
             broadcastToGame(gameId, {
                 type: 'player_joined',
                 playerId,
@@ -620,7 +605,7 @@ function setupGameWebSocket(server) {
         });
         console.log(game);
         saveStatistic({ id_user: playerId, id_map: game.map, time: gameRoom.timer.totalTime - gameRoom.timer.timeLeft, role: true});
-        console.log(game.stats); // добавить при попадании в полигон финиша тут чисто чтобы показать
+        console.log(game.stats); 
                     console.log(`Игрок ${playerId} достиг финиша и выиграл`);
                     checkAllRunnersDone(gameId);
                     return;
@@ -666,7 +651,6 @@ function setupGameWebSocket(server) {
     async function saveStatistic(data) {
         const { id_user, id_map, time, role } = data;
 
-        // Валидация входных данных
         if (id_user === undefined || id_map === undefined || time === undefined || role === undefined) {
             throw {
                 error: 'Обязательные поля: id_user, id_map, time, role',
@@ -690,7 +674,6 @@ function setupGameWebSocket(server) {
         }
 
         try {
-            // Проверка существующей статистики
             const existingStat = await prisma.stats.findFirst({
                 where: {
                     id_user: userId,
@@ -728,7 +711,6 @@ function setupGameWebSocket(server) {
                 console.log('Новая статистика создана:', result);
             }
 
-            // Форматирование результата
             const formattedResult = {
                 id: result.id,
                 id_user: result.id_user,
@@ -763,15 +745,13 @@ function setupGameWebSocket(server) {
     function handlePlayerDisconnect(ws) {
         if (!ws.gameId || !ws.playerId) return;
 
-        const gameId = ws.gameId; // Исправлено: используем ws.gameId
-        const gameRoom = gameRooms.get(gameId);
+        const gameId = ws.gameId; 
         if (!gameRoom) return;
 
         const player = gameRoom.players.get(ws.playerId);
         if (player) {
             player.connected = false;
 
-            // Уведомляем об отключении
             broadcastToGame(gameId, {
                 type: 'player_disconnected',
                 playerId: ws.playerId,
@@ -781,7 +761,6 @@ function setupGameWebSocket(server) {
             console.log(`🚪 Игрок ${ws.playerId} отключился от игры ${gameId}`);
         }
 
-        // Если все игроки отключились, останавливаем таймер
         const connectedPlayers = Array.from(gameRoom.players.values()).filter(p => p.connected);
         if (connectedPlayers.length === 0) {
             stopGameTimer(gameId);
@@ -800,7 +779,7 @@ function setupGameWebSocket(server) {
             }
         }        
     }
-    // Очистка пустых комнат
+
     setInterval(() => {
         for (const [gameId, gameRoom] of gameRooms.entries()) {
             const connectedPlayers = Array.from(gameRoom.players.values()).filter(p => p.connected);
