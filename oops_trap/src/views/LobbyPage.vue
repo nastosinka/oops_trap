@@ -179,7 +179,6 @@ export default {
       console.log("[LobbyPage] openSettings");
       if (!this.players.length) return;
 
-      // Назначаем мафию безопасно
       const mafiaPlayer =
         this.players.find((p) => p.id === this.pendingSettings.mafiaId) ||
         this.players[0];
@@ -211,7 +210,6 @@ export default {
           method: "POST",
           credentials: "include",
         }).catch(() => {
-          // намеренно ничего не делаем
         });
       }, 3000);
     },
@@ -366,7 +364,6 @@ export default {
           }
         );
         if (resp.ok) {
-          // Сохраняем в локальные pending и current + store
           this.pendingSettings = {
             mafiaId: settings.mafia.id,
             map: Number(settings.map),

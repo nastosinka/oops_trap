@@ -101,7 +101,6 @@ function onTrapDisactive(trap) {
   trapsState[trap.name] = false;
 }
 
-// Экспортируем функции для родительского компонента
 defineExpose({
   onTrapActivate,
   onTrapDisactive,
@@ -117,7 +116,6 @@ const props = defineProps({
     default: () => [],
   },
 
-  // Внешнее управление ловушками
   trapToActivate: {
     type: Object,
     default: null,
@@ -129,7 +127,6 @@ const props = defineProps({
   },
 });
 
-// Следим за изменением пропсов для внешнего управления
 watch(
   () => props.trapToActivate,
   (trap) => {
@@ -154,7 +151,6 @@ watch(
 
 const screenRef = ref(null);
 const gameContentRef = ref(null);
-const physicsPlayerRef = ref(null);
 
 /* ----------------------------------
    Game area
@@ -262,12 +258,6 @@ onMounted(() => {
   fetchPolygons();
   updateScreenSize();
   window.addEventListener("resize", onResize);
-  // window.addEventListener("click", (e) => {
-  //   const x = (e.clientX - gameArea.value.marginLeft) / gameArea.value.scale;
-  //   const y = (e.clientY - gameArea.value.marginTop) / gameArea.value.scale;
-
-  //   console.log("GAME COORDS", x.toFixed(1), y.toFixed(1));
-  // });
 });
 
 onUnmounted(() => {

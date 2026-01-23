@@ -45,7 +45,6 @@ import arrows from "@/assets/images/maps/Map2/st/arrows.png";
   background-repeat: no-repeat;
   background-position: center;
   pointer-events: none;
-  /* Добавляем чтобы не мешали */
 }
 
 .main-layer {

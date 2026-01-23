@@ -63,7 +63,7 @@ export default {
     },
     type: {
       type: String,
-      default: "auth", // 'auth', 'rules', 'custom'
+      default: "auth",
     },
     fields: {
       type: Array,
@@ -189,8 +189,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-  /* масенькие бедолаги */
-
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 18px;
   }
@@ -201,7 +199,6 @@ export default {
     height: 34px;
   }
 
-  /* крупные бедолаги */
   .modal--rules .modal__header,
   .modal--stats .modal__header {
     padding: 00px 0px 10px;
@@ -209,7 +206,6 @@ export default {
 }
 
 @media (min-width: 768px) {
-  /* масенькие бедолаги */
 
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 24px;
@@ -221,15 +217,12 @@ export default {
     height: 40px;
   }
 
-  /* крупные бедолаги */
-
   .modal--rules .modal__header,
   .modal--stats .modal__header {
     padding: 0px 0px 20px;
   }
 }
 @media (min-width: 1200px) {
-  /* масенькие бедолаги */
 
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 30px;
@@ -241,7 +234,6 @@ export default {
     height: 46px;
   }
 
-  /* крупные бедолаги */
 
   .modal--rules,
   .modal--stats {

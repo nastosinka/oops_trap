@@ -50,8 +50,8 @@ export default {
   name: "HomePage",
 
   setup() {
-    const ym = useYandexMetrika();  // Вызываем один раз
-    return { ym };  // Делаем доступным в шаблоне и методах
+    const ym = useYandexMetrika(); 
+    return { ym };
   },
   components: {
     BaseButton,
@@ -116,9 +116,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
@@ -162,9 +160,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignInModal = false;
         showSuccess("Login successful!");
