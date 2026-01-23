@@ -5,7 +5,6 @@ import App from "./App.vue";
 import router from "./router";
 import "@mdi/font/css/materialdesignicons.css";
 
-
 import * as Sentry from "@sentry/vue";
 
 vkBridge.send("VKWebAppInit");
@@ -19,7 +18,7 @@ Sentry.init({
   environment: import.meta.env.MODE,
   sendDefaultPii: true,
   integrations: [Sentry.browserTracingIntegration({ router })],
-  tracesSampleRate: 1.0, 
+  tracesSampleRate: 1.0,
   tracePropagationTargets: ["localhost", import.meta.env.VITE_SERVER_IP, /^\//],
   enableLogs: true,
 });

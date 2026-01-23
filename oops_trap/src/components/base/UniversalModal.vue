@@ -206,7 +206,6 @@ export default {
 }
 
 @media (min-width: 768px) {
-
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 24px;
   }
@@ -223,7 +222,6 @@ export default {
   }
 }
 @media (min-width: 1200px) {
-
   .modal:not(.modal--rules):not(.modal--stats) .modal__title {
     font-size: 30px;
   }
@@ -233,7 +231,6 @@ export default {
     width: 46px;
     height: 46px;
   }
-
 
   .modal--rules,
   .modal--stats {

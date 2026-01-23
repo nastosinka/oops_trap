@@ -184,11 +184,11 @@ describe('User Store', () => {
     it('should load user from sessionStorage if exists', () => {
       const sessionId = 'test_session_123'
       sessionStorage.setItem(`user_${sessionId}`, JSON.stringify(mockUser))
-      
+
       const store = useUserStore()
       store.sessionId = sessionId
       store.initializeUser()
-      
+
       expect(store.user).toEqual(mockUser)
     })
 
@@ -196,7 +196,7 @@ describe('User Store', () => {
       const store = useUserStore()
       store.sessionId = 'non_existing_session'
       store.initializeUser()
-      
+
       expect(store.user).toBeNull()
     })
   })
@@ -205,10 +205,10 @@ describe('User Store', () => {
     it('should set user data and store in sessionStorage', () => {
       const store = useUserStore()
       store.login(mockUser)
-      
+
       expect(store.user).toEqual(mockUser)
       expect(store.sessionId).toMatch(/^session_\d+_[a-z0-9]+$/)
-      
+
       const stored = sessionStorage.getItem(`user_${store.sessionId}`)
       expect(JSON.parse(stored)).toEqual(mockUser)
     })
@@ -217,9 +217,9 @@ describe('User Store', () => {
       const store = useUserStore()
       const existingSessionId = 'existing_session_123'
       store.sessionId = existingSessionId
-      
+
       store.login(mockUser)
-      
+
       expect(store.sessionId).toBe(existingSessionId)
       expect(sessionStorage.getItem(`user_${existingSessionId}`)).toBeTruthy()
     })
@@ -227,9 +227,9 @@ describe('User Store', () => {
     it('should generate new sessionId if null', () => {
       const store = useUserStore()
       store.sessionId = null
-      
+
       store.login(mockUser)
-      
+
       expect(store.sessionId).toMatch(/^session_\d+_[a-z0-9]+$/)
     })
   })
@@ -241,11 +241,14 @@ describe('User Store', () => {
       store.user = mockUser
       store.currentGameId = 'game123'
       store.currentLobbyId = 'lobby456'
-      
-      sessionStorage.setItem(`user_${store.sessionId}`, JSON.stringify(mockUser))
-      
+
+      sessionStorage.setItem(
+        `user_${store.sessionId}`,
+        JSON.stringify(mockUser)
+      )
+
       store.logout()
-      
+
       expect(store.user).toBeNull()
       expect(store.currentGameId).toBeNull()
       expect(store.currentLobbyId).toBeNull()
@@ -256,14 +259,14 @@ describe('User Store', () => {
     it('should not throw when sessionId is null', () => {
       const store = useUserStore()
       store.sessionId = null
-      
+
       expect(() => store.logout()).not.toThrow()
     })
 
     it('should not throw when sessionStorage is empty', () => {
       const store = useUserStore()
       store.sessionId = 'non_existing_session'
-      
+
       expect(() => store.logout()).not.toThrow()
     })
   })
@@ -299,7 +302,7 @@ describe('User Store', () => {
       const store = useUserStore()
       store.setMyRole('hunter')
       expect(store.myRole).toBe('hunter')
-      
+
       store.setMyRole('runner')
       expect(store.myRole).toBe('runner')
     })
@@ -309,9 +312,9 @@ describe('User Store', () => {
     it('should set gameSocket and game/lobby IDs', () => {
       const store = useUserStore()
       const mockSocket = new MockWebSocket('ws://game-server')
-      
+
       store.setGameSocket(mockSocket, 'game123', 'lobby456')
-      
+
       expect(store.gameSocket).toStrictEqual(mockSocket)
       expect(store.currentGameId).toBe('game123')
       expect(store.currentLobbyId).toBe('lobby456')
@@ -328,11 +331,14 @@ describe('User Store', () => {
       const oldSocket = new MockWebSocket('ws://old-server')
       oldSocket.readyState = MockWebSocket.OPEN
       store.gameSocket = oldSocket
-      
+
       const newSocket = new MockWebSocket('ws://new-server')
       store.setGameSocket(newSocket, 'newGame', 'newLobby')
-      
-      expect(oldSocket.close).toHaveBeenCalledWith(1000, 'Reconnecting to new game')
+
+      expect(oldSocket.close).toHaveBeenCalledWith(
+        1000,
+        'Reconnecting to new game'
+      )
       expect(store.gameSocket).toStrictEqual(newSocket)
     })
 
@@ -341,20 +347,20 @@ describe('User Store', () => {
       const oldSocket = new MockWebSocket('ws://old-server')
       oldSocket.readyState = MockWebSocket.CLOSED // Изменено: используем CLOSED вместо CLOSING
       store.gameSocket = oldSocket
-      
+
       const newSocket = new MockWebSocket('ws://new-server')
       store.setGameSocket(newSocket)
-      
+
       expect(oldSocket.close).not.toHaveBeenCalled()
     })
 
     it('should not close socket if it is null', () => {
       const store = useUserStore()
       store.gameSocket = null
-      
+
       const newSocket = new MockWebSocket('ws://new-server')
       store.setGameSocket(newSocket)
-      
+
       // Нет ошибки, так как gameSocket был null
       expect(store.gameSocket).toStrictEqual(newSocket)
     })
@@ -362,9 +368,9 @@ describe('User Store', () => {
     it('should accept null gameId and lobbyId', () => {
       const store = useUserStore()
       const mockSocket = new MockWebSocket('ws://game-server')
-      
+
       store.setGameSocket(mockSocket)
-      
+
       expect(store.gameSocket).toStrictEqual(mockSocket)
       expect(store.currentGameId).toBeNull()
       expect(store.currentLobbyId).toBeNull()
@@ -374,10 +380,10 @@ describe('User Store', () => {
       const store = useUserStore()
       store.currentGameId = 'existingGame'
       store.currentLobbyId = 'existingLobby'
-      
+
       const mockSocket = new MockWebSocket('ws://game-server')
       store.setGameSocket(mockSocket)
-      
+
       expect(store.currentGameId).toBe('existingGame')
       expect(store.currentLobbyId).toBe('existingLobby')
     })
@@ -394,16 +400,16 @@ describe('User Store', () => {
       const store = useUserStore()
       store.currentGameId = 'game123'
       store.currentLobbyId = 'lobby456'
-      
+
       store.clearGameState()
-      
+
       expect(store.currentGameId).toBeNull()
       expect(store.currentLobbyId).toBeNull()
     })
 
     it('should work when gameId and lobbyId are already null', () => {
       const store = useUserStore()
-      
+
       expect(() => store.clearGameState()).not.toThrow()
       expect(store.currentGameId).toBeNull()
       expect(store.currentLobbyId).toBeNull()
@@ -413,30 +419,30 @@ describe('User Store', () => {
   describe('Integration scenarios', () => {
     it('should handle complete login -> game -> logout flow', () => {
       const store = useUserStore()
-      
+
       // Логин
       store.login(mockUser)
       expect(store.isAuthenticated).toBe(true)
       expect(store.userName).toBe(mockUser.name)
-      
+
       // Присоединение к игре
       const mockSocket = new MockWebSocket('ws://game')
       store.setGameSocket(mockSocket, 'game1', 'lobby1')
       expect(store.isInGame).toBe(true)
       expect(store.currentGameId).toBe('game1')
-      
+
       // Смена роли
       store.setMyRole('hunter')
       expect(store.myRole).toBe('hunter')
-      
+
       // Смерть игрока
       store.setIsAlive(false)
       expect(store.isAlive).toBe(false)
-      
+
       // Выход из игры
       store.clearGameState()
       expect(store.currentGameId).toBeNull()
-      
+
       // Логаут
       store.logout()
       expect(store.isAuthenticated).toBe(false)
@@ -448,13 +454,13 @@ describe('User Store', () => {
       const store1 = useUserStore()
       store1.login(mockUser)
       const sessionId = store1.sessionId
-      
+
       // Симуляция перезагрузки страницы
       sessionStorage.setItem(`user_${sessionId}`, JSON.stringify(mockUser))
       const store2 = useUserStore()
       store2.sessionId = sessionId
       store2.initializeUser()
-      
+
       expect(store2.user).toEqual(mockUser)
       expect(store2.isAuthenticated).toBe(true)
     })

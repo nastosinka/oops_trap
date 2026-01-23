@@ -44,19 +44,19 @@ import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
 import { audioManager } from "@/utils/audioManager";
 import VolumeControl from "@/components/base/VolumeControl.vue";
-import { useYandexMetrika } from 'yandex-metrika-vue3';
+import { useYandexMetrika } from "yandex-metrika-vue3";
 
 export default {
   name: "HomePage",
-
-  setup() {
-    const ym = useYandexMetrika(); 
-    return { ym };
-  },
   components: {
     BaseButton,
     UniversalModal,
     VolumeControl,
+  },
+
+  setup() {
+    const ym = useYandexMetrika();
+    return { ym };
   },
 
   data() {

@@ -415,7 +415,6 @@ const handleGameMessage = (message) => {
             p.alive === true
         );
 
-
         otherPlayers.value.forEach((enemy) => {
           const prev = lastEnemyPositions.get(enemy.id);
 

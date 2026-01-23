@@ -1,9 +1,9 @@
-import { initYandexMetrika } from 'yandex-metrika-vue3';
+import { initYandexMetrika } from 'yandex-metrika-vue3'
 
 const yandexMetrika = initYandexMetrika({
-  id: 106318124, 
+  id: 106318124,
   webvisor: true,
-  router: router, 
-});
+  router
+})
 
-export default yandexMetrika;
+export default yandexMetrika

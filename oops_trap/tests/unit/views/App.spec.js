@@ -1,51 +1,51 @@
-import { mount } from "@vue/test-utils";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import App from "@/App.vue";
+import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import App from '@/App.vue'
 
-vi.mock("@sentry/vue", () => ({
+vi.mock('@sentry/vue', () => ({
   captureMessage: vi.fn(),
-  captureException: vi.fn(),
-}));
+  captureException: vi.fn()
+}))
 
 // Мокаем аудио менеджер
-vi.mock("@/utils/audioManager", () => ({
+vi.mock('@/utils/audioManager', () => ({
   audioManager: {
     load: vi.fn().mockResolvedValue(undefined),
     unlock: vi.fn().mockResolvedValue(undefined),
-    init: vi.fn(),
-  },
-}));
+    init: vi.fn()
+  }
+}))
 
-describe("App.vue", () => {
+describe('App.vue', () => {
   beforeEach(() => {
     // Очищаем моки перед каждым тестом
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  it("renders without errors", () => {
+  it('renders without errors', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
           RouterView: {
-            template: "<div>Test Content</div>",
-          },
-        },
-      },
-    });
-    expect(wrapper.exists()).toBe(true);
-  });
+            template: '<div>Test Content</div>'
+          }
+        }
+      }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
 
-  it("contains router view", () => {
+  it('contains router view', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
           RouterView: {
-            template: "<div>Router View Content</div>",
-          },
-        },
-      },
-    });
+            template: '<div>Router View Content</div>'
+          }
+        }
+      }
+    })
 
-    expect(wrapper.text()).toContain("Router View Content");
-  });
-});
+    expect(wrapper.text()).toContain('Router View Content')
+  })
+})

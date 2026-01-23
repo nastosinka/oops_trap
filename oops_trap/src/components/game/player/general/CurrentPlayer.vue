@@ -294,7 +294,7 @@ export default {
       if (this.keys.has("q") && (onVine || onRope)) {
         this.onVine = false;
         this.isOnGround = false;
-        this.pos.x -= 1; 
+        this.pos.x -= 1;
         this.velocity.y = -6.7;
         this.velocity.x = -9;
         this.dir = "left";
@@ -323,7 +323,6 @@ export default {
 
         if (this.velocity.x !== 0) {
           this.pos.x += this.velocity.x;
-
 
           if (this.velocity.x > 0) {
             this.velocity.x = Math.max(0, this.velocity.x - 0.5);

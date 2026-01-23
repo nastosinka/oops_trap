@@ -209,8 +209,7 @@ export default {
         fetch(`/api/lobby/lobbies/${this.lobbyId}/ping`, {
           method: "POST",
           credentials: "include",
-        }).catch(() => {
-        });
+        }).catch(() => {});
       }, 3000);
     },
 

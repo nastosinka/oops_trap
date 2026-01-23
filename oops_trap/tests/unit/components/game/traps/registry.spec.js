@@ -1,26 +1,62 @@
 import { describe, it, expect } from 'vitest'
-import { TRAPS_BY_MAP } from '@/components/game/traps/registry.js' 
+import { TRAPS_BY_MAP } from '@/components/game/traps/registry.js'
 
 // Мокаем импорты компонентов, чтобы тесты не зависели от реальных Vue компонентов
-vi.mock('@/components/game/traps/map2/TrapNum1.vue', () => ({ default: 'TrapNum1_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum2.vue', () => ({ default: 'TrapNum2_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum3.vue', () => ({ default: 'TrapNum3_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum4.vue', () => ({ default: 'TrapNum4_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum5.vue', () => ({ default: 'TrapNum5_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum6.vue', () => ({ default: 'TrapNum6_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum7.vue', () => ({ default: 'TrapNum7_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum8.vue', () => ({ default: 'TrapNum8_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum9.vue', () => ({ default: 'TrapNum9_2' }))
-vi.mock('@/components/game/traps/map2/TrapNum10.vue', () => ({ default: 'TrapNum10_2' }))
+vi.mock('@/components/game/traps/map2/TrapNum1.vue', () => ({
+  default: 'TrapNum1_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum2.vue', () => ({
+  default: 'TrapNum2_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum3.vue', () => ({
+  default: 'TrapNum3_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum4.vue', () => ({
+  default: 'TrapNum4_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum5.vue', () => ({
+  default: 'TrapNum5_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum6.vue', () => ({
+  default: 'TrapNum6_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum7.vue', () => ({
+  default: 'TrapNum7_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum8.vue', () => ({
+  default: 'TrapNum8_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum9.vue', () => ({
+  default: 'TrapNum9_2'
+}))
+vi.mock('@/components/game/traps/map2/TrapNum10.vue', () => ({
+  default: 'TrapNum10_2'
+}))
 
-vi.mock('@/components/game/traps/map1/TrapNum1.vue', () => ({ default: 'TrapNum1_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum2_1.vue', () => ({ default: 'TrapNum2_1_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum2_2.vue', () => ({ default: 'TrapNum2_2_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum5_1.vue', () => ({ default: 'TrapNum5_1_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum5_2.vue', () => ({ default: 'TrapNum5_2_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum6.vue', () => ({ default: 'TrapNum6_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum8_1.vue', () => ({ default: 'TrapNum8_1_1' }))
-vi.mock('@/components/game/traps/map1/TrapNum8_2.vue', () => ({ default: 'TrapNum8_2_1' }))
+vi.mock('@/components/game/traps/map1/TrapNum1.vue', () => ({
+  default: 'TrapNum1_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum2_1.vue', () => ({
+  default: 'TrapNum2_1_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum2_2.vue', () => ({
+  default: 'TrapNum2_2_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum5_1.vue', () => ({
+  default: 'TrapNum5_1_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum5_2.vue', () => ({
+  default: 'TrapNum5_2_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum6.vue', () => ({
+  default: 'TrapNum6_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum8_1.vue', () => ({
+  default: 'TrapNum8_1_1'
+}))
+vi.mock('@/components/game/traps/map1/TrapNum8_2.vue', () => ({
+  default: 'TrapNum8_2_1'
+}))
 
 describe('TRAPS_BY_MAP Configuration', () => {
   describe('Structure validation', () => {
@@ -45,8 +81,16 @@ describe('TRAPS_BY_MAP Configuration', () => {
 
     it('should have traps with correct ids from 1 to 10', () => {
       const expectedIds = [
-        'trap1', 'trap2', 'trap3', 'trap4', 'trap5',
-        'trap6', 'trap7', 'trap8', 'trap9', 'trap10'
+        'trap1',
+        'trap2',
+        'trap3',
+        'trap4',
+        'trap5',
+        'trap6',
+        'trap7',
+        'trap8',
+        'trap9',
+        'trap10'
       ]
       expect(map2Traps.map(trap => trap.id)).toEqual(expectedIds)
     })
@@ -221,7 +265,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
     it('should have different trap names between maps', () => {
       const map1Names = TRAPS_BY_MAP.map1.map(trap => trap.name)
       const map2Names = TRAPS_BY_MAP.map2.map(trap => trap.name)
-      
+
       const commonNames = map1Names.filter(name => map2Names.includes(name))
       expect(commonNames).toHaveLength(0)
     })
@@ -229,8 +273,10 @@ describe('TRAPS_BY_MAP Configuration', () => {
     it('should have different components between maps', () => {
       const map1Components = TRAPS_BY_MAP.map1.map(trap => trap.component)
       const map2Components = TRAPS_BY_MAP.map2.map(trap => trap.component)
-      
-      const commonComponents = map1Components.filter(comp => map2Components.includes(comp))
+
+      const commonComponents = map1Components.filter(comp =>
+        map2Components.includes(comp)
+      )
       expect(commonComponents).toHaveLength(0)
     })
   })
@@ -243,7 +289,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
 
     it('should have consistent trap object structure', () => {
       const allTraps = [...TRAPS_BY_MAP.map1, ...TRAPS_BY_MAP.map2]
-      
+
       allTraps.forEach(trap => {
         expect(Object.keys(trap)).toEqual(['id', 'name', 'component'])
         expect(Object.keys(trap)).toHaveLength(3)
@@ -252,7 +298,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
 
     it('should have trap ids that match pattern', () => {
       const allTraps = [...TRAPS_BY_MAP.map1, ...TRAPS_BY_MAP.map2]
-      
+
       allTraps.forEach(trap => {
         // Проверяем, что id начинается с 'trap' и содержит цифры
         expect(trap.id).toMatch(/^trap\d+(_\d+)?$/)
@@ -261,7 +307,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
 
     it('should not have traps with empty names', () => {
       const allTraps = [...TRAPS_BY_MAP.map1, ...TRAPS_BY_MAP.map2]
-      
+
       allTraps.forEach(trap => {
         expect(trap.name.trim()).not.toBe('')
         expect(trap.name.length).toBeGreaterThan(0)
@@ -270,7 +316,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
 
     it('should have all components defined (not undefined or null)', () => {
       const allTraps = [...TRAPS_BY_MAP.map1, ...TRAPS_BY_MAP.map2]
-      
+
       allTraps.forEach(trap => {
         expect(trap.component).toBeDefined()
         expect(trap.component).not.toBeNull()
@@ -305,7 +351,7 @@ describe('TRAPS_BY_MAP Configuration', () => {
   describe('TypeScript type safety (runtime checks)', () => {
     it('should have correct types for all trap properties', () => {
       const allTraps = [...TRAPS_BY_MAP.map1, ...TRAPS_BY_MAP.map2]
-      
+
       allTraps.forEach(trap => {
         // Проверка типов во время выполнения
         expect(typeof trap.id).toBe('string')
