@@ -1,9 +1,5 @@
 <template>
-  <button 
-    class="base-button" 
-    @click="handleClick"
-    :disabled="disabled"
-  >
+  <button class="base-button" :disabled="disabled" @click="handleClick">
     <div class="base-button__content">
       <slot>{{ label }}</slot>
     </div>
