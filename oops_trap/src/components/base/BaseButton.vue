@@ -1,5 +1,5 @@
 <template>
-  <button class="base-button" @click="handleClick">
+  <button class="base-button" :disabled="disabled" @click="handleClick">
     <div class="base-button__content">
       <slot>{{ label }}</slot>
     </div>
@@ -15,13 +15,19 @@ export default {
       type: String,
       default: "",
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ["click"],
 
   methods: {
     handleClick(event) {
-      this.$emit("click", event);
+      if (!this.disabled) {
+        this.$emit("click", event);
+      }
     },
   },
 };
@@ -45,11 +51,19 @@ export default {
   font-weight: 400;
   font-style: normal;
   min-height: 44px;
+
+  transition: all 0.3s ease;
 }
 
-.base-button:hover {
+.base-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.base-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: rgba(69, 114, 112, 0.7);
 }
 
 @media (min-width: 1200px) {

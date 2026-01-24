@@ -1,171 +1,171 @@
-import { describe, it, expect } from "vitest";
-import { mount } from "@vue/test-utils";
-import OtherPlayersContainer from "@/components/game/player/general/OtherPlayer.vue";
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
+import OtherPlayersContainer from '@/components/game/player/general/OtherPlayer.vue'
 
-describe("OtherPlayersContainer", () => {
+describe('OtherPlayersContainer', () => {
   const mockPlayers = [
     {
       id: 1,
-      name: "Player 1",
+      name: 'Player 1',
       x: 100,
       y: 200,
       lastImage: 1,
       isHost: true,
-      trapper: false,
+      trapper: false
     },
     {
       id: 2,
-      name: "Player 2",
+      name: 'Player 2',
       x: 300,
       y: 400,
       lastImage: 8,
       isHost: false,
-      trapper: true,
+      trapper: true
     },
     {
       id: 3,
-      name: "Player 3",
+      name: 'Player 3',
       x: 500,
       y: 600,
       lastImage: 7,
       isHost: false,
-      trapper: false,
-    },
-  ];
+      trapper: false
+    }
+  ]
 
-  it("рендерит контейнер для игроков", () => {
+  it('рендерит контейнер для игроков', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
-        players: mockPlayers,
-      },
-    });
+        players: mockPlayers
+      }
+    })
 
-    expect(wrapper.find(".other-players-container").exists()).toBe(true);
-    expect(wrapper.findAll(".other-player")).toHaveLength(3);
-  });
+    expect(wrapper.find('.other-players-container').exists()).toBe(true)
+    expect(wrapper.findAll('.other-player')).toHaveLength(3)
+  })
 
-  it("обрабатывает пустой массив игроков", () => {
+  it('обрабатывает пустой массив игроков', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
-        players: [],
-      },
-    });
+        players: []
+      }
+    })
 
-    expect(wrapper.vm.processedPlayers).toEqual([]);
-    expect(wrapper.findAll(".other-player")).toHaveLength(0);
-  });
+    expect(wrapper.vm.processedPlayers).toEqual([])
+    expect(wrapper.findAll('.other-player')).toHaveLength(0)
+  })
 
-  it("обрабатывает невалидные данные игроков", () => {
+  it('обрабатывает невалидные данные игроков', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
-        players: [{ id: null, x: "invalid", y: undefined }, { id: 5 }],
-      },
-    });
+        players: [{ id: null, x: 'invalid', y: undefined }, { id: 5 }]
+      }
+    })
 
-    const processed = wrapper.vm.processedPlayers;
+    const processed = wrapper.vm.processedPlayers
 
     expect(processed[0]).toMatchObject({
-      id: "null",
-      name: "Player null", // fallback имя
+      id: 'null',
+      name: 'Player null', // fallback имя
       x: 0, // преобразование невалидного значения
       y: 0,
       lastImage: 1,
       isHost: false,
       trapper: false,
-      face: "right", // default
-    });
-  });
+      face: 'right' // default
+    })
+  })
 
-  it("корректно применяет стили через playerStyle функцию", () => {
-    const wrapper = mount(OtherPlayersContainer);
-    const vm = wrapper.vm;
+  it('корректно применяет стили через playerStyle функцию', () => {
+    const wrapper = mount(OtherPlayersContainer)
+    const vm = wrapper.vm
 
     const player = {
       x: 123.456,
-      y: 789.123,
-    };
+      y: 789.123
+    }
 
-    const style = vm.playerStyle(player);
+    const style = vm.playerStyle(player)
 
     expect(style).toEqual({
-      position: "absolute",
-      left: "123px", // округление Math.round
-      top: "789px", // округление Math.round
-      width: "24px",
-      height: "48px",
+      position: 'absolute',
+      left: '123px', // округление Math.round
+      top: '789px', // округление Math.round
+      width: '24px',
+      height: '48px',
       zIndex: 150,
-      pointerEvents: "none",
-    });
-  });
+      pointerEvents: 'none'
+    })
+  })
 
-  it("отображает имена игроков и бейджи когда showNames = true", () => {
+  it('отображает имена игроков и бейджи когда showNames = true', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
         players: mockPlayers,
-        showNames: true,
-      },
-    });
+        showNames: true
+      }
+    })
 
-    const playerNames = wrapper.findAll(".player-name");
-    expect(playerNames).toHaveLength(3);
+    const playerNames = wrapper.findAll('.player-name')
+    expect(playerNames).toHaveLength(3)
 
     // Проверяем первый игрок (хост)
-    expect(playerNames[0].text()).toContain("Player 1");
-    expect(playerNames[0].find(".host-badge").exists()).toBe(true);
-    expect(playerNames[0].find(".trapper-badge").exists()).toBe(false);
+    expect(playerNames[0].text()).toContain('Player 1')
+    expect(playerNames[0].find('.host-badge').exists()).toBe(true)
+    expect(playerNames[0].find('.trapper-badge').exists()).toBe(false)
 
     // Проверяем второго игрока (trapper)
-    expect(playerNames[1].text()).toContain("Player 2");
-    expect(playerNames[1].find(".host-badge").exists()).toBe(false);
-    expect(playerNames[1].find(".trapper-badge").exists()).toBe(true);
+    expect(playerNames[1].text()).toContain('Player 2')
+    expect(playerNames[1].find('.host-badge').exists()).toBe(false)
+    expect(playerNames[1].find('.trapper-badge').exists()).toBe(true)
 
     // Проверяем третьего игрока (обычный)
-    expect(playerNames[2].text()).toContain("Player 3");
-    expect(playerNames[2].find(".host-badge").exists()).toBe(false);
-    expect(playerNames[2].find(".trapper-badge").exists()).toBe(false);
-  });
+    expect(playerNames[2].text()).toContain('Player 3')
+    expect(playerNames[2].find('.host-badge').exists()).toBe(false)
+    expect(playerNames[2].find('.trapper-badge').exists()).toBe(false)
+  })
 
-  it("не отображает имена игроков когда showNames = false", () => {
+  it('не отображает имена игроков когда showNames = false', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
         players: mockPlayers,
-        showNames: false,
-      },
-    });
+        showNames: false
+      }
+    })
 
-    expect(wrapper.findAll(".player-name")).toHaveLength(0);
-  });
+    expect(wrapper.findAll('.player-name')).toHaveLength(0)
+  })
 
-  it("имеет спрайты для игроков", () => {
+  it('имеет спрайты для игроков', () => {
     const wrapper = mount(OtherPlayersContainer, {
-      props: { players: mockPlayers },
-    });
+      props: { players: mockPlayers }
+    })
 
-    expect(wrapper.findAll(".player-sprite")).toHaveLength(3);
-  });
+    expect(wrapper.findAll('.player-sprite')).toHaveLength(3)
+  })
 
-  it("использует fallback имя когда name не указан", () => {
+  it('использует fallback имя когда name не указан', () => {
     const wrapper = mount(OtherPlayersContainer, {
       props: {
-        players: [{ id: 42 }],
-      },
-    });
+        players: [{ id: 42 }]
+      }
+    })
 
-    const player = wrapper.vm.processedPlayers[0];
-    expect(player.name).toBe("Player 42");
-  });
+    const player = wrapper.vm.processedPlayers[0]
+    expect(player.name).toBe('Player 42')
+  })
 
-  it("хранит предыдущие позиции игроков в prevXMap", () => {
+  it('хранит предыдущие позиции игроков в prevXMap', () => {
     const wrapper1 = mount(OtherPlayersContainer, {
       props: {
-        players: [{ id: 1, x: 100 }],
-      },
-    });
+        players: [{ id: 1, x: 100 }]
+      }
+    })
 
-    const vm1 = wrapper1.vm;
+    const vm1 = wrapper1.vm
 
     // После монтирования позиция должна быть в карте
     // Заметка: prevXMap не экспортируется, но мы можем проверить его существование
-    expect(vm1.prevXMap).toBeDefined();
-  });
-});
+    expect(vm1.prevXMap).toBeDefined()
+  })
+})
