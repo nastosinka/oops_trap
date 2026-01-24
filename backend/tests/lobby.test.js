@@ -1,7 +1,6 @@
 const request = require('supertest');
 const express = require('express');
 
-// Заглушаем таймеры до require lobby.js
 jest.spyOn(global, 'setInterval').mockImplementation(() => 0);
 jest.spyOn(global, 'setTimeout').mockImplementation(() => 0);
 
@@ -30,7 +29,6 @@ describe('Lobby API (auth-based)', () => {
     app.use(express.json());
     app.use('/api/lobby', lobbyRouter);
 
-    // заглушаем console
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -43,7 +41,6 @@ describe('Lobby API (auth-based)', () => {
   });
 
   afterAll(() => {
-    // восстанавливаем оригинальные таймеры
     global.setInterval.mockRestore();
     global.setTimeout.mockRestore();
 

@@ -12,13 +12,6 @@ services:
     depends_on:
       - backend
 
-
-  # frontend:
-  #   build:
-  #     context: ./oops_trap
-  #     dockerfile: Dockerfile.prod
-  #   container_name: frontend
-
   backend:
     build:
       context: ./backend

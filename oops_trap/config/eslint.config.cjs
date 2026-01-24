@@ -16,10 +16,11 @@ module.exports = {
   ignorePatterns: [
     'dist/',
     'coverage/',
-    'tests/e2e/',
+    'tests/',
     'playwright-report/',
     'node_modules/',
-    '*.min.js'
+    '*.min.js',
+    '*yandex-metrika.js'
   ],
   rules: {
     'vue/multi-word-component-names': 'off',

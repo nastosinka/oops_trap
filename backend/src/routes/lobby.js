@@ -14,7 +14,6 @@ const games = new Map();
 // ========================================
 router.post('/newlobby', requireAuth, async (req, res) => {
   try {
-    //const { ownerId } = req.body;
     const ownerId = req.user.id;
 
     if (!ownerId) {
@@ -335,7 +334,7 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
       games.set(game.id, game);
       
       console.log(`Game ${game.id} started from lobby ${lobby.id}`);
-      lobby.status = newStatus; // ТОЛЬКО меняем на in-progress
+      lobby.status = newStatus; 
       console.log(`Status of lobby ${lobbyId} changed: ${previousStatus} -> ${newStatus}`);
       
       lobby.currentGameId = game.id;
@@ -399,7 +398,6 @@ router.post('/lobbies/:id/status', requireAuth, async (req, res) => {
 router.post('/lobbies/:id/join', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    //const { userId } = req.body;
     const userId = req.user.id;
 
     if (!userId) {
@@ -465,7 +463,6 @@ router.post('/lobbies/:id/join', requireAuth, async (req, res) => {
 router.post('/lobbies/:id/leave', requireAuth, async (req, res) => {
   try {
     const lobbyId = parseInt(req.params.id);
-    //const { userId } = req.body;
     const userId = req.user.id;
 
     if (!userId) {
@@ -648,7 +645,7 @@ router.post('/lobbies/:id/ping', requireAuth, (req, res) => {
 
 setInterval(() => {
   const now = Date.now();
-  const TIMEOUT = 10000; // 10 секунд без ping = выход
+  const TIMEOUT = 10000;
   
   for (const [lobbyId, lobby] of lobbies.entries()) {
     if (lobby.status === ('in-progress'||'finished')) {
@@ -671,14 +668,12 @@ setInterval(() => {
       return alive;
     });
 
-    // если лобби опустело — удаляем
     if (lobby.players.length === 0) {
       lobbies.delete(lobbyId);
       console.log(`🧹 Лобби ${lobbyId} удалено (все игроки вышли)`);
       continue;
     }
 
-    // если хост ушёл — назначаем нового
     if (!lobby.players.some(p => p.id === lobby.ownerId)) {
       lobby.ownerId = lobby.players[0].id;
       console.log(

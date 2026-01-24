@@ -4,9 +4,9 @@ import { ref, computed } from "vue";
 export const useUserStore = defineStore("user", () => {
   const user = ref(null);
   const sessionId = ref(null);
-  const gameSocket = ref(null); // Добавляем хранение игрового сокета
-  const currentGameId = ref(null); // Текущая игра
-  const currentLobbyId = ref(null); // Текущее лобби
+  const gameSocket = ref(null);
+  const currentGameId = ref(null);
+  const currentLobbyId = ref(null);
   const myRole = ref("runner");
   const gameMap = ref(1);
   const isAlive = ref(true);
@@ -47,7 +47,6 @@ export const useUserStore = defineStore("user", () => {
     sessionId.value = null;
   };
 
-  // Методы для управления игровым сокетом
   const setGameSocket = (socket, gameId = null, lobbyId = null) => {
     if (gameSocket.value && gameSocket.value.readyState === WebSocket.OPEN) {
       gameSocket.value.close(1000, "Reconnecting to new game");

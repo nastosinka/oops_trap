@@ -44,19 +44,19 @@ import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
 import { audioManager } from "@/utils/audioManager";
 import VolumeControl from "@/components/base/VolumeControl.vue";
-import { useYandexMetrika } from 'yandex-metrika-vue3';
+import { useYandexMetrika } from "yandex-metrika-vue3";
 
 export default {
   name: "HomePage",
-
-  setup() {
-    const ym = useYandexMetrika();  // Вызываем один раз
-    return { ym };  // Делаем доступным в шаблоне и методах
-  },
   components: {
     BaseButton,
     UniversalModal,
     VolumeControl,
+  },
+
+  setup() {
+    const ym = useYandexMetrika();
+    return { ym };
   },
 
   data() {
@@ -116,9 +116,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
@@ -162,9 +160,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignInModal = false;
         showSuccess("Login successful!");

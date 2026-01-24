@@ -7,7 +7,6 @@ const router = express.Router();
 router.get("/:mapName", (req, res) => {
   const { mapName } = req.params;
 
-  // Абсолютный путь от корня проекта
   const mapPath = path.join(__dirname, "../../data", `${mapName}.json`);
 
   fs.readFile(mapPath, "utf8", (err, data) => {
@@ -15,7 +14,7 @@ router.get("/:mapName", (req, res) => {
       return res.status(500).json({
         error: "Ошибка чтения файла карты",
         details: err.message,
-        mapPathUsed: mapPath, // для дебага, чтобы видеть какой путь реально пытается открыть Node
+        mapPathUsed: mapPath, 
       });
     }
     try {

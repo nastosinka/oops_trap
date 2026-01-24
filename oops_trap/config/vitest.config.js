@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'happy-dom', // Используем happy-dom вместо jsdom
+    environment: 'happy-dom',
     setupFiles: [resolve(__dirname, '../vitest.setup.js')],
     include: ['tests/unit/**/*.{test,spec}.{js,ts}'],
     coverage: {

@@ -5,7 +5,7 @@ import MapEditPage from '@/tools/MapEditPage.vue'
 // Если вы хотите тестировать с реальным компонентом (не моком)
 describe('MapEditPage with real DevMapEditor', () => {
   let originalComponent
-  
+
   beforeAll(() => {
     // Сохраняем оригинальный компонент
     originalComponent = MapEditPage.components.DevMapEditor
@@ -22,9 +22,9 @@ describe('MapEditPage with real DevMapEditor', () => {
       template: '<div>Real Dev Map Editor</div>',
       name: 'RealDevMapEditor'
     }
-    
+
     MapEditPage.components.DevMapEditor = RealDevMapEditor
-    
+
     const wrapper = mount(MapEditPage)
     expect(wrapper.text()).toContain('Real Dev Map Editor')
   })

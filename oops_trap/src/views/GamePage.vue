@@ -383,17 +383,13 @@ const handleGameMessage = (message) => {
 
     case "trap_message":
       console.log("Trap message received:", message);
-      // Обрабатываем сообщение о ловушке
       if (message.result) {
-        // Если ловушка активируется
         handleIncomingTrap(message);
       } else {
-        // Если ловушка деактивируется
         handleTrapDeactivation(message);
       }
       break;
 
-    case "coord_message":
     case "player_move":
       if (Array.isArray(message.coords)) {
         const normalized = message.coords.map((player) => {
@@ -412,7 +408,6 @@ const handleGameMessage = (message) => {
           };
         });
 
-        // Для карты — только видимые игроки
         otherPlayers.value = normalized.filter(
           (p) =>
             p.id !== String(userId.value) &&
@@ -420,12 +415,9 @@ const handleGameMessage = (message) => {
             p.alive === true
         );
 
-        // Звуки шагов
-
         otherPlayers.value.forEach((enemy) => {
           const prev = lastEnemyPositions.get(enemy.id);
 
-          // сохраняем позицию
           lastEnemyPositions.set(enemy.id, { x: enemy.x, y: enemy.y });
 
           if (!prev) return;
@@ -434,9 +426,8 @@ const handleGameMessage = (message) => {
           const dy = enemy.y - prev.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 1) return; // микродрожание — игнор
+          if (dist < 1) return;
 
-          // накапливаем пройденную дистанцию
           const acc = (stepProgressByPlayer.get(enemy.id) || 0) + dist;
 
           if (acc < STEP_DISTANCE) {
@@ -444,13 +435,11 @@ const handleGameMessage = (message) => {
             return;
           }
 
-          // шаг "совершён"
           stepProgressByPlayer.set(enemy.id, acc % STEP_DISTANCE);
 
           const volume = calcStepVolume(playerCoords, enemy);
           if (volume <= 0.05) return;
 
-          // небольшая рандомизация
           const pitch = 0.9 + Math.random() * 0.2;
           const gain = volume * (0.5 + Math.random() * 0.2);
 
@@ -460,14 +449,11 @@ const handleGameMessage = (message) => {
           });
         });
 
-        // Для логики конца игры — все игроки
         allPlayers.value = normalized.filter(
           (p) => p.id !== String(userId.value)
         );
 
         const me = normalized.find((p) => p.id === String(userId.value));
-        // console.table(normalized);
-        // console.table(otherPlayers.value);
 
         if (me) {
           playerCoords.x = me.x;

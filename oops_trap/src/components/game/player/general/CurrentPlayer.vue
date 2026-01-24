@@ -13,7 +13,6 @@ import walk1 from "@/assets/images/players/1/bp1.png";
 import walk2 from "@/assets/images/players/1/bp2.png";
 import walk3 from "@/assets/images/players/1/bp3.png";
 
-// Хитбокс игрока (физика)
 const HITBOX = {
   offsetX: 6,
   offsetY: 10,
@@ -46,7 +45,7 @@ export default {
 
       lastSentPos: { x: 0, y: 0 },
       lastSendTime: 0,
-      sendInterval: 50, // отправляем каждые 50мс (20 раз в секунду)
+      sendInterval: 50,
 
       idle,
       walk1,
@@ -91,7 +90,6 @@ export default {
     window.addEventListener("keyup", this.handleKeyUp);
     this.loop();
     this.setSpawnFromPolygon();
-    // Отправляем начальные координаты
     this.sendCoords();
   },
   beforeUnmount() {
@@ -100,7 +98,6 @@ export default {
     cancelAnimationFrame(this.animationFrame);
   },
   methods: {
-    // Новые вспомогательные методы
     addToY(value) {
       this.pos.y = parseFloat((this.pos.y + value).toFixed(2));
     },
@@ -128,7 +125,6 @@ export default {
     handleKeyDown(e) {
       const key = e.key.toLowerCase();
 
-      // Поддержка русской и английской раскладки
       const mapping = {
         w: ["w", "ц"],
         a: ["a", "ф"],
@@ -234,16 +230,13 @@ export default {
       );
     },
 
-    // ✅ ДОБАВЛЕНО: Метод отправки координат с троттлингом
     sendCoords(force = false) {
       const now = Date.now();
       const timePassed = now - this.lastSendTime;
 
-      // Проверяем, изменилась ли позиция
       const posChanged =
         this.lastSentPos.x !== this.pos.x || this.lastSentPos.y !== this.pos.y;
 
-      // Отправляем если: форсированно ИЛИ (прошло время И позиция изменилась)
       if (force || (timePassed >= this.sendInterval && posChanged)) {
         this.lastSentPos = { x: this.pos.x, y: this.pos.y };
         this.lastSendTime = now;
@@ -301,7 +294,7 @@ export default {
       if (this.keys.has("q") && (onVine || onRope)) {
         this.onVine = false;
         this.isOnGround = false;
-        this.pos.x -= 1; // даём шанс набрать импульс
+        this.pos.x -= 1;
         this.velocity.y = -6.7;
         this.velocity.x = -9;
         this.dir = "left";
@@ -328,11 +321,9 @@ export default {
 
         this.velocity.y += this.gravity;
 
-        // Горизонтальное движение от velocity (например, после прыжка с каната)
         if (this.velocity.x !== 0) {
           this.pos.x += this.velocity.x;
 
-          // Плавное замедление
           if (this.velocity.x > 0) {
             this.velocity.x = Math.max(0, this.velocity.x - 0.5);
           } else if (this.velocity.x < 0) {

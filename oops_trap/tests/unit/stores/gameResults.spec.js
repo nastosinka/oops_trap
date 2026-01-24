@@ -65,14 +65,16 @@ describe('GameResults Store', () => {
 
     it('should override previous results', () => {
       const store = useGameResultsStore()
-      
+
       // Первый вызов
       store.setResults(mockPlayersStats, mockMapId)
       expect(store.stats).toEqual(mockPlayersStats)
       expect(store.mapId).toBe(mockMapId)
 
       // Второй вызов с другими данными
-      const newStats = [{ id: 4, name: 'New Player', kills: 10, deaths: 0, score: 2000 }]
+      const newStats = [
+        { id: 4, name: 'New Player', kills: 10, deaths: 0, score: 2000 }
+      ]
       const newMap = 'de_inferno'
       store.setResults(newStats, newMap)
 
@@ -85,41 +87,41 @@ describe('GameResults Store', () => {
   describe('clearResults', () => {
     it('should clear player stats', () => {
       const store = useGameResultsStore()
-      
+
       // Устанавливаем данные
       store.setResults(mockPlayersStats, mockMapId)
       expect(store.stats).toEqual(mockPlayersStats)
 
       // Очищаем
       store.clearResults()
-      
+
       expect(store.stats).toEqual([])
       expect(store.stats).toHaveLength(0)
     })
 
     it('should not clear mapId (as per commented code)', () => {
       const store = useGameResultsStore()
-      
+
       // Устанавливаем данные
       store.setResults(mockPlayersStats, mockMapId)
       expect(store.mapId).toBe(mockMapId)
 
       // Очищаем
       store.clearResults()
-      
+
       // mapId должен остаться прежним, так как закомментировано
       expect(store.mapId).toBe(mockMapId)
     })
 
     it('should work on already empty store', () => {
       const store = useGameResultsStore()
-      
+
       // Проверяем начальное состояние
       expect(store.stats).toEqual([])
-      
+
       // Очищаем (ничего не должно сломаться)
       expect(() => store.clearResults()).not.toThrow()
-      
+
       // Проверяем, что всё ещё пусто
       expect(store.stats).toEqual([])
     })
@@ -129,7 +131,7 @@ describe('GameResults Store', () => {
   describe('Integration', () => {
     it('should handle setResults -> clearResults -> setResults sequence', () => {
       const store = useGameResultsStore()
-      
+
       // Первое сохранение
       store.setResults(mockPlayersStats, mockMapId)
       expect(store.stats).toEqual(mockPlayersStats)
@@ -141,9 +143,15 @@ describe('GameResults Store', () => {
       expect(store.mapId).toBe(mockMapId) // mapId остаётся
 
       // Новое сохранение
-      const newPlayer = { id: 10, name: 'Solo Player', kills: 1, deaths: 1, score: 500 }
+      const newPlayer = {
+        id: 10,
+        name: 'Solo Player',
+        kills: 1,
+        deaths: 1,
+        score: 500
+      }
       store.setResults([newPlayer], 'de_nuke')
-      
+
       expect(store.stats).toEqual([newPlayer])
       expect(store.stats).toHaveLength(1)
       expect(store.mapId).toBe('de_nuke')
