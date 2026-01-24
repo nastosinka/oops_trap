@@ -1,7 +1,4 @@
-// backend/src/middleware/auth.js
 const jwt = require('jsonwebtoken');
-//const prisma = require('../db/prismaClient');
-
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 
 /**
@@ -10,8 +7,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
  * При успехе добавляет req.user = { id, username, role, iat, exp }
  */
 function requireAuth(req, res, next) {
-  //const authHeader = req.headers.authorization || '';
-  //const match = authHeader.match(/^Bearer\s+(.+)$/i);
   const token = req.cookies?.auth_token;
   if (!token) {
     return res.status(401).json({ error: 'Invalid token', code: 401 });
@@ -19,7 +14,7 @@ function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload; // { sub, username, role, iat, exp }
+    req.user = payload;
     next();
   } catch (err) {
     console.error('JWT verify error:', err);

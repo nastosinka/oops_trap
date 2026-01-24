@@ -44,6 +44,7 @@ import { showSuccess } from "@/utils/notification-wrapper";
 import { useUserStore } from "@/stores/user";
 import { audioManager } from "@/utils/audioManager";
 import VolumeControl from "@/components/base/VolumeControl.vue";
+import { useYandexMetrika } from "yandex-metrika-vue3";
 
 export default {
   name: "HomePage",
@@ -51,6 +52,11 @@ export default {
     BaseButton,
     UniversalModal,
     VolumeControl,
+  },
+
+  setup() {
+    const ym = useYandexMetrika();
+    return { ym };
   },
 
   data() {
@@ -66,6 +72,12 @@ export default {
       loop: true,
       volume: 0.3,
     });
+    if (this.ym) {
+      console.log("YM OK");
+      this.ym.reachGoal("homepage_open");
+    } else {
+      console.warn("YM NOT READY", window.ym);
+    }
   },
 
   methods: {
@@ -104,9 +116,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignUpModal = false;
         showSuccess("Registration successful!");
@@ -150,9 +160,7 @@ export default {
           id: data.user?.id,
         };
 
-        //userStore.login(userData, data.token);
         userStore.login(userData);
-        //localStorage.setItem("token", data.token);
 
         this.showSignInModal = false;
         showSuccess("Login successful!");

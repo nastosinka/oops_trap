@@ -1,304 +1,304 @@
-import { mount } from "@vue/test-utils";
-import { describe, it, expect, afterEach } from "vitest";
-import SettingsModal from "@/components/base/SettingsModal.vue";
-import BaseButton from "@/components/base/BaseButton.vue";
+import { mount } from '@vue/test-utils'
+import { describe, it, expect, afterEach } from 'vitest'
+import SettingsModal from '@/components/base/SettingsModal.vue'
+import BaseButton from '@/components/base/BaseButton.vue'
 
-describe("SettingsModal.vue", () => {
-  let wrapper;
+describe('SettingsModal.vue', () => {
+  let wrapper
   const mockPlayers = [
-    { id: 1, name: "Player 1" },
-    { id: 2, name: "Player 2" },
-    { id: 3, name: "Player 3" },
-  ];
+    { id: 1, name: 'Player 1' },
+    { id: 2, name: 'Player 2' },
+    { id: 3, name: 'Player 3' }
+  ]
 
   const defaultInitialSettings = {
     map: 1,
-    mafia: { id: 2, name: "Player 2" },
-    time: "normal",
-  };
+    mafia: { id: 2, name: 'Player 2' },
+    time: 'normal'
+  }
 
   const createWrapper = (props = {}) => {
     return mount(SettingsModal, {
       props: {
         players: props.players || mockPlayers,
-        initialSettings: props.initialSettings || {},
+        initialSettings: props.initialSettings || {}
       },
       global: {
         components: {
-          BaseButton,
-        },
-      },
-    });
-  };
+          BaseButton
+        }
+      }
+    })
+  }
 
   afterEach(() => {
     if (wrapper) {
-      wrapper.unmount();
+      wrapper.unmount()
     }
-  });
+  })
 
-  describe("Рендеринг компонента", () => {
-    it("должен отображать все секции настроек", () => {
-      wrapper = createWrapper();
+  describe('Рендеринг компонента', () => {
+    it('должен отображать все секции настроек', () => {
+      wrapper = createWrapper()
 
-      const settingGroups = wrapper.findAll(".setting-group");
-      expect(settingGroups).toHaveLength(3);
+      const settingGroups = wrapper.findAll('.setting-group')
+      expect(settingGroups).toHaveLength(3)
 
-      const titles = wrapper.findAll(".setting-title");
-      expect(titles[0].text()).toBe("map type");
-      expect(titles[1].text()).toBe("mafia");
-      expect(titles[2].text()).toBe("time");
-    });
+      const titles = wrapper.findAll('.setting-title')
+      expect(titles[0].text()).toBe('map type')
+      expect(titles[1].text()).toBe('mafia')
+      expect(titles[2].text()).toBe('time')
+    })
 
-    it("должен отображать кнопку Apply", () => {
-      wrapper = createWrapper();
+    it('должен отображать кнопку Apply', () => {
+      wrapper = createWrapper()
 
-      const button = wrapper.findComponent(BaseButton);
-      expect(button.exists()).toBe(true);
-      expect(button.props("label")).toBe("Apply");
-    });
-  });
+      const button = wrapper.findComponent(BaseButton)
+      expect(button.exists()).toBe(true)
+      expect(button.props('label')).toBe('Apply')
+    })
+  })
 
-  describe("Селект карты", () => {
-    it("должен отображать опции карт", () => {
-      wrapper = createWrapper();
+  describe('Селект карты', () => {
+    it('должен отображать опции карт', () => {
+      wrapper = createWrapper()
 
-      const mapSelect = wrapper.findAll("select")[0];
-      const options = mapSelect.findAll("option");
+      const mapSelect = wrapper.findAll('select')[0]
+      const options = mapSelect.findAll('option')
 
-      expect(options).toHaveLength(3);
-      expect(options[0].text()).toBe("select map type");
-      expect(options[1].text()).toBe("city");
-      expect(options[2].text()).toBe("village");
-      expect(options[1].attributes("value")).toBe("1");
-      expect(options[2].attributes("value")).toBe("2");
-    });
+      expect(options).toHaveLength(3)
+      expect(options[0].text()).toBe('select map type')
+      expect(options[1].text()).toBe('I see the light')
+      expect(options[2].text()).toBe('Deep caves')
+      expect(options[1].attributes('value')).toBe('1')
+      expect(options[2].attributes('value')).toBe('2')
+    })
 
-    it("должен устанавливать начальное значение карты из initialSettings", () => {
+    it('должен устанавливать начальное значение карты из initialSettings', () => {
       wrapper = createWrapper({
-        initialSettings: { map: 2 },
-      });
+        initialSettings: { map: 2 }
+      })
 
-      expect(wrapper.vm.selectedMap).toBe(2);
-    });
-  });
+      expect(wrapper.vm.selectedMap).toBe(2)
+    })
+  })
 
-  describe("Селект мафии", () => {
-    it("должен отображать опции игроков", () => {
-      wrapper = createWrapper();
+  describe('Селект мафии', () => {
+    it('должен отображать опции игроков', () => {
+      wrapper = createWrapper()
 
-      const mafiaSelect = wrapper.findAll("select")[1];
-      const options = mafiaSelect.findAll("option");
+      const mafiaSelect = wrapper.findAll('select')[1]
+      const options = mafiaSelect.findAll('option')
 
-      expect(options).toHaveLength(4);
-      expect(options[0].text()).toBe("select mafia");
-      expect(options[1].text()).toBe("Player 1");
-      expect(options[2].text()).toBe("Player 2");
-      expect(options[3].text()).toBe("Player 3");
-      expect(options[1].attributes("value")).toBe("1");
-      expect(options[2].attributes("value")).toBe("2");
-      expect(options[3].attributes("value")).toBe("3");
-    });
+      expect(options).toHaveLength(4)
+      expect(options[0].text()).toBe('select mafia')
+      expect(options[1].text()).toBe('Player 1')
+      expect(options[2].text()).toBe('Player 2')
+      expect(options[3].text()).toBe('Player 3')
+      expect(options[1].attributes('value')).toBe('1')
+      expect(options[2].attributes('value')).toBe('2')
+      expect(options[3].attributes('value')).toBe('3')
+    })
 
-    it("должен устанавливать начальное значение мафии из initialSettings", () => {
+    it('должен устанавливать начальное значение мафии из initialSettings', () => {
       wrapper = createWrapper({
-        initialSettings: { mafia: { id: 3, name: "Player 3" } }, // Изменено: объект
-      });
+        initialSettings: { mafia: { id: 3, name: 'Player 3' } } // Изменено: объект
+      })
 
-      expect(wrapper.vm.selectedMafia).toEqual({ id: 3, name: "Player 3" }); // Изменено: объект
-    });
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 3, name: 'Player 3' }) // Изменено: объект
+    })
 
-    it("должен работать с пустым массивом игроков", () => {
+    it('должен работать с пустым массивом игроков', () => {
       wrapper = createWrapper({
-        players: [],
-      });
+        players: []
+      })
 
-      const mafiaSelect = wrapper.findAll("select")[1];
-      const options = mafiaSelect.findAll("option");
+      const mafiaSelect = wrapper.findAll('select')[1]
+      const options = mafiaSelect.findAll('option')
 
-      expect(options).toHaveLength(1);
-      expect(options[0].text()).toBe("select mafia");
-    });
-  });
+      expect(options).toHaveLength(1)
+      expect(options[0].text()).toBe('select mafia')
+    })
+  })
 
-  describe("Селект времени", () => {
-    it("должен отображать опции времени", () => {
-      wrapper = createWrapper();
+  describe('Селект времени', () => {
+    it('должен отображать опции времени', () => {
+      wrapper = createWrapper()
 
-      const timeSelect = wrapper.findAll("select")[2];
-      const options = timeSelect.findAll("option");
+      const timeSelect = wrapper.findAll('select')[2]
+      const options = timeSelect.findAll('option')
 
-      expect(options).toHaveLength(4);
-      expect(options[0].text()).toBe("select time");
-      expect(options[1].text()).toBe("easy");
-      expect(options[2].text()).toBe("normal");
-      expect(options[3].text()).toBe("hard");
-      expect(options[1].attributes("value")).toBe("easy");
-      expect(options[2].attributes("value")).toBe("normal");
-      expect(options[3].attributes("value")).toBe("hard");
-    });
+      expect(options).toHaveLength(4)
+      expect(options[0].text()).toBe('select time')
+      expect(options[1].text()).toBe('easy')
+      expect(options[2].text()).toBe('normal')
+      expect(options[3].text()).toBe('hard')
+      expect(options[1].attributes('value')).toBe('easy')
+      expect(options[2].attributes('value')).toBe('normal')
+      expect(options[3].attributes('value')).toBe('hard')
+    })
 
-    it("должен устанавливать начальное значение времени из initialSettings", () => {
+    it('должен устанавливать начальное значение времени из initialSettings', () => {
       wrapper = createWrapper({
-        initialSettings: { time: "hard" },
-      });
+        initialSettings: { time: 'hard' }
+      })
 
-      expect(wrapper.vm.selectedTime).toBe("hard");
-    });
-  });
+      expect(wrapper.vm.selectedTime).toBe('hard')
+    })
+  })
 
-  describe("Инициализация данных", () => {
-    it("должен инициализировать пустые значения при отсутствии initialSettings", () => {
-      wrapper = createWrapper();
+  describe('Инициализация данных', () => {
+    it('должен инициализировать пустые значения при отсутствии initialSettings', () => {
+      wrapper = createWrapper()
 
-      expect(wrapper.vm.selectedMap).toBe("");
-      expect(wrapper.vm.selectedMafia).toBe(null); // Изменено: null, а не ""
-      expect(wrapper.vm.selectedTime).toBe("");
-    });
+      expect(wrapper.vm.selectedMap).toBe('')
+      expect(wrapper.vm.selectedMafia).toBe(null) // Изменено: null, а не ""
+      expect(wrapper.vm.selectedTime).toBe('')
+    })
 
-    it("должен инициализировать значения из partial initialSettings", () => {
+    it('должен инициализировать значения из partial initialSettings', () => {
       wrapper = createWrapper({
         initialSettings: {
           map: 1,
-          time: "easy",
-        },
-      });
+          time: 'easy'
+        }
+      })
 
-      expect(wrapper.vm.selectedMap).toBe(1);
-      expect(wrapper.vm.selectedMafia).toBe(null); // Изменено: null, а не ""
-      expect(wrapper.vm.selectedTime).toBe("easy");
-    });
+      expect(wrapper.vm.selectedMap).toBe(1)
+      expect(wrapper.vm.selectedMafia).toBe(null) // Изменено: null, а не ""
+      expect(wrapper.vm.selectedTime).toBe('easy')
+    })
 
-    it("должен инициализировать все значения из полного initialSettings", () => {
+    it('должен инициализировать все значения из полного initialSettings', () => {
       wrapper = createWrapper({
-        initialSettings: defaultInitialSettings,
-      });
+        initialSettings: defaultInitialSettings
+      })
 
-      expect(wrapper.vm.selectedMap).toBe(1);
-      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: "Player 2" }); // Изменено: объект
-      expect(wrapper.vm.selectedTime).toBe("normal");
-    });
-  });
+      expect(wrapper.vm.selectedMap).toBe(1)
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: 'Player 2' }) // Изменено: объект
+      expect(wrapper.vm.selectedTime).toBe('normal')
+    })
+  })
 
-  describe("Метод handleApply", () => {
-    it("должен эмитить событие apply с текущими настройками", async () => {
+  describe('Метод handleApply', () => {
+    it('должен эмитить событие apply с текущими настройками', async () => {
       wrapper = createWrapper({
-        initialSettings: defaultInitialSettings,
-      });
+        initialSettings: defaultInitialSettings
+      })
 
-      await wrapper.vm.handleApply();
+      await wrapper.vm.handleApply()
 
-      expect(wrapper.emitted("apply")).toHaveLength(1);
-      expect(wrapper.emitted("apply")[0]).toEqual([
+      expect(wrapper.emitted('apply')).toHaveLength(1)
+      expect(wrapper.emitted('apply')[0]).toEqual([
         {
           map: 1,
-          mafia: { id: 2, name: "Player 2" }, // Изменено: объект
-          time: "normal",
-        },
-      ]);
-    });
+          mafia: { id: 2, name: 'Player 2' }, // Изменено: объект
+          time: 'normal'
+        }
+      ])
+    })
 
-    it("должен эмитить событие apply с частичными настройками", async () => {
+    it('должен эмитить событие apply с частичными настройками', async () => {
       wrapper = createWrapper({
-        initialSettings: { map: 2 },
-      });
+        initialSettings: { map: 2 }
+      })
 
-      await wrapper.vm.handleApply();
+      await wrapper.vm.handleApply()
 
-      expect(wrapper.emitted("apply")).toHaveLength(1);
-      expect(wrapper.emitted("apply")[0]).toEqual([
+      expect(wrapper.emitted('apply')).toHaveLength(1)
+      expect(wrapper.emitted('apply')[0]).toEqual([
         {
           map: 2,
           mafia: null, // Изменено: null, а не ""
-          time: "",
-        },
-      ]);
-    });
+          time: ''
+        }
+      ])
+    })
 
-    it("должен эмитить событие apply при клике на кнопку", async () => {
+    it('должен эмитить событие apply при клике на кнопку', async () => {
       wrapper = createWrapper({
-        initialSettings: defaultInitialSettings,
-      });
+        initialSettings: defaultInitialSettings
+      })
 
-      const button = wrapper.findComponent(BaseButton);
-      await button.trigger("click");
+      const button = wrapper.findComponent(BaseButton)
+      await button.trigger('click')
 
-      expect(wrapper.emitted("apply")).toHaveLength(1);
-      expect(wrapper.emitted("apply")[0]).toEqual([
+      expect(wrapper.emitted('apply')).toHaveLength(1)
+      expect(wrapper.emitted('apply')[0]).toEqual([
         {
           map: 1,
-          mafia: { id: 2, name: "Player 2" }, // Изменено: объект
-          time: "normal",
-        },
-      ]);
-    });
-  });
+          mafia: { id: 2, name: 'Player 2' }, // Изменено: объект
+          time: 'normal'
+        }
+      ])
+    })
+  })
 
-  describe("Двустороннее связывание (v-model)", () => {
-    it("должен обновлять selectedMap при изменении селекта карты", async () => {
-      wrapper = createWrapper();
+  describe('Двустороннее связывание (v-model)', () => {
+    it('должен обновлять selectedMap при изменении селекта карты', async () => {
+      wrapper = createWrapper()
 
-      const mapSelect = wrapper.findAll("select")[0];
-      await mapSelect.setValue("2");
+      const mapSelect = wrapper.findAll('select')[0]
+      await mapSelect.setValue('2')
 
-      expect(wrapper.vm.selectedMap).toBe(2);
-    });
+      expect(wrapper.vm.selectedMap).toBe(2)
+    })
 
-    it("должен обновлять selectedMafia при изменении селекта мафии", async () => {
-      wrapper = createWrapper();
+    it('должен обновлять selectedMafia при изменении селекта мафии', async () => {
+      wrapper = createWrapper()
 
-      const mafiaSelect = wrapper.findAll("select")[1];
-      await mafiaSelect.setValue("2");
+      const mafiaSelect = wrapper.findAll('select')[1]
+      await mafiaSelect.setValue('2')
 
-      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: "Player 2" }); // Изменено: объект
-    });
+      expect(wrapper.vm.selectedMafia).toEqual({ id: 2, name: 'Player 2' }) // Изменено: объект
+    })
 
-    it("должен обновлять selectedTime при изменении селекта времени", async () => {
-      wrapper = createWrapper();
+    it('должен обновлять selectedTime при изменении селекта времени', async () => {
+      wrapper = createWrapper()
 
-      const timeSelect = wrapper.findAll("select")[2];
-      await timeSelect.setValue("hard");
+      const timeSelect = wrapper.findAll('select')[2]
+      await timeSelect.setValue('hard')
 
-      expect(wrapper.vm.selectedTime).toBe("hard");
-    });
-  });
+      expect(wrapper.vm.selectedTime).toBe('hard')
+    })
+  })
 
-  describe("Валидация пропсов", () => {
-    it("должен работать с пустым массивом players по умолчанию", () => {
+  describe('Валидация пропсов', () => {
+    it('должен работать с пустым массивом players по умолчанию', () => {
       wrapper = mount(SettingsModal, {
         props: {
           players: [], // Добавлено
-          initialSettings: {}, // Добавлено
+          initialSettings: {} // Добавлено
         },
         global: {
           components: {
-            BaseButton,
-          },
-        },
-      });
+            BaseButton
+          }
+        }
+      })
 
-      expect(wrapper.vm.players).toEqual([]);
-      expect(wrapper.vm.initialSettings).toEqual({});
-    });
+      expect(wrapper.vm.players).toEqual([])
+      expect(wrapper.vm.initialSettings).toEqual({})
+    })
 
-    it("должен работать с пустым объектом initialSettings по умолчанию", () => {
+    it('должен работать с пустым объектом initialSettings по умолчанию', () => {
       wrapper = mount(SettingsModal, {
         props: {
           players: [], // Добавлено
-          initialSettings: {}, // Добавлено
+          initialSettings: {} // Добавлено
         },
         global: {
           components: {
-            BaseButton,
-          },
-        },
-      });
+            BaseButton
+          }
+        }
+      })
 
-      expect(wrapper.vm.initialSettings).toEqual({});
+      expect(wrapper.vm.initialSettings).toEqual({})
       // Проверяем, что компонент не падает при инициализации
-      expect(wrapper.vm.selectedMap).toBe("");
-      expect(wrapper.vm.selectedMafia).toBe(null);
-      expect(wrapper.vm.selectedTime).toBe("");
-    });
-  });
-});
+      expect(wrapper.vm.selectedMap).toBe('')
+      expect(wrapper.vm.selectedMafia).toBe(null)
+      expect(wrapper.vm.selectedTime).toBe('')
+    })
+  })
+})

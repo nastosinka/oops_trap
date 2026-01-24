@@ -74,7 +74,6 @@ export default {
     initialSettings: {
       type: Object,
       required: true,
-      // { map: number, mafia: object|null, time: string }
     },
   },
 
@@ -87,8 +86,8 @@ export default {
       selectedTime: "",
 
       mapTypes: [
-        { value: 1, label: "city" },
-        { value: 2, label: "village" },
+        { value: 1, label: "I see the light" },
+        { value: 2, label: "Deep caves" },
       ],
       timeOptions: [
         { value: "easy", label: "easy" },

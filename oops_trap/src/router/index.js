@@ -29,7 +29,6 @@ const routes = [
     path: "/map-edit", // редактура полигонов
     name: "MapEdit",
     component: () => import("@/tools/MapEditPage.vue"),
-    //meta: { devOnly: true }
   },
   {
     path: "/results",

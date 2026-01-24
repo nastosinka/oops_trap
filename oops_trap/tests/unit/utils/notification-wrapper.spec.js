@@ -9,19 +9,19 @@ vi.unmock("@/utils/notification-wrapper.js");
 vi.mock("ant-design-vue", () => ({
   message: {
     success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+    error: vi.fn()
+  }
+}))
 
 describe("Notification functions", () => {
   beforeEach(() => {
     // Очищаем моки перед каждым тестом
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   afterEach(() => {
-    vi.restoreAllMocks();
-  });
+    vi.restoreAllMocks()
+  })
 
   describe("showSuccess", () => {
     test("должен вызывать message.success с переданным текстом", () => {
@@ -32,9 +32,9 @@ describe("Notification functions", () => {
       showSuccess(text);
 
       // Assert
-      expect(message.success).toHaveBeenCalledTimes(1);
-      expect(message.success).toHaveBeenCalledWith(text);
-    });
+      expect(message.success).toHaveBeenCalledTimes(1)
+      expect(message.success).toHaveBeenCalledWith(text)
+    })
 
     test("должен вызывать message.success с пустой строкой", () => {
       // Arrange
@@ -44,9 +44,9 @@ describe("Notification functions", () => {
       showSuccess(text);
 
       // Assert
-      expect(message.success).toHaveBeenCalledTimes(1);
-      expect(message.success).toHaveBeenCalledWith(text);
-    });
+      expect(message.success).toHaveBeenCalledTimes(1)
+      expect(message.success).toHaveBeenCalledWith(text)
+    })
 
     test("должен вызывать message.success с разными типами данных", () => {
       // Arrange
@@ -61,9 +61,9 @@ describe("Notification functions", () => {
         showSuccess(input);
         expect(message.success).toHaveBeenCalledWith(input);
         // Сбрасываем счетчик вызовов для следующего теста
-        vi.clearAllMocks();
-      });
-    });
+        vi.clearAllMocks()
+      })
+    })
 
     test("должен вызывать message.success только один раз", () => {
       // Arrange
@@ -74,9 +74,9 @@ describe("Notification functions", () => {
       showSuccess(text);
 
       // Assert
-      expect(message.success).toHaveBeenCalledTimes(2);
-    });
-  });
+      expect(message.success).toHaveBeenCalledTimes(2)
+    })
+  })
 
   describe("showError", () => {
     test("должен вызывать message.error с переданным текстом", () => {
@@ -87,9 +87,9 @@ describe("Notification functions", () => {
       showError(text);
 
       // Assert
-      expect(message.error).toHaveBeenCalledTimes(1);
-      expect(message.error).toHaveBeenCalledWith(text);
-    });
+      expect(message.error).toHaveBeenCalledTimes(1)
+      expect(message.error).toHaveBeenCalledWith(text)
+    })
 
     test("должен вызывать message.error с длинным текстом", () => {
       // Arrange
@@ -100,9 +100,9 @@ describe("Notification functions", () => {
       showError(text);
 
       // Assert
-      expect(message.error).toHaveBeenCalledTimes(1);
-      expect(message.error).toHaveBeenCalledWith(text);
-    });
+      expect(message.error).toHaveBeenCalledTimes(1)
+      expect(message.error).toHaveBeenCalledWith(text)
+    })
 
     test("должен вызывать message.error с текстом ошибки по умолчанию если текст не передан", () => {
       // Arrange
@@ -124,10 +124,10 @@ describe("Notification functions", () => {
       showError(text);
 
       // Assert
-      expect(message.error).toHaveBeenCalledTimes(1);
-      expect(message.success).not.toHaveBeenCalled();
-    });
-  });
+      expect(message.error).toHaveBeenCalledTimes(1)
+      expect(message.success).not.toHaveBeenCalled()
+    })
+  })
 
   describe("Интеграционные тесты", () => {
     test("должны работать обе функции независимо", () => {
@@ -140,11 +140,11 @@ describe("Notification functions", () => {
       showError(errorText);
 
       // Assert
-      expect(message.success).toHaveBeenCalledTimes(1);
-      expect(message.success).toHaveBeenCalledWith(successText);
-      expect(message.error).toHaveBeenCalledTimes(1);
-      expect(message.error).toHaveBeenCalledWith(errorText);
-    });
+      expect(message.success).toHaveBeenCalledTimes(1)
+      expect(message.success).toHaveBeenCalledWith(successText)
+      expect(message.error).toHaveBeenCalledTimes(1)
+      expect(message.error).toHaveBeenCalledWith(errorText)
+    })
 
     test("должны правильно обрабатывать последовательные вызовы", () => {
       // Arrange
@@ -160,12 +160,12 @@ describe("Notification functions", () => {
       showSuccess(texts[2]);
 
       // Assert
-      expect(message.success).toHaveBeenCalledTimes(2);
-      expect(message.success).toHaveBeenNthCalledWith(1, texts[0]);
-      expect(message.success).toHaveBeenNthCalledWith(2, texts[2]);
-      expect(message.error).toHaveBeenCalledTimes(1);
-      expect(message.error).toHaveBeenCalledWith(texts[1]);
-    });
+      expect(message.success).toHaveBeenCalledTimes(2)
+      expect(message.success).toHaveBeenNthCalledWith(1, texts[0])
+      expect(message.success).toHaveBeenNthCalledWith(2, texts[2])
+      expect(message.error).toHaveBeenCalledTimes(1)
+      expect(message.error).toHaveBeenCalledWith(texts[1])
+    })
 
     test("должны корректно работать с различными типами строк", () => {
       // Arrange

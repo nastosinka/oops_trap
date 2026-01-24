@@ -33,12 +33,12 @@ import li1 from "@/assets/images/maps/Map1/li/1.png";
 
 <style scoped>
 .game-map {
-  position: absolute; /* Добавьте это! */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0; /* Убедитесь, что фон ниже полигонов */
+  z-index: 0;
 }
 
 .map-layer {
@@ -50,7 +50,7 @@ import li1 from "@/assets/images/maps/Map1/li/1.png";
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  pointer-events: none; /* Чтобы не мешали кликам */
+  pointer-events: none;
 }
 
 .st1-layer {

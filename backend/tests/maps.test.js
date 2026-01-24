@@ -2,6 +2,12 @@ const request = require('supertest');
 const express = require('express');
 const mapsRouter = require('../src/routes/maps');
 
+beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => { });
+    jest.spyOn(console, 'warn').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => { });
+});
+
 jest.mock('../src/db/prismaClient', () => ({
   maps: {
     findMany: jest.fn(),
@@ -100,4 +106,10 @@ describe('Map Info API', () => {
     expect(res.body.error).toBe('Ошибка сервера при получении карты');
     expect(res.body.code).toBe(500);
   });
+});
+
+afterAll(() => {
+    console.log.mockRestore();
+    console.warn.mockRestore();
+    console.error.mockRestore();
 });

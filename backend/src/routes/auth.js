@@ -84,18 +84,8 @@ router.post('/register', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // res.status(201).json({
-    //   message: 'Пользователь успешно зарегистрирован',
-    //   //token,
-    //   user: {
-    //     id: newUser.id,
-    //     username: newUser.name,
-    //   },
-    // });
-
     res.cookie("auth_token", token, {
       httpOnly: true,
-      //secure: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 1000,
     });
@@ -168,18 +158,8 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // res.status(200).json({
-    //   token,
-    //   user: {
-    //     id: user.id,
-    //     username: user.name,
-    //     role: user.role || 'user',
-    //   },
-    // });
-
     res.cookie("auth_token", token, {
       httpOnly: true,
-      //secure: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 1000,
     });

@@ -22,15 +22,12 @@ export default {
   name: "VolumeControl",
 
   setup() {
-    // Состояние громкости (от 0 до 1)
     const volume = ref(audioManager.masterGain.gain.value);
 
-    // Обработчик изменения громкости
     const updateVolume = () => {
       audioManager.setMasterVolume(volume.value);
     };
 
-    // Слежение за изменением громкости через слайдер
     watch(volume, (newVolume) => {
       audioManager.setMasterVolume(newVolume);
     });

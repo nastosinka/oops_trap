@@ -136,7 +136,6 @@ const sortedPlayers = computed(() => {
     });
 });
 
-// Результат текущего пользователя
 const playerResult = computed(() => {
   const myId = String(userStore.userId);
 
@@ -168,7 +167,6 @@ const playerResult = computed(() => {
   };
 });
 
-// Переход в лобби
 const returnToLobby = async () => {
   userStore.setIsAlive(true);
 
